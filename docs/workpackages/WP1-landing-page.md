@@ -9,7 +9,7 @@
 ---
 
 ## Objective
-Build a production-quality static landing page that communicates the ConsistAI value proposition, displays 3 phone mockup screens, and captures waitlist emails.
+Build a production-quality static landing page that communicates the Kairo value proposition, displays 3 phone mockup screens, and captures waitlist emails.
 
 ## Entry Criteria (Phase Gate)
 - [x] Architecture document approved
@@ -73,7 +73,7 @@ Build a production-quality static landing page that communicates the ConsistAI v
 ## Acceptance Criteria
 - [ ] Page matches UI Screen Spec for all 3 phone screens
 - [ ] 3-step flow text matches: Set constraints → Get plan → Log & adapt
-- [ ] Headline includes "ConsistAI" product name
+- [ ] Headline includes "Kairo" product name
 - [ ] Waitlist form captures email with validation
 - [ ] Responsive at 375px, 768px, 1440px
 - [ ] Zero external dependencies (no CDN, no framework)

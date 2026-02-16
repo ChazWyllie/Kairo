@@ -1,5 +1,5 @@
 /**
- * ConsistAI — CSS / Styles Tests
+ * Kairo — CSS / Styles Tests
  * Validates that styles.css exists and meets quality requirements.
  *
  * Tests run against: src/landing/styles.css

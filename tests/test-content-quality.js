@@ -1,5 +1,5 @@
 /**
- * ConsistAI — Content Quality Tests
+ * Kairo — Content Quality Tests
  * Validates that content is specific, concrete, and not placeholder.
  *
  * Tests run against: src/landing/index.html

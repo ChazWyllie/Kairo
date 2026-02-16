@@ -1,5 +1,5 @@
 /**
- * ConsistAI — Accessibility Tests
+ * Kairo — Accessibility Tests
  * Validates basic accessibility requirements for the landing page.
  *
  * Tests run against: src/landing/index.html
