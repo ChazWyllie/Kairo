@@ -1,4 +1,4 @@
-name: CI — ConsistAI
+name: CI — Kairo
 
 on:
   push:

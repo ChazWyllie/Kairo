@@ -1,4 +1,4 @@
-# ConsistAI
+# Kairo
 
 > **Your plan adapts. You stay consistent.**
 
@@ -34,7 +34,7 @@ Try these scenarios to understand the product:
 ## Project Structure
 
 ```
-ConsistAI/
+Kairo/
 ├── docs/
 │   ├── architecture.md           # Technical architecture
 │   ├── rfc-template.md           # RFC template

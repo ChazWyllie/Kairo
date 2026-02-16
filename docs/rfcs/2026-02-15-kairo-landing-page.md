@@ -1,4 +1,4 @@
-# RFC: ConsistAI Landing Page & Solution Slide
+# RFC: Kairo Landing Page & Solution Slide
 
 > **RFC ID:** RFC-001
 > **Date:** 2026-02-15
@@ -10,7 +10,7 @@
 
 ## Summary
 
-Build a static landing page for **ConsistAI** that serves as a smoke test for product-market fit. The page includes a hero section, 3-step user flow, 3 phone mockups showing the core UI screens, and a waitlist email capture form. Additionally, produce a solution slide layout for pitch deck use.
+Build a static landing page for **Kairo** that serves as a smoke test for product-market fit. The page includes a hero section, 3-step user flow, 3 phone mockups showing the core UI screens, and a waitlist email capture form. Additionally, produce a solution slide layout for pitch deck use.
 
 ---
 
@@ -58,13 +58,13 @@ A static landing page is the cheapest possible validation artifact.
 ## Solution Slide Content
 
 ### Headline
-**ConsistAI**
+**Kairo**
 
 ### Tagline
 *"Your plan adapts. You stay consistent."*
 
 ### One-liner Value Prop
-> ConsistAI generates a daily workout + nutrition plan from your real constraints — and adapts tomorrow when today doesn't go as planned.
+> Kairo generates a daily workout + nutrition plan from your real constraints — and adapts tomorrow when today doesn't go as planned.
 
 ### 3-Step Flow
 1. **Set your constraints** — Time, equipment, travel, stress level
@@ -75,7 +75,7 @@ A static landing page is the cheapest possible validation artifact.
 ```
 ┌──────────────────────────────────────────────────────┐
 │                                                      │
-│   ConsistAI                                          │
+│   Kairo                                          │
 │   "Your plan adapts. You stay consistent."           │
 │                                                      │
 │   One daily plan. Real constraints.                  │
@@ -89,7 +89,7 @@ A static landing page is the cheapest possible validation artifact.
 │                                                      │
 │   1. Set constraints  →  2. Get plan  →  3. Log     │
 │                                                      │
-│   "Unlike rigid plans, ConsistAI adapts daily —     │
+│   "Unlike rigid plans, Kairo adapts daily —     │
 │    so missing a day makes tomorrow smarter."         │
 │                                                      │
 └──────────────────────────────────────────────────────┘

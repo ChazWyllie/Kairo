@@ -1,5 +1,5 @@
 /**
- * ConsistAI — Minimal Test Runner
+ * Kairo — Minimal Test Runner
  * Runs all test files and reports results.
  * No external test framework — uses Node.js assert.
  */
@@ -19,7 +19,7 @@ let totalFailed = 0;
 let totalErrors = [];
 
 console.log('\n╔══════════════════════════════════════════╗');
-console.log('║     ConsistAI Test Suite                 ║');
+console.log('║     Kairo Test Suite                 ║');
 console.log('╚══════════════════════════════════════════╝\n');
 
 for (const file of testFiles) {

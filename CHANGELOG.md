@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to ConsistAI will be documented in this file.
+All notable changes to Kairo will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
@@ -25,7 +25,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added — Project Infrastructure
 - Technical architecture document (`docs/architecture.md`)
-- RFC for landing page (`docs/rfcs/2026-02-15-consistai-landing-page.md`)
+- RFC for landing page (`docs/rfcs/2026-02-15-kairo-landing-page.md`)
 - RFC template (`docs/rfcs/rfc-template.md`)
 - 6 work packages (`docs/workpackages/WP1–WP6`)
 - Reviewer, security, and DoD checklists (`docs/checklists/`)

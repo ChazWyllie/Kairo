@@ -1,4 +1,4 @@
-# ConsistAI — Technical Architecture Document
+# Kairo — Technical Architecture Document
 
 > **Version:** 1.0.0  
 > **Date:** 2026-02-15  
@@ -9,7 +9,7 @@
 
 ## 1. Executive Summary
 
-**ConsistAI** is a mobile-first fitness app that generates adaptive daily workout and nutrition plans based on a user's real-life constraints (time, equipment, stress, sleep, travel). The core differentiation is **adherence over perfection**: plans auto-adjust when life gets in the way.
+**Kairo** is a mobile-first fitness app that generates adaptive daily workout and nutrition plans based on a user's real-life constraints (time, equipment, stress, sleep, travel). The core differentiation is **adherence over perfection**: plans auto-adjust when life gets in the way.
 
 ### Success Criteria
 | Metric | Target |

@@ -1,4 +1,4 @@
-# RFC: ConsistAI Landing Page MVP
+# RFC: Kairo Landing Page MVP
 
 > **RFC ID:** 2026-02-15-landing-page-mvp  
 > **Date:** 2026-02-15  
@@ -9,7 +9,7 @@
 
 ## 1. Problem Statement
 
-We need to validate market demand for ConsistAI before building the full mobile app. A static landing page with waitlist signup serves as a smoke test. The page must also produce visual assets (phone mockups) usable in a pitch deck solution slide.
+We need to validate market demand for Kairo before building the full mobile app. A static landing page with waitlist signup serves as a smoke test. The page must also produce visual assets (phone mockups) usable in a pitch deck solution slide.
 
 ## 2. Proposal
 

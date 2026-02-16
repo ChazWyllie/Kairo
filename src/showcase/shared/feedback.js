@@ -1,10 +1,10 @@
 /* ======================================================
-   ConsistAI — Feedback & Preference System
+   Kairo — Feedback & Preference System
    Persists user reactions in localStorage and exposes
    a floating widget on each landing-page variant.
    ====================================================== */
 
-const STORAGE_KEY = 'consistai_showcase_feedback';
+const STORAGE_KEY = 'kairo_showcase_feedback';
 
 /** Read all feedback from localStorage */
 function loadFeedback() {
@@ -103,5 +103,5 @@ function mountFeedbackWidget(pageId, pageName) {
 
 // Export for use in pages
 if (typeof window !== 'undefined') {
-  window.ConsistAIFeedback = { mountFeedbackWidget, getPreferences, loadFeedback };
+  window.KairoFeedback = { mountFeedbackWidget, getPreferences, loadFeedback };
 }

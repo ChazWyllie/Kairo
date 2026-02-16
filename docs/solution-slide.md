@@ -1,4 +1,4 @@
-# ConsistAI — Solution Slide Content
+# Kairo — Solution Slide Content
 
 > **For:** Pitch deck / investor presentation
 > **Version:** 1.0
@@ -7,13 +7,13 @@
 ---
 
 ## Headline
-**ConsistAI**
+**Kairo**
 
 ## Tagline
 > *"Your plan adapts. You stay consistent."*
 
 ## One-liner Value Prop
-> ConsistAI generates a daily workout + nutrition plan from your real constraints — and adapts tomorrow when today doesn't go as planned.
+> Kairo generates a daily workout + nutrition plan from your real constraints — and adapts tomorrow when today doesn't go as planned.
 
 ---
 
@@ -32,7 +32,7 @@
 ### Screen 1: TODAY PLAN
 ```
 ┌─────────────────────────────┐
-│ ConsistAI       [✈ Travel]  │
+│ Kairo       [✈ Travel]  │
 │                             │
 │ Today • Feb 15              │
 │                             │
@@ -113,7 +113,7 @@
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │                                                              │
-│                        ConsistAI                             │
+│                        Kairo                             │
 │          "Your plan adapts. You stay consistent."            │
 │                                                              │
 │   One daily plan from your real constraints.                 │
@@ -137,7 +137,7 @@
 │                                                              │
 │   ─────────────────────────────────────────────────────────   │
 │                                                              │
-│   "Unlike rigid 12-week plans, ConsistAI adapts daily —     │
+│   "Unlike rigid 12-week plans, Kairo adapts daily —     │
 │    so missing a day makes tomorrow smarter, not harder."     │
 │                                                              │
 └──────────────────────────────────────────────────────────────┘
@@ -154,7 +154,7 @@
 ---
 
 ## Competitor Contrast (use on slide or in notes)
-> *"Unlike rigid 12-week programs that break when you miss a day, ConsistAI adapts your plan daily — because consistency beats perfection."*
+> *"Unlike rigid 12-week programs that break when you miss a day, Kairo adapts your plan daily — because consistency beats perfection."*
 
 ---
 

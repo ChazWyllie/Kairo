@@ -1,5 +1,5 @@
 /**
- * ConsistAI — HTML Structure Tests
+ * Kairo — HTML Structure Tests
  * Validates that index.html contains all required sections and elements.
  *
  * Tests run against: src/landing/index.html
@@ -53,9 +53,9 @@ const html = fs.readFileSync(HTML_PATH, 'utf-8');
 const $ = cheerio.load(html);
 
 // ─── Meta & Head ─────────────────────────────────────────────
-test('T1: Has <title> with "ConsistAI"', () => {
+test('T1: Has <title> with "Kairo"', () => {
   const title = $('title').text();
-  assert(title.includes('ConsistAI'), `Title is "${title}", expected to contain "ConsistAI"`);
+  assert(title.includes('Kairo'), `Title is "${title}", expected to contain "Kairo"`);
 });
 
 test('T2: Has meta viewport tag', () => {
@@ -74,9 +74,9 @@ test('T4: Has hero section', () => {
   assert(hero.length > 0, 'No hero section found (need .hero or #hero)');
 });
 
-test('T5: Hero contains product name "ConsistAI"', () => {
+test('T5: Hero contains product name "Kairo"', () => {
   const bodyText = $('body').text();
-  assert(bodyText.includes('ConsistAI'), 'Product name "ConsistAI" not found');
+  assert(bodyText.includes('Kairo'), 'Product name "Kairo" not found');
 });
 
 test('T6: Hero contains tagline about adapting', () => {

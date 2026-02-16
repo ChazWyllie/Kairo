@@ -1,4 +1,4 @@
-# ConsistAI — Solution Slide Content Package
+# Kairo — Solution Slide Content Package
 
 > **Purpose:** All copy, layout, and screen content needed to build a pitch deck solution slide.  
 > **Date:** 2026-02-15  
@@ -9,7 +9,7 @@
 ## 1. Headline & Copy
 
 ### Product Name
-**ConsistAI**
+**Kairo**
 
 ### Tagline
 **Fitness that adapts when life happens.**
@@ -25,7 +25,7 @@
 ┌──────────────────────────────────────────────────────────────────┐
 │                                                                  │
 │   [TOP LEFT]                          [TOP RIGHT]                │
-│   ConsistAI logo + name               "Solution" label           │
+│   Kairo logo + name               "Solution" label           │
 │                                                                  │
 │   [LEFT 40%]                          [RIGHT 60%]                │
 │   ┌─────────────────────┐             ┌────────────────────────┐ │
@@ -71,7 +71,7 @@
 ### Screen 1: TODAY
 
 ```
-Header:     ConsistAI          [Travel] pill
+Header:     Kairo          [Travel] pill
 Title:      Today • Feb 15
 
 ── Workout Options ──
@@ -157,7 +157,7 @@ Text:       Upper body focus · Full gym · Protein: 165g
 
 ## 5. Competitor Contrast (One-Liner)
 
-> "Unlike rigid 12-week programs that break when you miss a day, ConsistAI adapts your plan daily — because consistency beats perfection."
+> "Unlike rigid 12-week programs that break when you miss a day, Kairo adapts your plan daily — because consistency beats perfection."
 
 ---
 

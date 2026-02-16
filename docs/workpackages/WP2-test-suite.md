@@ -30,10 +30,10 @@ Write all tests for the landing page BEFORE implementation. Tests validate HTML 
 | # | Test Case | Expectation |
 |---|-----------|-------------|
 | T1 | index.html exists | File at `src/landing/index.html` |
-| T2 | Has `<title>` with "ConsistAI" | Title contains product name |
+| T2 | Has `<title>` with "Kairo" | Title contains product name |
 | T3 | Has meta viewport tag | Responsive meta tag present |
 | T4 | Has hero section | Element with class/id `hero` exists |
-| T5 | Hero contains product name | Text "ConsistAI" in hero |
+| T5 | Hero contains product name | Text "Kairo" in hero |
 | T6 | Hero contains tagline | Text "Your plan adapts" in hero |
 | T7 | Has 3-step flow section | Section with 3 step items |
 | T8 | Step 1 text correct | Contains "Set" and "constraints" |
