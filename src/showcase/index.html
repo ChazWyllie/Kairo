@@ -36,9 +36,9 @@
 
       <!-- Cards grid -->
       <section class="sc-grid" id="sc-grid">
-        <!-- Card 1 — Original -->
-        <a href="pages/v1-original.html" class="sc-card" data-page="v1-original">
-          <div class="sc-card-preview sc-preview-v1">
+        <!-- Card 1 — Crimson -->
+        <a href="pages/v1-crimson.html" class="sc-card" data-page="v1-crimson">
+          <div class="sc-card-preview sc-preview-red sc-preview-crimson">
             <div class="sc-preview-nav">
               <div class="sc-preview-dot"></div>
               <div class="sc-preview-bar"></div>
@@ -60,60 +60,73 @@
             </div>
           </div>
           <div class="sc-card-body">
-            <div class="sc-card-tag">V1</div>
-            <h2 class="sc-card-title">Original</h2>
-            <p class="sc-card-desc">Hero headline, 3-step flow, phone mockups, and waitlist form. The proven classic.</p>
+            <div class="sc-card-tag sc-tag-crimson">V1</div>
+            <h2 class="sc-card-title">Crimson</h2>
+            <p class="sc-card-desc">Bold crimson red accent. Hero headline, 3-step flow, phone mockups, and waitlist form.</p>
           </div>
-          <div class="sc-card-score" id="score-v1-original"></div>
+          <div class="sc-card-score" id="score-v1-crimson"></div>
         </a>
 
-        <!-- Card 2 — Bento Grid -->
-        <a href="pages/v2-bento.html" class="sc-card" data-page="v2-bento">
-          <div class="sc-card-preview sc-preview-v2">
+        <!-- Card 2 — Rose -->
+        <a href="pages/v2-rose.html" class="sc-card" data-page="v2-rose">
+          <div class="sc-card-preview sc-preview-red sc-preview-rose">
             <div class="sc-preview-nav">
               <div class="sc-preview-dot"></div>
               <div class="sc-preview-bar"></div>
             </div>
-            <div class="sc-bento-grid">
-              <div class="sc-bento-cell big"></div>
-              <div class="sc-bento-cell"></div>
-              <div class="sc-bento-cell"></div>
-              <div class="sc-bento-cell wide"></div>
-              <div class="sc-bento-cell"></div>
-              <div class="sc-bento-cell"></div>
-            </div>
-          </div>
-          <div class="sc-card-body">
-            <div class="sc-card-tag">V2</div>
-            <h2 class="sc-card-title">Bento Grid</h2>
-            <p class="sc-card-desc">Modern asymmetric tile layout. Feature-forward, visually striking at every breakpoint.</p>
-          </div>
-          <div class="sc-card-score" id="score-v2-bento"></div>
-        </a>
-
-        <!-- Card 3 — Immersive Editorial -->
-        <a href="pages/v3-editorial.html" class="sc-card" data-page="v3-editorial">
-          <div class="sc-card-preview sc-preview-v3">
-            <div class="sc-preview-nav">
-              <div class="sc-preview-dot"></div>
-              <div class="sc-preview-bar"></div>
-            </div>
-            <div class="sc-editorial-preview">
-              <div class="sc-edit-block full"></div>
-              <div class="sc-edit-row">
-                <div class="sc-edit-block half"></div>
-                <div class="sc-edit-block half"></div>
+            <div class="sc-preview-hero">
+              <div class="sc-preview-badge"></div>
+              <div class="sc-preview-heading"></div>
+              <div class="sc-preview-heading short"></div>
+              <div class="sc-preview-text"></div>
+              <div class="sc-preview-cta-row">
+                <div class="sc-preview-cta"></div>
+                <div class="sc-preview-cta outline"></div>
               </div>
-              <div class="sc-edit-block full short"></div>
-              <div class="sc-edit-block full"></div>
+            </div>
+            <div class="sc-preview-phones">
+              <div class="sc-mini-phone"></div>
+              <div class="sc-mini-phone tall"></div>
+              <div class="sc-mini-phone"></div>
             </div>
           </div>
           <div class="sc-card-body">
-            <div class="sc-card-tag">V3</div>
-            <h2 class="sc-card-title">Immersive Editorial</h2>
-            <p class="sc-card-desc">Full-bleed sections, bold typography, story-driven scroll. Narrative-first design.</p>
+            <div class="sc-card-tag sc-tag-rose">V2</div>
+            <h2 class="sc-card-title">Rose</h2>
+            <p class="sc-card-desc">Warm rose-red accent. Same proven layout with a softer, vibrant red energy.</p>
           </div>
-          <div class="sc-card-score" id="score-v3-editorial"></div>
+          <div class="sc-card-score" id="score-v2-rose"></div>
+        </a>
+
+        <!-- Card 3 — Scarlet -->
+        <a href="pages/v3-scarlet.html" class="sc-card" data-page="v3-scarlet">
+          <div class="sc-card-preview sc-preview-red sc-preview-scarlet">
+            <div class="sc-preview-nav">
+              <div class="sc-preview-dot"></div>
+              <div class="sc-preview-bar"></div>
+            </div>
+            <div class="sc-preview-hero">
+              <div class="sc-preview-badge"></div>
+              <div class="sc-preview-heading"></div>
+              <div class="sc-preview-heading short"></div>
+              <div class="sc-preview-text"></div>
+              <div class="sc-preview-cta-row">
+                <div class="sc-preview-cta"></div>
+                <div class="sc-preview-cta outline"></div>
+              </div>
+            </div>
+            <div class="sc-preview-phones">
+              <div class="sc-mini-phone"></div>
+              <div class="sc-mini-phone tall"></div>
+              <div class="sc-mini-phone"></div>
+            </div>
+          </div>
+          <div class="sc-card-body">
+            <div class="sc-card-tag sc-tag-scarlet">V3</div>
+            <h2 class="sc-card-title">Scarlet</h2>
+            <p class="sc-card-desc">Deep scarlet red accent. Classic and intense — the original design with fiery energy.</p>
+          </div>
+          <div class="sc-card-score" id="score-v3-scarlet"></div>
         </a>
       </section>
 
@@ -150,7 +163,7 @@
     // Show preference summary if any feedback exists
     (function () {
       const prefs = ConsistAIFeedback.getPreferences();
-      const names = { 'v1-original': 'Original', 'v2-bento': 'Bento Grid', 'v3-editorial': 'Editorial' };
+      const names = { 'v1-crimson': 'Crimson', 'v2-rose': 'Rose', 'v3-scarlet': 'Scarlet' };
       let best = null, bestNet = -Infinity;
 
       for (const [id, s] of Object.entries(prefs)) {
