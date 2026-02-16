@@ -11,10 +11,10 @@
   --bg-card:       #1a1a28;
   --bg-phone:      #14141f;
 
-  --accent:        #e74c3c;
-  --accent-light:  #ff6b6b;
-  --accent-glow:   rgba(231, 76, 60, 0.10);
-  --accent-gradient: linear-gradient(135deg, #e74c3c, #ff6b6b);
+  --accent:        #d63031;
+  --accent-light:  #ff7675;
+  --accent-glow:   rgba(214, 48, 49, 0.10);
+  --accent-gradient: linear-gradient(135deg, #d63031, #ff7675);
 
   --text-primary:   #f0f0f5;
   --text-secondary: #9090a8;
@@ -63,7 +63,7 @@
   --shadow-sm:   0 1px 3px rgba(0,0,0,0.3);
   --shadow-md:   0 4px 12px rgba(0,0,0,0.4);
   --shadow-lg:   0 8px 30px rgba(0,0,0,0.5);
-  --shadow-glow: 0 4px 20px rgba(231, 76, 60, 0.3);
+  --shadow-glow: 0 4px 20px rgba(214, 48, 49, 0.3);
 }
 
 /* ---- Global Resets ---- */
