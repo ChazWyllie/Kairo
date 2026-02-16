@@ -157,19 +157,9 @@
   border-radius: 3px;
 }
 
-/* V1 preview wireframe */
-.sc-preview-hero {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-}
-.sc-preview-badge {
-  width: 60px;
-  height: 8px;
-  background: var(--border);
-  border-radius: 4px;
-}
+/* ─── Variant preview wireframe thumbnails ─── */
+
+/* Shared wireframe elements */
 .sc-preview-heading {
   width: 80%;
   height: 10px;
@@ -178,6 +168,7 @@
   opacity: 0.3;
 }
 .sc-preview-heading.short { width: 55%; }
+.sc-preview-heading.wide { width: 90%; }
 .sc-preview-text {
   width: 65%;
   height: 6px;
@@ -194,49 +185,144 @@
   width: 44px;
   height: 14px;
   border-radius: 7px;
+  background: var(--accent-gradient);
 }
 .sc-preview-cta.outline {
   background: transparent;
   border: 1px solid var(--border);
 }
-.sc-preview-phones {
+.sc-preview-bar.short { width: 30px; }
+
+/* ─── V1 Momentum — Split hero + stat grid ─── */
+.sc-preview-momentum {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   gap: 8px;
-  margin-top: 14px;
 }
-.sc-mini-phone {
-  width: 32px;
-  height: 54px;
+.sc-preview-split {
+  display: flex;
+  gap: 10px;
+  flex: 1;
+}
+.sc-preview-split-left {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.sc-preview-stat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+  flex: 0 0 45%;
+}
+.sc-preview-stat {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  height: 32px;
+}
+.sc-preview-stat:first-child,
+.sc-preview-stat:last-child {
+  border-color: rgba(214, 48, 49, 0.3);
+}
+.sc-tag-momentum {
+  background: rgba(214, 48, 49, 0.15);
+  border-color: rgba(214, 48, 49, 0.3);
+  color: #ff7675;
+}
+
+/* ─── V2 Nightfall — Cinematic + alternating ─── */
+.sc-preview-nightfall {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.sc-preview-cinematic {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding-top: 4px;
+}
+.sc-preview-eyebrow {
+  width: 50px;
+  height: 5px;
+  background: var(--accent-light);
+  opacity: 0.4;
+  border-radius: 3px;
+}
+.sc-preview-divider-line {
+  width: 30px;
+  height: 2px;
+  background: var(--accent-gradient);
+  border-radius: 1px;
+  margin: 2px 0;
+}
+.sc-preview-alternating {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.sc-preview-alt-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sc-preview-alt-icon {
+  width: 24px;
+  height: 24px;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 6px;
+  flex-shrink: 0;
 }
-.sc-mini-phone.tall { height: 62px; }
-
-/* ─── Red variant preview colours ─── */
-/* Crimson */
-.sc-preview-crimson .sc-preview-dot { background: linear-gradient(135deg, #e74c3c, #ff6b6b); }
-.sc-preview-crimson .sc-preview-cta:not(.outline) { background: linear-gradient(135deg, #e74c3c, #ff6b6b); }
-.sc-tag-crimson {
-  background: rgba(231, 76, 60, 0.15);
-  border-color: rgba(231, 76, 60, 0.3);
-  color: #ff6b6b;
+.sc-preview-alt-lines {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
 }
-
-/* Rose */
-.sc-preview-rose .sc-preview-dot { background: linear-gradient(135deg, #e84393, #fd79a8); }
-.sc-preview-rose .sc-preview-cta:not(.outline) { background: linear-gradient(135deg, #e84393, #fd79a8); }
-.sc-tag-rose {
-  background: rgba(232, 67, 147, 0.15);
-  border-color: rgba(232, 67, 147, 0.3);
-  color: #fd79a8;
+.sc-tag-nightfall {
+  background: rgba(214, 48, 49, 0.15);
+  border-color: rgba(214, 48, 49, 0.3);
+  color: #ff7675;
 }
 
-/* Scarlet */
-.sc-preview-scarlet .sc-preview-dot { background: linear-gradient(135deg, #d63031, #ff7675); }
-.sc-preview-scarlet .sc-preview-cta:not(.outline) { background: linear-gradient(135deg, #d63031, #ff7675); }
-.sc-tag-scarlet {
+/* ─── V3 Pulse — Centered + horizontal strip ─── */
+.sc-preview-pulse {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.sc-preview-centered {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+.sc-preview-pill {
+  width: 45px;
+  height: 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+}
+.sc-preview-hstrip {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+}
+.sc-preview-hstrip-card {
+  width: 48px;
+  height: 38px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+}
+.sc-tag-pulse {
   background: rgba(214, 48, 49, 0.15);
   border-color: rgba(214, 48, 49, 0.3);
   color: #ff7675;
