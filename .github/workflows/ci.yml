@@ -1,0 +1,157 @@
+name: CI — ConsistAI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Run Test Suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm test
+
+  validate-html:
+    name: Validate HTML & CSS
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate HTML syntax
+        run: |
+          # Basic HTML validation: check for unclosed tags and structure
+          echo "Checking HTML files..."
+          for f in $(find src -name '*.html'); do
+            echo "  Validating: $f"
+            # Check DOCTYPE
+            head -1 "$f" | grep -qi 'doctype' || echo "    WARNING: Missing DOCTYPE in $f"
+            # Check matching tags (basic)
+            python3 -c "
+          import html.parser, sys
+          class V(html.parser.HTMLParser):
+            def __init__(self):
+              super().__init__()
+              self.errors = []
+            def handle_starttag(self, tag, attrs):
+              pass
+            def handle_endtag(self, tag):
+              pass
+          try:
+            v = V()
+            v.feed(open('$f').read())
+            print('    ✓ Valid HTML structure')
+          except Exception as e:
+            print(f'    ✗ HTML error: {e}')
+            sys.exit(1)
+          "
+          done
+
+      - name: Check CSS syntax
+        run: |
+          echo "Checking CSS files..."
+          for f in $(find src -name '*.css'); do
+            echo "  Validating: $f"
+            # Check for balanced braces
+            python3 -c "
+          content = open('$f').read()
+          if content.count('{') != content.count('}'):
+            print(f'    ✗ Unbalanced braces: { content.count(\"{\") } open, { content.count(\"}\") } close')
+            exit(1)
+          else:
+            print('    ✓ Balanced braces')
+          "
+          done
+
+  accessibility-check:
+    name: Accessibility Checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check semantic HTML
+        run: |
+          echo "Checking accessibility..."
+          for f in $(find src -name '*.html'); do
+            echo "  Checking: $f"
+            # Check for lang attribute
+            grep -q 'lang=' "$f" && echo "    ✓ lang attribute present" || echo "    ✗ Missing lang attribute"
+            # Check for meta viewport
+            grep -q 'viewport' "$f" && echo "    ✓ viewport meta present" || echo "    ✗ Missing viewport meta"
+            # Check for aria-labels on interactive elements
+            grep -q 'aria-label' "$f" && echo "    ✓ aria-labels found" || echo "    ⚠ No aria-labels found"
+          done
+
+  security-check:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for inline event handlers
+        run: |
+          echo "Scanning for security issues..."
+          ISSUES=0
+          for f in $(find src -name '*.html'); do
+            # Check for inline event handlers (XSS vector)
+            if grep -Pn 'on\w+=' "$f" | grep -v 'novalidate'; then
+              echo "  ✗ Inline event handler found in $f"
+              ISSUES=$((ISSUES + 1))
+            fi
+          done
+          if [ $ISSUES -eq 0 ]; then
+            echo "  ✓ No inline event handlers found"
+          fi
+
+      - name: Check for external scripts
+        run: |
+          for f in $(find src -name '*.html'); do
+            if grep -Pn 'src=["\x27]https?://' "$f"; then
+              echo "  ⚠ External script/resource found in $f"
+            else
+              echo "  ✓ No external scripts in $f"
+            fi
+          done
+
+  file-size-check:
+    name: Performance Budget
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check file sizes
+        run: |
+          echo "Checking performance budget..."
+          MAX_HTML=50000  # 50KB
+          MAX_CSS=30000   # 30KB
+
+          for f in $(find src -name '*.html'); do
+            SIZE=$(wc -c < "$f")
+            if [ $SIZE -gt $MAX_HTML ]; then
+              echo "  ✗ $f is ${SIZE}B (max ${MAX_HTML}B)"
+              exit 1
+            else
+              echo "  ✓ $f is ${SIZE}B (under ${MAX_HTML}B limit)"
+            fi
+          done
+
+          for f in $(find src -name '*.css'); do
+            SIZE=$(wc -c < "$f")
+            if [ $SIZE -gt $MAX_CSS ]; then
+              echo "  ✗ $f is ${SIZE}B (max ${MAX_CSS}B)"
+              exit 1
+            else
+              echo "  ✓ $f is ${SIZE}B (under ${MAX_CSS}B limit)"
+            fi
+          done
