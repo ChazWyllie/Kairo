@@ -1,0 +1,19 @@
+{
+  "name": "consistai",
+  "version": "0.1.0",
+  "description": "ConsistAI — Adaptive fitness planning for busy people",
+  "private": true,
+  "scripts": {
+    "test": "node tests/run-all.js",
+    "test:html": "node tests/test-html-structure.js",
+    "test:content": "node tests/test-content-quality.js",
+    "test:a11y": "node tests/test-accessibility.js",
+    "test:css": "node tests/test-styles.js"
+  },
+  "devDependencies": {
+    "cheerio": "1.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
