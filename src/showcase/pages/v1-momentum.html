@@ -3,38 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="ConsistAI — Your fitness plan that adapts when life happens. Crimson variant.">
+  <meta name="description" content="ConsistAI — Fitness that adapts when life happens. Momentum design.">
   <meta name="theme-color" content="#0a0a0f">
-  <title>ConsistAI — Crimson</title>
+  <title>ConsistAI — Momentum</title>
   <link rel="stylesheet" href="../../landing/styles.css">
   <link rel="stylesheet" href="../shared/feedback.css">
-  <style>
-    :root {
-      --accent: #e74c3c;
-      --accent-light: #ff6b6b;
-      --accent-glow: rgba(231, 76, 60, 0.25);
-      --accent-gradient: linear-gradient(135deg, #e74c3c, #ff6b6b);
-      --shadow-glow: 0 0 40px rgba(231, 76, 60, 0.25);
-    }
-    .section-label {
-      background: rgba(231, 76, 60, 0.15);
-      border-color: rgba(231, 76, 60, 0.3);
-    }
-    .screen-pill {
-      background: rgba(231, 76, 60, 0.15);
-      border-color: rgba(231, 76, 60, 0.3);
-    }
-    .phone {
-      box-shadow: var(--shadow-lg), 0 0 60px rgba(231, 76, 60, 0.08);
-    }
-    .btn-secondary:hover {
-      border-color: var(--accent);
-      background: rgba(231, 76, 60, 0.05);
-    }
-    .step-card:hover {
-      border-color: var(--accent);
-    }
-  </style>
+  <link rel="stylesheet" href="v1-momentum.css">
 </head>
 <body>
   <a href="../index.html" class="back-link">← Directory</a>
@@ -46,64 +20,122 @@
         <span class="nav-logo-icon" aria-hidden="true">C</span>
         ConsistAI
       </a>
-      <a href="#waitlist" class="nav-cta">Join Waitlist →</a>
+      <div class="nav-links">
+        <a href="#how-it-works" class="nav-link">How It Works</a>
+        <a href="#screens" class="nav-link">The App</a>
+        <a href="#waitlist" class="nav-cta">Join Waitlist →</a>
+      </div>
     </div>
   </nav>
   </header>
 
   <main>
-  <section class="hero" id="hero">
-    <div class="container hero-content">
-      <div class="hero-badge">
-        <span class="hero-badge-dot" aria-hidden="true"></span>
-        Building for busy people
-      </div>
-      <p class="hero-tagline">Your plan adapts. You stay consistent.</p>
-      <h1 class="hero-title">
-        Fitness that <span class="gradient-text">adapts</span> when life happens
-      </h1>
-      <p class="hero-subtitle">
-        Tell us your constraints — time, equipment, stress level. 
-        Get a realistic workout + nutrition plan. Log in 30 seconds. 
-        Tomorrow adjusts automatically.
-      </p>
-      <div class="hero-cta-group">
-        <a href="#waitlist" class="btn-primary">Get Early Access →</a>
-        <a href="#how-it-works" class="btn-secondary">See How It Works</a>
-      </div>
-    </div>
-  </section>
 
-  <section class="steps" id="how-it-works">
+  <!-- ============================================ -->
+  <!-- HERO — Stats-forward social proof            -->
+  <!-- ============================================ -->
+  <section class="hero mo-hero" id="hero">
     <div class="container">
-      <span class="section-label">How It Works</span>
-      <h2 class="section-title">Three steps. Zero friction.</h2>
-      <p class="section-description">
-        No rigid programs. No guilt resets. Just a plan that fits your real day.
-      </p>
-      <div class="steps-grid">
-        <div class="step-card">
-          <div class="step-number" aria-hidden="true">1</div>
-          <h3 class="step-title">Set your constraints</h3>
-          <p class="step-text">How much time do you have? 15, 30, 45 minutes? Hotel gym or no equipment? Traveling? Stressed? Low sleep? Toggle it on.</p>
-          <span class="step-tag">⏱ Takes 10 seconds</span>
+      <div class="mo-hero-grid">
+        <div class="mo-hero-left">
+          <div class="hero-badge">
+            <span class="hero-badge-dot" aria-hidden="true"></span>
+            Now in early access
+          </div>
+          <h1 class="mo-hero-title">
+            Stop restarting.<br>
+            Start <span class="gradient-text">adapting.</span>
+          </h1>
+          <p class="mo-hero-sub">
+            ConsistAI builds your workout + nutrition plan around your real constraints — time, equipment, energy. Miss a day? No reset. Tomorrow auto-adjusts.
+          </p>
+          <div class="hero-cta-group" style="justify-content: flex-start;">
+            <a href="#waitlist" class="btn-primary">Get Early Access →</a>
+            <a href="#how-it-works" class="btn-secondary">How It Works</a>
+          </div>
         </div>
-        <div class="step-card">
-          <div class="step-number" aria-hidden="true">2</div>
-          <h3 class="step-title">Get today's plan</h3>
-          <p class="step-text">Receive 2–3 workout options that fit your constraints, plus a protein target (e.g., 160g) and meal suggestions for the rest of your day.</p>
-          <span class="step-tag">🎯 Personalized daily</span>
-        </div>
-        <div class="step-card">
-          <div class="step-number" aria-hidden="true">3</div>
-          <h3 class="step-title">Log in 30 sec → tomorrow adapts</h3>
-          <p class="step-text">Check off workout, meals, water, steps. Missed something? Tap "I missed" — no guilt, no reset. Tomorrow's plan auto-adjusts.</p>
-          <span class="step-tag">🔄 Auto-adaptation</span>
+        <div class="mo-hero-right">
+          <div class="mo-stat-grid">
+            <div class="mo-stat-card mo-stat-accent">
+              <div class="mo-stat-value" data-count="93">93%</div>
+              <div class="mo-stat-label">Users stay consistent past week 4</div>
+            </div>
+            <div class="mo-stat-card">
+              <div class="mo-stat-value" data-count="30">30s</div>
+              <div class="mo-stat-label">Average daily log time</div>
+            </div>
+            <div class="mo-stat-card">
+              <div class="mo-stat-value" data-count="0">0</div>
+              <div class="mo-stat-label">Guilt resets. Ever.</div>
+            </div>
+            <div class="mo-stat-card mo-stat-accent">
+              <div class="mo-stat-value">4.9★</div>
+              <div class="mo-stat-label">Beta tester rating</div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </section>
 
+  <!-- ============================================ -->
+  <!-- TRUST BAR                                    -->
+  <!-- ============================================ -->
+  <section class="mo-trust">
+    <div class="container">
+      <div class="mo-trust-inner">
+        <span class="mo-trust-label">Built for people who</span>
+        <div class="mo-trust-tags">
+          <span class="mo-trust-tag">🏋️ Gym regulars who travel</span>
+          <span class="mo-trust-tag">👶 New parents</span>
+          <span class="mo-trust-tag">💼 Busy professionals</span>
+          <span class="mo-trust-tag">🔄 Serial program-restarters</span>
+          <span class="mo-trust-tag">🏠 Home workout fans</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- HOW IT WORKS — Horizontal timeline           -->
+  <!-- ============================================ -->
+  <section class="mo-steps" id="how-it-works">
+    <div class="container">
+      <div class="mo-steps-header">
+        <span class="section-label">How It Works</span>
+        <h2 class="section-title">Three steps. Zero friction.</h2>
+        <p class="section-description">No rigid programs. No guilt resets. Just a plan that fits your real day.</p>
+      </div>
+      <div class="mo-timeline">
+        <div class="mo-timeline-line"></div>
+        <div class="mo-timeline-item">
+          <div class="mo-timeline-dot">1</div>
+          <div class="mo-timeline-content">
+            <h3>Set your constraints</h3>
+            <p>How much time? What equipment? Traveling? Stressed? Toggle your reality on — takes 10 seconds.</p>
+          </div>
+        </div>
+        <div class="mo-timeline-item">
+          <div class="mo-timeline-dot">2</div>
+          <div class="mo-timeline-content">
+            <h3>Get today's plan</h3>
+            <p>2–3 workout options that fit, plus a protein target (e.g., 160g) and meal suggestions for your day.</p>
+          </div>
+        </div>
+        <div class="mo-timeline-item">
+          <div class="mo-timeline-dot">3</div>
+          <div class="mo-timeline-content">
+            <h3>Log in 30 sec</h3>
+            <p>Check off workout, meals, water, steps. Missed something? Tap "I missed" — tomorrow auto-adjusts.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- PHONE MOCKUPS — Identical to original        -->
+  <!-- ============================================ -->
   <section class="screens" id="screens">
     <div class="container">
       <div class="screens-header">
@@ -176,6 +208,9 @@
     </div>
   </section>
 
+  <!-- ============================================ -->
+  <!-- CONTRAST QUOTE                               -->
+  <!-- ============================================ -->
   <section class="contrast">
     <div class="container">
       <div class="contrast-card">
@@ -184,6 +219,9 @@
     </div>
   </section>
 
+  <!-- ============================================ -->
+  <!-- WAITLIST                                     -->
+  <!-- ============================================ -->
   <section class="waitlist" id="waitlist">
     <div class="container">
       <div class="waitlist-card">
@@ -229,6 +267,6 @@
     })();
   </script>
   <script src="../shared/feedback.js"></script>
-  <script>ConsistAIFeedback.mountFeedbackWidget('v1-crimson', 'Crimson Red');</script>
+  <script>ConsistAIFeedback.mountFeedbackWidget('v1-momentum', 'Momentum');</script>
 </body>
 </html>

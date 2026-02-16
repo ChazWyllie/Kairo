@@ -3,38 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="ConsistAI — Your fitness plan that adapts when life happens. Rose variant.">
+  <meta name="description" content="ConsistAI — Fitness that adapts when life happens. Nightfall design.">
   <meta name="theme-color" content="#0a0a0f">
-  <title>ConsistAI — Rose</title>
+  <title>ConsistAI — Nightfall</title>
   <link rel="stylesheet" href="../../landing/styles.css">
   <link rel="stylesheet" href="../shared/feedback.css">
-  <style>
-    :root {
-      --accent: #e84393;
-      --accent-light: #fd79a8;
-      --accent-glow: rgba(232, 67, 147, 0.25);
-      --accent-gradient: linear-gradient(135deg, #e84393, #fd79a8);
-      --shadow-glow: 0 0 40px rgba(232, 67, 147, 0.25);
-    }
-    .section-label {
-      background: rgba(232, 67, 147, 0.15);
-      border-color: rgba(232, 67, 147, 0.3);
-    }
-    .screen-pill {
-      background: rgba(232, 67, 147, 0.15);
-      border-color: rgba(232, 67, 147, 0.3);
-    }
-    .phone {
-      box-shadow: var(--shadow-lg), 0 0 60px rgba(232, 67, 147, 0.08);
-    }
-    .btn-secondary:hover {
-      border-color: var(--accent);
-      background: rgba(232, 67, 147, 0.05);
-    }
-    .step-card:hover {
-      border-color: var(--accent);
-    }
-  </style>
+  <link rel="stylesheet" href="v2-nightfall.css">
 </head>
 <body>
   <a href="../index.html" class="back-link">← Directory</a>
@@ -52,58 +26,84 @@
   </header>
 
   <main>
-  <section class="hero" id="hero">
-    <div class="container hero-content">
-      <div class="hero-badge">
-        <span class="hero-badge-dot" aria-hidden="true"></span>
-        Building for busy people
-      </div>
-      <p class="hero-tagline">Your plan adapts. You stay consistent.</p>
-      <h1 class="hero-title">
-        Fitness that <span class="gradient-text">adapts</span> when life happens
+
+  <!-- ============================================ -->
+  <!-- HERO — Cinematic full-bleed statement        -->
+  <!-- ============================================ -->
+  <section class="nf-hero" id="hero">
+    <div class="nf-hero-bg"></div>
+    <div class="container nf-hero-content">
+      <p class="nf-hero-eyebrow">Adaptive Fitness Intelligence</p>
+      <h1 class="nf-hero-title">
+        Life is <span class="gradient-text">unpredictable.</span><br>
+        Your fitness shouldn't be.
       </h1>
-      <p class="hero-subtitle">
-        Tell us your constraints — time, equipment, stress level. 
-        Get a realistic workout + nutrition plan. Log in 30 seconds. 
-        Tomorrow adjusts automatically.
+      <div class="nf-hero-divider"></div>
+      <p class="nf-hero-sub">
+        ConsistAI learns your constraints — time, equipment, energy, stress — and builds a daily plan that actually works. Miss a day? We don't reset. We recalibrate.
       </p>
-      <div class="hero-cta-group">
-        <a href="#waitlist" class="btn-primary">Get Early Access →</a>
-        <a href="#how-it-works" class="btn-secondary">See How It Works</a>
-      </div>
+      <a href="#waitlist" class="btn-primary nf-hero-cta">Join the Waitlist →</a>
     </div>
   </section>
 
-  <section class="steps" id="how-it-works">
+  <!-- ============================================ -->
+  <!-- FEATURES — Alternating left/right editorial  -->
+  <!-- ============================================ -->
+  <section class="nf-features" id="how-it-works">
     <div class="container">
-      <span class="section-label">How It Works</span>
-      <h2 class="section-title">Three steps. Zero friction.</h2>
-      <p class="section-description">
-        No rigid programs. No guilt resets. Just a plan that fits your real day.
-      </p>
-      <div class="steps-grid">
-        <div class="step-card">
-          <div class="step-number" aria-hidden="true">1</div>
-          <h3 class="step-title">Set your constraints</h3>
-          <p class="step-text">How much time do you have? 15, 30, 45 minutes? Hotel gym or no equipment? Traveling? Stressed? Low sleep? Toggle it on.</p>
-          <span class="step-tag">⏱ Takes 10 seconds</span>
+      <div class="nf-feature nf-feature--left">
+        <div class="nf-feature-visual">
+          <div class="nf-feature-icon-wrap">
+            <div class="nf-feature-icon">⏱</div>
+          </div>
+          <div class="nf-feature-number">01</div>
         </div>
-        <div class="step-card">
-          <div class="step-number" aria-hidden="true">2</div>
-          <h3 class="step-title">Get today's plan</h3>
-          <p class="step-text">Receive 2–3 workout options that fit your constraints, plus a protein target (e.g., 160g) and meal suggestions for the rest of your day.</p>
-          <span class="step-tag">🎯 Personalized daily</span>
+        <div class="nf-feature-text">
+          <span class="section-label">Step One</span>
+          <h2 class="nf-feature-title">Tell us your reality</h2>
+          <p class="nf-feature-desc">
+            15 minutes or 60? Hotel room or full gym? High stress or low sleep? Toggle your constraints — it takes 10 seconds. We build around what's real, not what's ideal.
+          </p>
         </div>
-        <div class="step-card">
-          <div class="step-number" aria-hidden="true">3</div>
-          <h3 class="step-title">Log in 30 sec → tomorrow adapts</h3>
-          <p class="step-text">Check off workout, meals, water, steps. Missed something? Tap "I missed" — no guilt, no reset. Tomorrow's plan auto-adjusts.</p>
-          <span class="step-tag">🔄 Auto-adaptation</span>
+      </div>
+
+      <div class="nf-feature nf-feature--right">
+        <div class="nf-feature-text">
+          <span class="section-label">Step Two</span>
+          <h2 class="nf-feature-title">Get a plan that fits today</h2>
+          <p class="nf-feature-desc">
+            Receive 2–3 workout options matched to your constraints, plus a protein target (e.g., 160g) and meal suggestions. Every day is personalized. Every day is different.
+          </p>
+        </div>
+        <div class="nf-feature-visual">
+          <div class="nf-feature-icon-wrap">
+            <div class="nf-feature-icon">🎯</div>
+          </div>
+          <div class="nf-feature-number">02</div>
+        </div>
+      </div>
+
+      <div class="nf-feature nf-feature--left">
+        <div class="nf-feature-visual">
+          <div class="nf-feature-icon-wrap">
+            <div class="nf-feature-icon">🔄</div>
+          </div>
+          <div class="nf-feature-number">03</div>
+        </div>
+        <div class="nf-feature-text">
+          <span class="section-label">Step Three</span>
+          <h2 class="nf-feature-title">Log in 30 seconds. Tomorrow adapts.</h2>
+          <p class="nf-feature-desc">
+            Check off workout, meals, water, steps. Missed something? Tap "I missed" — no guilt, no shame, no reset. Tomorrow's plan automatically adjusts to keep you moving forward.
+          </p>
         </div>
       </div>
     </div>
   </section>
 
+  <!-- ============================================ -->
+  <!-- PHONE MOCKUPS — Identical to original        -->
+  <!-- ============================================ -->
   <section class="screens" id="screens">
     <div class="container">
       <div class="screens-header">
@@ -176,6 +176,9 @@
     </div>
   </section>
 
+  <!-- ============================================ -->
+  <!-- CONTRAST QUOTE                               -->
+  <!-- ============================================ -->
   <section class="contrast">
     <div class="container">
       <div class="contrast-card">
@@ -184,6 +187,9 @@
     </div>
   </section>
 
+  <!-- ============================================ -->
+  <!-- WAITLIST                                     -->
+  <!-- ============================================ -->
   <section class="waitlist" id="waitlist">
     <div class="container">
       <div class="waitlist-card">
@@ -229,6 +235,6 @@
     })();
   </script>
   <script src="../shared/feedback.js"></script>
-  <script>ConsistAIFeedback.mountFeedbackWidget('v2-rose', 'Rose Red');</script>
+  <script>ConsistAIFeedback.mountFeedbackWidget('v2-nightfall', 'Nightfall');</script>
 </body>
 </html>
