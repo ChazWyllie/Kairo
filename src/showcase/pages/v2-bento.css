@@ -1,0 +1,339 @@
+/* V2 — Bento Grid Layout Styles */
+
+/* Nav */
+.nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding: var(--space-md) 0; background: rgba(10,10,15,0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); }
+.nav-inner { display: flex; align-items: center; justify-content: space-between; }
+.nav-brand { display: flex; align-items: center; gap: var(--space-sm); }
+.nav-logo { width: 32px; height: 32px; background: var(--accent-gradient); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: var(--text-base); color: white; }
+.nav-name { font-size: var(--text-lg); font-weight: 700; }
+.nav-cta { padding: var(--space-sm) var(--space-lg); background: var(--accent-gradient); color: white; font-size: var(--text-sm); font-weight: 600; border-radius: var(--radius-full); transition: transform 0.2s, box-shadow 0.2s; }
+.nav-cta:hover { transform: translateY(-1px); box-shadow: var(--shadow-glow); }
+
+/* Bento hero section */
+.bento-hero {
+  padding: calc(80px + var(--space-3xl)) 0 var(--space-3xl);
+}
+
+.bento-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-auto-rows: minmax(140px, auto);
+  gap: var(--space-md);
+}
+
+.bento-cell {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-xl);
+  transition: border-color 0.3s, transform 0.3s;
+  overflow: hidden;
+}
+.bento-cell:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+
+/* Main hero cell: spans 2 cols, 2 rows */
+.bento-main {
+  grid-column: 1 / 3;
+  grid-row: 1 / 3;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--bg-card) 0%, rgba(108,92,231,0.06) 100%);
+}
+.bento-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-xs) var(--space-md);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-lg);
+  width: fit-content;
+}
+.badge-dot {
+  width: 8px; height: 8px; background: var(--success); border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+
+.bento-title {
+  font-size: var(--text-4xl);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  margin-bottom: var(--space-lg);
+}
+.bento-subtitle {
+  font-size: var(--text-lg);
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-bottom: var(--space-xl);
+  max-width: 420px;
+}
+.bento-cta {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-md) var(--space-2xl);
+  background: var(--accent-gradient);
+  color: white;
+  font-weight: 600;
+  border-radius: var(--radius-full);
+  transition: transform 0.2s, box-shadow 0.2s;
+  width: fit-content;
+}
+.bento-cta:hover { transform: translateY(-2px); box-shadow: var(--shadow-glow); color: white; }
+
+/* Stats cell: top right */
+.bento-stats {
+  grid-column: 3 / 5;
+  display: flex;
+  gap: var(--space-lg);
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-secondary);
+}
+.bento-stat { text-align: center; }
+.bento-stat-value {
+  display: block;
+  font-size: var(--text-3xl);
+  font-weight: 800;
+  color: var(--accent-light);
+  line-height: 1.2;
+}
+.bento-stat-label {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* Feature cells */
+.bento-feature {
+  display: flex;
+  flex-direction: column;
+}
+.bento-icon {
+  font-size: var(--text-2xl);
+  margin-bottom: var(--space-md);
+}
+.bento-feat-title {
+  font-size: var(--text-lg);
+  font-weight: 700;
+  margin-bottom: var(--space-xs);
+}
+.bento-feat-text {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* Workout cell: spans 2 cols */
+.bento-workout {
+  grid-column: span 2;
+}
+.bento-cell-label {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  margin-bottom: var(--space-md);
+}
+.bento-workout-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-sm) 0;
+  border-bottom: 1px solid var(--border);
+}
+.bento-workout-item:last-child { border-bottom: none; }
+.bento-workout-name {
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+.bento-workout-tag {
+  padding: 2px 10px;
+  background: var(--accent-glow);
+  border: 1px solid rgba(108,92,231,0.2);
+  border-radius: var(--radius-full);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--accent-light);
+}
+
+/* Nutrition cell */
+.bento-nutrition {
+  grid-column: span 2;
+}
+.bento-macro-row {
+  display: flex;
+  gap: var(--space-xl);
+  justify-content: center;
+}
+.bento-macro {
+  text-align: center;
+}
+.bento-macro-ring {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: conic-gradient(var(--ring-color) var(--progress), var(--border) var(--progress));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--space-xs);
+  position: relative;
+}
+.bento-macro-ring::before {
+  content: '';
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--bg-card);
+  position: absolute;
+}
+.bento-macro-ring span {
+  position: relative;
+  z-index: 1;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.bento-macro-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Learn cell */
+.bento-learn {
+  grid-column: span 2;
+}
+
+/* Quote cell: spans full width */
+.bento-quote {
+  grid-column: 1 / -1;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--bg-card), rgba(108,92,231,0.04));
+}
+.bento-quote blockquote {
+  font-size: var(--text-xl);
+  color: var(--text-secondary);
+  line-height: 1.6;
+  max-width: 640px;
+  font-style: italic;
+}
+
+/* How it works section */
+.bento-how {
+  padding: var(--space-4xl) 0;
+  border-top: 1px solid var(--border);
+}
+.section-heading {
+  font-size: var(--text-3xl);
+  font-weight: 800;
+  text-align: center;
+  margin-bottom: var(--space-2xl);
+  letter-spacing: -0.02em;
+}
+.how-steps {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: var(--space-lg);
+}
+.how-step {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-xl);
+  max-width: 280px;
+  flex: 1;
+}
+.how-step h3 {
+  font-size: var(--text-lg);
+  font-weight: 700;
+  margin-bottom: var(--space-xs);
+}
+.how-step p {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+.how-num {
+  width: 36px; height: 36px;
+  background: var(--accent-gradient);
+  border-radius: var(--radius-md);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: var(--text-sm); color: white;
+  margin-bottom: var(--space-md);
+}
+.how-arrow {
+  font-size: var(--text-2xl);
+  color: var(--text-muted);
+  margin-top: var(--space-2xl);
+}
+
+/* CTA */
+.bento-cta-section { padding: var(--space-4xl) 0; }
+.cta-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-3xl);
+  text-align: center;
+  max-width: 640px;
+  margin: 0 auto;
+  position: relative;
+  overflow: hidden;
+}
+.cta-card::before {
+  content: '';
+  position: absolute;
+  top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background: radial-gradient(circle at center, var(--accent-glow) 0%, transparent 50%);
+  pointer-events: none;
+}
+.cta-title { font-size: var(--text-2xl); font-weight: 800; margin-bottom: var(--space-sm); position: relative; }
+.cta-text { font-size: var(--text-base); color: var(--text-secondary); margin-bottom: var(--space-xl); position: relative; }
+.cta-form { display: flex; gap: var(--space-sm); max-width: 440px; margin: 0 auto; position: relative; }
+.cta-input { flex: 1; padding: var(--space-md) var(--space-lg); background: var(--bg-primary); border: 1px solid var(--border); border-radius: var(--radius-full); color: var(--text-primary); font-size: var(--text-base); font-family: var(--font-sans); outline: none; }
+.cta-input::placeholder { color: var(--text-muted); }
+.cta-input:focus { border-color: var(--accent); }
+.cta-submit { padding: var(--space-md) var(--space-xl); background: var(--accent-gradient); color: white; font-weight: 600; border-radius: var(--radius-full); border: none; cursor: pointer; white-space: nowrap; transition: transform 0.2s, box-shadow 0.2s; }
+.cta-submit:hover { transform: translateY(-1px); box-shadow: var(--shadow-glow); }
+.cta-note { font-size: var(--text-xs); color: var(--text-muted); margin-top: var(--space-md); position: relative; }
+.cta-success { display: none; padding: var(--space-md); background: var(--success-soft); border: 1px solid rgba(0,206,201,0.3); border-radius: var(--radius-md); color: var(--success); font-weight: 600; margin-top: var(--space-md); position: relative; }
+.cta-success.show { display: block; }
+
+/* Footer */
+.footer { padding: var(--space-2xl) 0; border-top: 1px solid var(--border); text-align: center; }
+.footer-text { font-size: var(--text-sm); color: var(--text-muted); }
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .bento-grid { grid-template-columns: repeat(2, 1fr); }
+  .bento-main { grid-column: 1 / -1; }
+  .bento-stats { grid-column: 1 / -1; }
+  .bento-quote { grid-column: 1 / -1; }
+}
+@media (max-width: 768px) {
+  .bento-grid { grid-template-columns: 1fr; }
+  .bento-main, .bento-stats, .bento-workout, .bento-nutrition, .bento-learn, .bento-quote { grid-column: span 1; }
+  .bento-title { font-size: var(--text-3xl); }
+  .bento-stats { flex-direction: column; gap: var(--space-md); }
+  .how-steps { flex-direction: column; align-items: center; }
+  .how-arrow { transform: rotate(90deg); margin: 0; }
+  .cta-form { flex-direction: column; }
+}
