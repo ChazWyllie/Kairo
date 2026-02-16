@@ -2,7 +2,7 @@
 
 > **Your plan adapts. You stay consistent.**
 
-Fitness that adapts when life happens. Set your real-life constraints — time, equipment, stress. Get a daily workout + protein plan. Log in 30 seconds. Tomorrow auto-adjusts.
+Fitness that adapts when life happens. Set your real-life constraints, time, equipment, stress. Get a daily workout + protein plan. Log in 30 seconds. Tomorrow auto-adjusts.
 
 ---
 
