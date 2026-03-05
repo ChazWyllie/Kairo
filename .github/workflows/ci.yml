@@ -23,6 +23,37 @@ jobs:
       - run: npm ci
       - run: npm test
 
+  web:
+    name: Web App (Next.js)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app/kairo-web
+    # Enable once app/kairo-web is initialized with Next.js
+    if: hashFiles('app/kairo-web/package.json') != ''
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: app/kairo-web/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint --if-present
+
+      - name: Typecheck
+        run: npm run typecheck --if-present
+
+      - name: Test
+        run: npm test --if-present
+
   validate-html:
     name: Validate HTML & CSS
     runs-on: ubuntu-latest

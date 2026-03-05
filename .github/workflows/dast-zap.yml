@@ -1,0 +1,36 @@
+name: DAST (OWASP ZAP)
+
+on:
+  workflow_dispatch:
+  # Uncomment after staging URL exists:
+  # schedule:
+  #   - cron: '0 6 * * 1'  # Weekly Monday 6am UTC
+
+jobs:
+  zap:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Placeholder
+        run: |
+          echo "Enable after deployment URL exists."
+          echo "Use OWASP ZAP baseline scan against staging."
+
+      # Uncomment after staging URL exists:
+      # - name: Checkout
+      #   uses: actions/checkout@v4
+      #
+      # - name: ZAP Baseline Scan
+      #   uses: zaproxy/action-baseline@v0.12.0
+      #   with:
+      #     target: 'https://staging.kairo.app'
+      #     rules_file_name: '.zap/rules.tsv'
+      #     cmd_options: '-a'
+      #     allow_issue_writing: false
+      #
+      # - name: Upload ZAP Report
+      #   if: always()
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: zap-report
+      #     path: report_html.html
+      #     retention-days: 30

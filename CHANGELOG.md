@@ -6,6 +6,39 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [Unreleased]
+
+### Added — Repository Restructuring
+- Numbered docs series (`docs/00-overview.md` through `docs/11-product-copy.md`)
+- Threat model (`docs/03-threat-model.md`) with STRIDE analysis
+- API specification (`docs/04-api-spec.md`) with full endpoint contracts
+- Data model (`docs/05-data-model.md`) with table schemas and indexes
+- Stripe payment flow (`docs/06-stripe-flow.md`)
+- Security controls reference (`docs/07-security-controls.md`)
+- Testing & CI strategy (`docs/08-testing-ci.md`)
+- Deployment runbook (`docs/09-deployment-runbook.md`)
+- Privacy & legal requirements (`docs/10-privacy-legal.md`)
+- Product copy reference (`docs/11-product-copy.md`)
+- Security agent (`agents/security.md`)
+- QA agent (`agents/qa.md`)
+- PR description prompt (`prompts/pr-template.md`)
+- Security review prompt (`prompts/security-review-template.md`)
+- Test plan prompt (`prompts/test-plan-template.md`)
+- GitHub PR template (`.github/PULL_REQUEST_TEMPLATE.md`)
+- Dependabot configuration (`.github/dependabot.yml`)
+- OWASP ZAP DAST workflow (`.github/workflows/dast-zap.yml`)
+- Next.js app directory placeholder (`app/kairo-web/`)
+- Infrastructure config (`infrastructure/env.example`, `infrastructure/secrets-guidance.md`)
+- `.editorconfig` for editor consistency
+- `LICENSE` file (MIT)
+
+### Changed
+- Renamed `docs/architecture.md` → `docs/02-architecture.md`
+- Updated README.md project structure to reflect new layout
+- Updated `.gitignore` with Next.js, ZAP report, and env file entries
+
+---
+
 ## [0.1.0] — 2026-02-15
 
 ### Added — WP1: Landing Page MVP
