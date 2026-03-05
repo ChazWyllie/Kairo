@@ -30,4 +30,6 @@ export const env = createEnv({
     RESEND_API_KEY: process.env.RESEND_API_KEY,
     EMAIL_FROM: process.env.EMAIL_FROM,
   },
+  // Skip validation during Vercel build if env vars aren't configured yet
+  skipValidation: !!process.env.SKIP_ENV_VALIDATION,
 });
