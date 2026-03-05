@@ -1,0 +1,33 @@
+import { createEnv } from "@t3-oss/env-nextjs";
+import { z } from "zod";
+
+export const env = createEnv({
+  server: {
+    DATABASE_URL: z.string().url("DATABASE_URL must be a valid URL"),
+    STRIPE_SECRET_KEY: z
+      .string()
+      .startsWith("sk_", "STRIPE_SECRET_KEY must start with sk_"),
+    STRIPE_WEBHOOK_SECRET: z
+      .string()
+      .startsWith("whsec_", "STRIPE_WEBHOOK_SECRET must start with whsec_"),
+    STRIPE_PRICE_ID: z
+      .string()
+      .startsWith("price_", "STRIPE_PRICE_ID must start with price_"),
+    APP_URL: z.string().url("APP_URL must be a valid URL"),
+    ADMIN_NOTIFY_EMAIL: z.string().email("ADMIN_NOTIFY_EMAIL must be valid"),
+    RESEND_API_KEY: z.string().min(1, "RESEND_API_KEY is required").optional(),
+    EMAIL_FROM: z.string().min(1, "EMAIL_FROM is required"),
+  },
+  // No client-side env vars — Stripe keys stay server-side
+  client: {},
+  runtimeEnv: {
+    DATABASE_URL: process.env.DATABASE_URL,
+    STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
+    STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
+    STRIPE_PRICE_ID: process.env.STRIPE_PRICE_ID,
+    APP_URL: process.env.APP_URL,
+    ADMIN_NOTIFY_EMAIL: process.env.ADMIN_NOTIFY_EMAIL,
+    RESEND_API_KEY: process.env.RESEND_API_KEY,
+    EMAIL_FROM: process.env.EMAIL_FROM,
+  },
+});
