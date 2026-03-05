@@ -1,0 +1,311 @@
+/**
+ * Tests for POST /api/webhook
+ *
+ * Coverage: signature verification, idempotency, member upsert,
+ * admin notification, unknown events, missing fields, security.
+ * All external calls mocked — no real Stripe/DB/email.
+ */
+import { describe, it, expect, beforeEach } from "vitest";
+import { NextRequest } from "next/server";
+import {
+  mockPrisma,
+  mockStripeConstructEvent,
+  mockNotifyAdmin,
+} from "@/test/setup";
+import {
+  makeCheckoutCompletedEvent,
+  makeUnknownEvent,
+} from "@/test/fixtures";
+import { POST } from "@/app/api/webhook/route";
+
+function makeRequest(
+  body = "raw_webhook_body",
+  signature: string | null = "sig_test_valid"
+): NextRequest {
+  const headers = new Headers({ "content-type": "application/json" });
+  if (signature) {
+    headers.set("stripe-signature", signature);
+  }
+  return new NextRequest("http://localhost:3000/api/webhook", {
+    method: "POST",
+    headers,
+    body,
+  });
+}
+
+describe("POST /api/webhook", () => {
+  beforeEach(() => {
+    mockStripeConstructEvent.mockReset();
+    mockPrisma.stripeEvent.findUnique.mockReset();
+    mockPrisma.stripeEvent.create.mockReset();
+    mockPrisma.member.upsert.mockReset();
+    mockNotifyAdmin.mockReset();
+  });
+
+  // ── Signature Verification ──
+
+  describe("signature verification", () => {
+    it("returns 400 when stripe-signature header is missing", async () => {
+      const response = await POST(makeRequest("body", null));
+      const data = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(data.error.code).toBe("WEBHOOK_ERROR");
+      expect(data.error.message).toContain("stripe-signature");
+    });
+
+    it("returns 400 when signature is invalid", async () => {
+      mockStripeConstructEvent.mockImplementation(() => {
+        throw new Error("No signatures found matching the expected signature");
+      });
+
+      const response = await POST(makeRequest("body", "sig_bad"));
+      const data = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(data.error.code).toBe("WEBHOOK_SIGNATURE_ERROR");
+    });
+
+    it("passes raw body and signature to constructEvent", async () => {
+      const event = makeCheckoutCompletedEvent();
+      mockStripeConstructEvent.mockReturnValue(event);
+      mockPrisma.stripeEvent.findUnique.mockResolvedValue(null);
+      mockPrisma.stripeEvent.create.mockResolvedValue({ id: event.id });
+      mockPrisma.member.upsert.mockResolvedValue({});
+      mockNotifyAdmin.mockResolvedValue(undefined);
+
+      await POST(makeRequest("raw_body_content", "sig_123"));
+
+      expect(mockStripeConstructEvent).toHaveBeenCalledWith(
+        "raw_body_content",
+        "sig_123",
+        "whsec_test_fake"
+      );
+    });
+  });
+
+  // ── Idempotency ──
+
+  describe("idempotency", () => {
+    it("skips already-processed events", async () => {
+      const event = makeCheckoutCompletedEvent({ eventId: "evt_duplicate" });
+      mockStripeConstructEvent.mockReturnValue(event);
+      mockPrisma.stripeEvent.findUnique.mockResolvedValue({
+        id: "evt_duplicate",
+        createdAt: new Date(),
+      });
+
+      const response = await POST(makeRequest());
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.status).toBe("already_processed");
+      expect(mockPrisma.member.upsert).not.toHaveBeenCalled();
+      expect(mockNotifyAdmin).not.toHaveBeenCalled();
+    });
+
+    it("stores event ID before processing", async () => {
+      const event = makeCheckoutCompletedEvent({ eventId: "evt_new_123" });
+      mockStripeConstructEvent.mockReturnValue(event);
+      mockPrisma.stripeEvent.findUnique.mockResolvedValue(null);
+      mockPrisma.stripeEvent.create.mockResolvedValue({ id: event.id });
+      mockPrisma.member.upsert.mockResolvedValue({});
+      mockNotifyAdmin.mockResolvedValue(undefined);
+
+      await POST(makeRequest());
+
+      expect(mockPrisma.stripeEvent.create).toHaveBeenCalledWith({
+        data: { id: "evt_new_123" },
+      });
+    });
+
+    it("records event before upserting member", async () => {
+      const callOrder: string[] = [];
+      const event = makeCheckoutCompletedEvent();
+      mockStripeConstructEvent.mockReturnValue(event);
+      mockPrisma.stripeEvent.findUnique.mockResolvedValue(null);
+      mockPrisma.stripeEvent.create.mockImplementation(async () => {
+        callOrder.push("createEvent");
+        return { id: event.id };
+      });
+      mockPrisma.member.upsert.mockImplementation(async () => {
+        callOrder.push("upsertMember");
+        return {};
+      });
+      mockNotifyAdmin.mockResolvedValue(undefined);
+
+      await POST(makeRequest());
+
+      expect(callOrder).toEqual(["createEvent", "upsertMember"]);
+    });
+  });
+
+  // ── checkout.session.completed — Happy Path ──
+
+  describe("checkout.session.completed", () => {
+    it("upserts member with correct data", async () => {
+      const event = makeCheckoutCompletedEvent({
+        email: "new@member.com",
+        customerId: "cus_happy",
+        subscriptionId: "sub_happy",
+      });
+      mockStripeConstructEvent.mockReturnValue(event);
+      mockPrisma.stripeEvent.findUnique.mockResolvedValue(null);
+      mockPrisma.stripeEvent.create.mockResolvedValue({ id: event.id });
+      mockPrisma.member.upsert.mockResolvedValue({});
+      mockNotifyAdmin.mockResolvedValue(undefined);
+
+      const response = await POST(makeRequest());
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.status).toBe("processed");
+      expect(mockPrisma.member.upsert).toHaveBeenCalledWith({
+        where: { email: "new@member.com" },
+        create: {
+          email: "new@member.com",
+          stripeCustomerId: "cus_happy",
+          stripeSubId: "sub_happy",
+          status: "active",
+        },
+        update: {
+          stripeCustomerId: "cus_happy",
+          stripeSubId: "sub_happy",
+          status: "active",
+        },
+      });
+    });
+
+    it("sends admin notification with member details", async () => {
+      const event = makeCheckoutCompletedEvent({
+        email: "notify@test.com",
+        customerId: "cus_notify",
+        subscriptionId: "sub_notify",
+      });
+      mockStripeConstructEvent.mockReturnValue(event);
+      mockPrisma.stripeEvent.findUnique.mockResolvedValue(null);
+      mockPrisma.stripeEvent.create.mockResolvedValue({ id: event.id });
+      mockPrisma.member.upsert.mockResolvedValue({});
+      mockNotifyAdmin.mockResolvedValue(undefined);
+
+      await POST(makeRequest());
+
+      expect(mockNotifyAdmin).toHaveBeenCalledWith({
+        memberEmail: "notify@test.com",
+        stripeCustomerId: "cus_notify",
+        stripeSubId: "sub_notify",
+      });
+    });
+
+    it("still returns 200 if admin notification fails", async () => {
+      const event = makeCheckoutCompletedEvent();
+      mockStripeConstructEvent.mockReturnValue(event);
+      mockPrisma.stripeEvent.findUnique.mockResolvedValue(null);
+      mockPrisma.stripeEvent.create.mockResolvedValue({ id: event.id });
+      mockPrisma.member.upsert.mockResolvedValue({});
+      mockNotifyAdmin.mockRejectedValue(new Error("Email service down"));
+
+      const response = await POST(makeRequest());
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.status).toBe("processed");
+    });
+  });
+
+  // ── Missing Fields ──
+
+  describe("missing fields", () => {
+    it("returns 400 when email is missing", async () => {
+      const event = makeCheckoutCompletedEvent({ email: null });
+      mockStripeConstructEvent.mockReturnValue(event);
+      mockPrisma.stripeEvent.findUnique.mockResolvedValue(null);
+
+      const response = await POST(makeRequest());
+      const data = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(data.error.code).toBe("WEBHOOK_ERROR");
+      expect(mockPrisma.member.upsert).not.toHaveBeenCalled();
+    });
+
+    it("returns 400 when customerId is missing", async () => {
+      const event = makeCheckoutCompletedEvent({ customerId: null });
+      mockStripeConstructEvent.mockReturnValue(event);
+      mockPrisma.stripeEvent.findUnique.mockResolvedValue(null);
+
+      const response = await POST(makeRequest());
+      const data = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(data.error.code).toBe("WEBHOOK_ERROR");
+    });
+
+    it("returns 400 when subscriptionId is missing", async () => {
+      const event = makeCheckoutCompletedEvent({ subscriptionId: null });
+      mockStripeConstructEvent.mockReturnValue(event);
+      mockPrisma.stripeEvent.findUnique.mockResolvedValue(null);
+
+      const response = await POST(makeRequest());
+      const data = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(data.error.code).toBe("WEBHOOK_ERROR");
+    });
+  });
+
+  // ── Unknown Events ──
+
+  describe("unknown events", () => {
+    it("returns 200 with status 'ignored' for unhandled event types", async () => {
+      const event = makeUnknownEvent("invoice.payment_failed");
+      mockStripeConstructEvent.mockReturnValue(event);
+      mockPrisma.stripeEvent.findUnique.mockResolvedValue(null);
+
+      const response = await POST(makeRequest());
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.status).toBe("ignored");
+      expect(mockPrisma.member.upsert).not.toHaveBeenCalled();
+    });
+
+    it("does not create StripeEvent record for unknown events", async () => {
+      const event = makeUnknownEvent("customer.subscription.deleted");
+      mockStripeConstructEvent.mockReturnValue(event);
+      mockPrisma.stripeEvent.findUnique.mockResolvedValue(null);
+
+      await POST(makeRequest());
+
+      expect(mockPrisma.stripeEvent.create).not.toHaveBeenCalled();
+    });
+  });
+
+  // ── Security ──
+
+  describe("security", () => {
+    it("never exposes webhook secret in error response", async () => {
+      mockStripeConstructEvent.mockImplementation(() => {
+        throw new Error("whsec_test_fake is invalid");
+      });
+
+      const response = await POST(makeRequest());
+      const text = await response.text();
+
+      expect(text).not.toContain("whsec_");
+    });
+
+    it("returns structured error format on all failures", async () => {
+      mockStripeConstructEvent.mockImplementation(() => {
+        throw new Error("boom");
+      });
+
+      const response = await POST(makeRequest());
+      const data = await response.json();
+
+      expect(data).toHaveProperty("error");
+      expect(data.error).toHaveProperty("code");
+      expect(data.error).toHaveProperty("message");
+    });
+  });
+});

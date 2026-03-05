@@ -29,8 +29,8 @@ jobs:
     defaults:
       run:
         working-directory: app/kairo-web
-    # Enable once app/kairo-web is initialized with Next.js
-    if: hashFiles('app/kairo-web/package.json') != ''
+    # Runs when app/kairo-web has been initialized
+    if: ${{ hashFiles('app/kairo-web/package.json') != '' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -44,6 +44,9 @@ jobs:
 
       - name: Install
         run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
 
       - name: Lint
         run: npm run lint --if-present
