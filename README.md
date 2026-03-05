@@ -2,7 +2,26 @@
 
 > **Your plan adapts. You stay consistent.**
 
-Fitness that adapts when life happens. Set your real-life constraints, time, equipment, stress. Get a daily workout + protein plan. Log in 30 seconds. Tomorrow auto-adjusts.
+Kairo Coaching is a secure, production-ready MVP that converts Instagram traffic into paid subscriptions ($50/mo) with a clean landing page + Stripe-hosted checkout + verified webhooks + minimal data storage.
+
+Fitness that adapts when life happens. Set your real-life constraints — time, equipment, stress. Get a daily workout + protein plan. Log in 30 seconds. Tomorrow auto-adjusts.
+
+---
+
+## MVP Scope
+
+**Includes:**
+- Landing page (bio link)
+- Stripe Checkout subscription ($50/mo)
+- Webhook-verified member activation
+- Minimal member record (email/phone optional + Stripe IDs + status)
+- Admin email notification on successful signup
+- Tests + CI + security baseline
+
+**Explicitly NOT included (post-MVP):**
+- Full client portal, messaging, custom daily meal plans
+- Medical/diagnostic features
+- Storing sensitive health data
 
 ---
 
@@ -20,6 +39,14 @@ Or use VS Code Live Server:
 1. Install the [Live Server](https://marketplace.visualstudio.com/items?itemName=ritwickdey.LiveServer) extension
 2. Right-click `src/landing/index.html` → "Open with Live Server"
 
+### Run the App (when created)
+
+```bash
+cd app/kairo-web
+npm install
+npm run dev
+```
+
 ### Demo Prompts
 
 Try these scenarios to understand the product:
@@ -36,46 +63,68 @@ Try these scenarios to understand the product:
 ```
 Kairo/
 ├── docs/
-│   ├── architecture.md           # Technical architecture
-│   ├── rfc-template.md           # RFC template
-│   ├── slide-content.md          # Pitch deck content
-│   ├── rfcs/                     # Approved RFCs
-│   │   └── 2026-02-15-landing-page-mvp.md
-│   ├── workflows/                # Runbooks
-│   │   └── iteration-runbook.md
-│   ├── workpackages/             # Work packages (WP1–WP6)
-│   │   ├── WP1-landing-page.md
-│   │   ├── WP2-solution-slide.md
-│   │   ├── WP3-waitlist-backend.md
-│   │   ├── WP4-constraints-engine.md
-│   │   ├── WP5-plan-generator.md
-│   │   └── WP6-logging-adaptation.md
-│   └── checklists/               # Review checklists
-│       ├── reviewer-checklist.md
-│       ├── security-checklist.md
-│       └── definition-of-done.md
-├── prompts/                      # Agent prompt templates
-│   ├── feature-template.md
-│   ├── bugfix-template.md
-│   ├── refacror-template.md
-│   ├── architecture-review.md
-│   └── multi-agent-orchestration.md
-├── agents/                       # Agent definitions
-│   ├── planner.md
-│   ├── implementer.md
-│   └── reviewer.md
+│   ├── 00-overview.md                 # Product overview
+│   ├── 01-requirements.md             # Functional & non-functional requirements
+│   ├── 02-architecture.md             # Technical architecture
+│   ├── 03-threat-model.md             # STRIDE threat model
+│   ├── 04-api-spec.md                 # REST API specification
+│   ├── 05-data-model.md               # Database schema & models
+│   ├── 06-stripe-flow.md              # Payment integration flow
+│   ├── 07-security-controls.md        # Security controls & mitigations
+│   ├── 08-testing-ci.md               # Testing strategy & CI pipeline
+│   ├── 09-deployment-runbook.md       # Deployment & rollback procedures
+│   ├── 10-privacy-legal.md            # Privacy, GDPR, legal
+│   ├── 11-product-copy.md             # Marketing & product copy
+│   ├── rfc-template.md                # RFC template
+│   ├── slide-content.md               # Pitch deck content
+│   ├── solution-slide.md              # Solution slide content
+│   ├── rfcs/                          # Approved RFCs
+│   ├── workflows/                     # Runbooks
+│   ├── workpackages/                  # Work packages (WP1–WP6)
+│   └── checklists/                    # Review checklists
+├── agents/
+│   ├── planner.md                     # Planning agent
+│   ├── implementer.md                 # Implementation agent
+│   ├── reviewer.md                    # Review agent
+│   ├── security.md                    # Security review agent
+│   └── qa.md                          # QA/testing agent
+├── prompts/
+│   ├── feature-template.md            # Feature implementation prompt
+│   ├── bugfix-template.md             # Bug fix prompt
+│   ├── refacror-template.md           # Refactoring prompt
+│   ├── architecture-review.md         # Architecture review prompt
+│   ├── multi-agent-orchestration.md   # Multi-agent orchestration
+│   ├── landing-page.md               # Landing page design prompt
+│   ├── master-agentic-engineering.md  # Master engineering prompt
+│   ├── pr-template.md                # PR description prompt
+│   ├── security-review-template.md   # Security review prompt
+│   └── test-plan-template.md         # Test plan generation prompt
+├── app/
+│   └── kairo-web/                     # Next.js app (future)
 ├── src/
-│   └── landing/
-│       ├── index.html            # Landing page
-│       └── styles.css            # Styles
-├── tests/                        # Automated test suite (50 tests)
-│   ├── run-all.js                # Test runner
-│   ├── test-html-structure.js    # HTML structure tests (22)
-│   ├── test-content-quality.js   # Content quality tests (11)
-│   ├── test-accessibility.js     # Accessibility tests (9)
-│   └── test-styles.js            # CSS quality tests (8)
-├── .github/workflows/ci.yml     # CI pipeline
+│   ├── landing/                       # Landing page (index.html + styles.css)
+│   ├── index.html                     # Root redirect
+│   └── showcase/                      # Landing page variant showcase
+├── tests/                             # Automated test suite (50 tests)
+│   ├── run-all.js
+│   ├── test-html-structure.js
+│   ├── test-content-quality.js
+│   ├── test-accessibility.js
+│   └── test-styles.js
+├── infrastructure/
+│   ├── env.example                    # Environment variable template
+│   └── secrets-guidance.md            # Secrets management guide
+├── .github/
+│   ├── PULL_REQUEST_TEMPLATE.md
+│   ├── dependabot.yml
+│   └── workflows/
+│       ├── ci.yml
+│       └── dast-zap.yml
+├── .editorconfig
+├── .gitignore
 ├── CHANGELOG.md
+├── LICENSE
+├── package.json
 └── README.md
 ```
 
@@ -125,7 +174,7 @@ npm run test:css       # CSS quality (8 tests)
 
 ## Architecture
 
-See [`docs/architecture.md`](docs/architecture.md) for the full technical design.
+See [`docs/02-architecture.md`](docs/02-architecture.md) for the full technical design.
 
 **Key decisions:**
 - Static HTML landing page (zero dependencies)
@@ -146,4 +195,4 @@ See [`docs/architecture.md`](docs/architecture.md) for the full technical design
 
 ## License
 
-Proprietary. All rights reserved.
+MIT — see [LICENSE](LICENSE).
