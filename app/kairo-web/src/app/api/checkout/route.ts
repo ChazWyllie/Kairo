@@ -2,22 +2,26 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { stripe } from "@/services/stripe";
 import { env } from "@/lib/env";
+import { prisma } from "@/lib/prisma";
 
 /**
  * POST /api/checkout
  *
- * Creates a Stripe Checkout Session for the Kairo Coaching subscription.
- * Returns { url } for client-side redirect to Stripe's hosted checkout.
+ * Accepts { email, phone? } from the landing page form.
+ * 1. Validates input via Zod
+ * 2. Upserts a "pending" Member in the database
+ * 3. Creates a Stripe Checkout Session (with customer_email pre-filled)
+ * 4. Returns { url } for client-side redirect to Stripe's hosted checkout
  *
  * Security:
- * - Zod input validation
+ * - Zod input validation — no raw req.body access
  * - STRIPE_SECRET_KEY stays server-side
  * - No PII logged
  */
 
 const CheckoutSchema = z.object({
-  successUrl: z.string().url().optional(),
-  cancelUrl: z.string().url().optional(),
+  email: z.string().email("A valid email is required"),
+  phone: z.string().optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -39,19 +43,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { successUrl, cancelUrl } = parsed.data;
+    const { email, phone } = parsed.data;
+
+    // Upsert a pending member — webhook will activate on payment success
+    await prisma.member.upsert({
+      where: { email },
+      create: { email, phone: phone || null, status: "pending" },
+      update: { phone: phone || null },
+    });
 
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
+      customer_email: email,
       line_items: [
         {
           price: env.STRIPE_PRICE_ID,
           quantity: 1,
         },
       ],
-      success_url:
-        successUrl ?? `${env.APP_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: cancelUrl ?? `${env.APP_URL}/cancel`,
+      success_url: `${env.APP_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${env.APP_URL}`,
     });
 
     if (!session.url) {

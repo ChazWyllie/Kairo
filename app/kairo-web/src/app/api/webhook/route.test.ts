@@ -15,6 +15,7 @@ import {
 import {
   makeCheckoutCompletedEvent,
   makeUnknownEvent,
+  makeSubscriptionDeletedEvent,
 } from "@/test/fixtures";
 import { POST } from "@/app/api/webhook/route";
 
@@ -39,6 +40,7 @@ describe("POST /api/webhook", () => {
     mockPrisma.stripeEvent.findUnique.mockReset();
     mockPrisma.stripeEvent.create.mockReset();
     mockPrisma.member.upsert.mockReset();
+    mockPrisma.member.updateMany.mockReset();
     mockNotifyAdmin.mockReset();
   });
 
@@ -271,13 +273,74 @@ describe("POST /api/webhook", () => {
     });
 
     it("does not create StripeEvent record for unknown events", async () => {
-      const event = makeUnknownEvent("customer.subscription.deleted");
+      const event = makeUnknownEvent("invoice.created");
       mockStripeConstructEvent.mockReturnValue(event);
       mockPrisma.stripeEvent.findUnique.mockResolvedValue(null);
 
       await POST(makeRequest());
 
       expect(mockPrisma.stripeEvent.create).not.toHaveBeenCalled();
+    });
+  });
+
+  // ── customer.subscription.deleted — Cancellation ──
+
+  describe("customer.subscription.deleted", () => {
+    it("marks member as canceled when subscription is deleted", async () => {
+      const event = makeSubscriptionDeletedEvent({
+        subscriptionId: "sub_to_cancel",
+      });
+      mockStripeConstructEvent.mockReturnValue(event);
+      mockPrisma.stripeEvent.findUnique.mockResolvedValue(null);
+      mockPrisma.stripeEvent.create.mockResolvedValue({ id: event.id });
+      mockPrisma.member.updateMany.mockResolvedValue({ count: 1 });
+
+      const response = await POST(makeRequest());
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.status).toBe("processed");
+      expect(mockPrisma.member.updateMany).toHaveBeenCalledWith({
+        where: { stripeSubId: "sub_to_cancel" },
+        data: { status: "canceled" },
+      });
+    });
+
+    it("records event for idempotency before updating member", async () => {
+      const callOrder: string[] = [];
+      const event = makeSubscriptionDeletedEvent({
+        eventId: "evt_cancel_order",
+      });
+      mockStripeConstructEvent.mockReturnValue(event);
+      mockPrisma.stripeEvent.findUnique.mockResolvedValue(null);
+      mockPrisma.stripeEvent.create.mockImplementation(async () => {
+        callOrder.push("createEvent");
+        return { id: event.id };
+      });
+      mockPrisma.member.updateMany.mockImplementation(async () => {
+        callOrder.push("updateMember");
+        return { count: 1 };
+      });
+
+      await POST(makeRequest());
+
+      expect(callOrder).toEqual(["createEvent", "updateMember"]);
+    });
+
+    it("handles subscription with no matching member gracefully", async () => {
+      const event = makeSubscriptionDeletedEvent({
+        subscriptionId: "sub_nonexistent",
+      });
+      mockStripeConstructEvent.mockReturnValue(event);
+      mockPrisma.stripeEvent.findUnique.mockResolvedValue(null);
+      mockPrisma.stripeEvent.create.mockResolvedValue({ id: event.id });
+      mockPrisma.member.updateMany.mockResolvedValue({ count: 0 });
+
+      const response = await POST(makeRequest());
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.status).toBe("processed");
     });
   });
 

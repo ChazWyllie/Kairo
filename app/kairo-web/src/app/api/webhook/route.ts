@@ -8,7 +8,9 @@ import { notifyAdmin } from "@/services/email";
 /**
  * POST /api/webhook
  *
- * Handles Stripe webhook events. MVP: only `checkout.session.completed`.
+ * Handles Stripe webhook events:
+ *  - checkout.session.completed → activate member
+ *  - customer.subscription.deleted → mark member canceled
  *
  * Security:
  * - Signature verification via stripe.webhooks.constructEvent()
@@ -140,6 +142,42 @@ export async function POST(request: NextRequest) {
       // Log but don't fail — the member is already activated
       console.error("[webhook] Admin notification failed (non-fatal)");
     }
+
+    return NextResponse.json({ received: true, status: "processed" });
+  }
+
+  // ── customer.subscription.deleted — mark member as canceled ──
+
+  if (event.type === "customer.subscription.deleted") {
+    const subscription = event.data.object as Stripe.Subscription;
+    const subscriptionId =
+      typeof subscription.id === "string" ? subscription.id : null;
+
+    if (!subscriptionId) {
+      console.error(
+        "[webhook] customer.subscription.deleted missing subscription ID"
+      );
+      return NextResponse.json(
+        {
+          error: {
+            code: "WEBHOOK_ERROR",
+            message: "Subscription missing ID",
+          },
+        },
+        { status: 400 }
+      );
+    }
+
+    // Record event for idempotency
+    await prisma.stripeEvent.create({
+      data: { id: event.id },
+    });
+
+    // Mark the member as canceled
+    await prisma.member.updateMany({
+      where: { stripeSubId: subscriptionId },
+      data: { status: "canceled" },
+    });
 
     return NextResponse.json({ received: true, status: "processed" });
   }
