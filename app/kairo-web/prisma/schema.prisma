@@ -14,6 +14,10 @@ model Member {
   stripeSubId      String?  @unique
   status           String   @default("pending") // pending | active | canceled
 
+  // Multi-tier pricing (Phase 7+)
+  planTier         String?  // "foundation" | "coaching" | "performance" | "vip"
+  billingInterval  String?  // "monthly" | "annual"
+
   // Onboarding (Phase 4) — all optional, filled post-checkout
   goal             String?  // "fat_loss" | "muscle" | "maintenance"
   daysPerWeek      Int?     // 1-7

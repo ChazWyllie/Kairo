@@ -10,7 +10,6 @@ vi.mock("@/lib/env", () => ({
     DATABASE_URL: "postgresql://test:test@localhost:5432/test",
     STRIPE_SECRET_KEY: "sk_test_fake",
     STRIPE_WEBHOOK_SECRET: "whsec_test_fake",
-    STRIPE_PRICE_ID: "price_test_fake",
     APP_URL: "http://localhost:3000",
     ADMIN_NOTIFY_EMAIL: "admin@test.com",
     RESEND_API_KEY: undefined,

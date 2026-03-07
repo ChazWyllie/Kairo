@@ -10,9 +10,6 @@ export const env = createEnv({
     STRIPE_WEBHOOK_SECRET: z
       .string()
       .startsWith("whsec_", "STRIPE_WEBHOOK_SECRET must start with whsec_"),
-    STRIPE_PRICE_ID: z
-      .string()
-      .startsWith("price_", "STRIPE_PRICE_ID must start with price_"),
     APP_URL: z.string().url("APP_URL must be a valid URL"),
     ADMIN_NOTIFY_EMAIL: z.string().email("ADMIN_NOTIFY_EMAIL must be valid"),
     RESEND_API_KEY: z.string().min(1, "RESEND_API_KEY is required").optional(),
@@ -24,7 +21,6 @@ export const env = createEnv({
     DATABASE_URL: process.env.DATABASE_URL,
     STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
     STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
-    STRIPE_PRICE_ID: process.env.STRIPE_PRICE_ID,
     APP_URL: process.env.APP_URL,
     ADMIN_NOTIFY_EMAIL: process.env.ADMIN_NOTIFY_EMAIL,
     RESEND_API_KEY: process.env.RESEND_API_KEY,

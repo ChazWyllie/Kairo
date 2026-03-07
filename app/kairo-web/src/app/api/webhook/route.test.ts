@@ -173,11 +173,15 @@ describe("POST /api/webhook", () => {
           stripeCustomerId: "cus_happy",
           stripeSubId: "sub_happy",
           status: "active",
+          planTier: "foundation",
+          billingInterval: "monthly",
         },
         update: {
           stripeCustomerId: "cus_happy",
           stripeSubId: "sub_happy",
           status: "active",
+          planTier: "foundation",
+          billingInterval: "monthly",
         },
       });
     });
