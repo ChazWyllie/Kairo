@@ -95,29 +95,35 @@ function ResultContent() {
   }
 
   return (
-    <main className="min-h-screen bg-white text-black flex flex-col">
+    <main className="min-h-screen bg-gradient-hero text-white flex flex-col relative overflow-hidden">
+      {/* Ambient glow */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full bg-amber-500/10 blur-[120px] pointer-events-none" />
+
       {/* Completed progress bar */}
-      <div className="w-full bg-neutral-100 h-1.5">
-        <div className="h-1.5 bg-black w-full" />
+      <div className="w-full bg-white/10 h-1.5 relative z-10">
+        <div className="h-1.5 bg-gradient-to-r from-amber-400 to-amber-500 w-full" />
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
+      <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 relative z-10">
         <div className="w-full max-w-lg">
           {/* Recommendation header */}
-          <div className="text-center mb-8">
-            <p className="text-sm font-medium text-neutral-400 uppercase tracking-wide mb-2">
+          <div className="text-center mb-10 animate-fade-in-up">
+            <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-500/20 text-2xl mb-4">
+              ✨
+            </div>
+            <p className="text-sm font-medium text-amber-400 uppercase tracking-widest mb-3">
               Your Recommended Plan
             </p>
-            <h1 className="text-3xl sm:text-4xl font-bold">{plan.name}</h1>
-            <p className="mt-2 text-lg text-neutral-600">{plan.tagline}</p>
+            <h1 className="text-3xl sm:text-4xl font-bold text-white">{plan.name}</h1>
+            <p className="mt-3 text-lg text-white/50">{plan.tagline}</p>
           </div>
 
           {/* Plan card */}
-          <div className="rounded-2xl border border-black ring-2 ring-black p-6 shadow-sm mb-6">
+          <div className="rounded-2xl border border-amber-400/30 bg-white/5 backdrop-blur-xl p-8 shadow-lg glow-brand mb-8 animate-scale-in">
             {/* Billing toggle */}
             <div className="flex items-center justify-center gap-3 mb-6">
               <span
-                className={`text-sm font-medium ${billingInterval === "monthly" ? "text-black" : "text-neutral-400"}`}
+                className={`text-sm font-medium transition-colors ${billingInterval === "monthly" ? "text-white" : "text-white/40"}`}
               >
                 Monthly
               </span>
@@ -127,23 +133,23 @@ function ResultContent() {
                   setBillingInterval((prev) => (prev === "monthly" ? "annual" : "monthly"))
                 }
                 className="relative inline-flex h-7 w-12 items-center rounded-full transition-colors"
-                style={{ backgroundColor: billingInterval === "annual" ? "#000" : "#d4d4d4" }}
+                style={{ backgroundColor: billingInterval === "annual" ? "#f59e0b" : "rgba(255,255,255,0.15)" }}
                 aria-label="Toggle annual billing"
               >
                 <span
-                  className="inline-block h-5 w-5 rounded-full bg-white transition-transform"
+                  className="inline-block h-5 w-5 rounded-full bg-white transition-transform shadow-sm"
                   style={{
                     transform: billingInterval === "annual" ? "translateX(24px)" : "translateX(4px)",
                   }}
                 />
               </button>
               <span
-                className={`text-sm font-medium ${billingInterval === "annual" ? "text-black" : "text-neutral-400"}`}
+                className={`text-sm font-medium transition-colors ${billingInterval === "annual" ? "text-white" : "text-white/40"}`}
               >
                 Annual
               </span>
               {billingInterval === "annual" && (
-                <span className="ml-2 rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                <span className="ml-2 rounded-full bg-green-500/20 px-2.5 py-0.5 text-xs font-semibold text-green-400">
                   Save ~17%
                 </span>
               )}
@@ -151,21 +157,21 @@ function ResultContent() {
 
             {/* Price */}
             <div className="text-center mb-6">
-              <span className="text-4xl font-bold">${perMonth}</span>
-              <span className="text-neutral-500">/mo</span>
+              <span className="text-5xl font-bold text-white tracking-tight">${perMonth}</span>
+              <span className="text-white/40">/mo</span>
               {billingInterval === "annual" && (
-                <p className="mt-1 text-xs text-neutral-500">
+                <p className="mt-1 text-xs text-white/40">
                   ${totalPrice}/yr — billed annually
                 </p>
               )}
             </div>
 
             {/* Features */}
-            <ul className="space-y-3 mb-6">
+            <ul className="space-y-3 mb-8">
               {plan.features.map((feature) => (
                 <li key={feature} className="flex items-start gap-3 text-sm">
-                  <span className="text-green-600 shrink-0 mt-0.5">✓</span>
-                  <span>{feature}</span>
+                  <span className="flex-shrink-0 mt-0.5 h-4 w-4 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 text-[10px]">✓</span>
+                  <span className="text-white/70">{feature}</span>
                 </li>
               ))}
             </ul>
@@ -177,7 +183,7 @@ function ResultContent() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Email address"
-                className="w-full rounded-xl border border-neutral-300 px-4 py-3 text-base outline-none focus:border-black focus:ring-1 focus:ring-black"
+                className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3.5 text-base text-white placeholder-white/30 outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400 backdrop-blur-sm transition-all"
                 inputMode="email"
                 autoComplete="email"
                 required
@@ -187,19 +193,19 @@ function ResultContent() {
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="Phone (optional — for coaching texts)"
-                className="w-full rounded-xl border border-neutral-300 px-4 py-3 text-base outline-none focus:border-black focus:ring-1 focus:ring-black"
+                className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3.5 text-base text-white placeholder-white/30 outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400 backdrop-blur-sm transition-all"
                 inputMode="tel"
                 autoComplete="tel"
               />
               {error && (
-                <p className="text-sm text-red-600" role="alert">
+                <p className="text-sm text-red-400" role="alert">
                   {error}
                 </p>
               )}
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded-xl bg-black px-6 py-3.5 text-white font-semibold text-base transition-opacity disabled:opacity-60"
+                className="w-full rounded-xl bg-amber-500 px-6 py-3.5 text-neutral-950 font-semibold text-base transition-all hover:bg-amber-400 hover:shadow-[0_0_20px_rgba(245,158,11,0.25)] disabled:opacity-50"
               >
                 {loading ? "Loading…" : `Start Your ${plan.name} Plan →`}
               </button>
@@ -207,14 +213,14 @@ function ResultContent() {
           </div>
 
           {/* Secondary CTAs */}
-          <div className="text-center space-y-3">
+          <div className="text-center space-y-3 animate-fade-in" style={{ animationDelay: "300ms" }}>
             <Link
               href="/#pricing"
-              className="text-sm font-medium text-neutral-500 hover:text-black transition-colors"
+              className="text-sm font-medium text-white/40 hover:text-white/70 transition-colors"
             >
               Compare all plans ↓
             </Link>
-            <p className="text-xs text-neutral-400">
+            <p className="text-xs text-white/25">
               30-day satisfaction guarantee · Cancel anytime
             </p>
           </div>
@@ -228,8 +234,8 @@ export default function QuizResultPage() {
   return (
     <Suspense
       fallback={
-        <main className="min-h-screen bg-white flex items-center justify-center">
-          <p className="text-neutral-400">Loading your result…</p>
+        <main className="min-h-screen bg-gradient-hero flex items-center justify-center">
+          <p className="text-white/40">Loading your result…</p>
         </main>
       }
     >

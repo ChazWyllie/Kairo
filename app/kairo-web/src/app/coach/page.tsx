@@ -112,12 +112,17 @@ export default function CoachPage() {
   // ── Auth screen ──
   if (state.phase === "auth" || state.phase === "error") {
     return (
-      <main className="min-h-screen bg-neutral-50 text-black">
+      <main className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
         <div className="mx-auto max-w-md px-6 py-16">
-          <h1 className="text-2xl font-semibold text-center">Coach Portal</h1>
-          <p className="mt-2 text-center text-neutral-500 text-sm">
-            Enter your coach secret to access the dashboard.
-          </p>
+          <div className="text-center animate-fade-in-up">
+            <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-100 text-2xl mb-5">
+              🛡️
+            </div>
+            <h1 className="text-2xl font-bold tracking-tight">Coach Portal</h1>
+            <p className="mt-2 text-[var(--foreground-secondary)] text-sm">
+              Enter your coach secret to access the dashboard.
+            </p>
+          </div>
 
           <form onSubmit={onAuth} className="mt-8 space-y-4">
             <input
@@ -155,16 +160,16 @@ export default function CoachPage() {
   // ── Loading ──
   if (state.phase === "loading") {
     return (
-      <main className="min-h-screen bg-neutral-50 text-black">
+      <main className="min-h-screen bg-[var(--background)]">
         <div className="mx-auto max-w-4xl px-6 py-8">
-          <div className="space-y-4 animate-pulse">
-            <div className="h-8 bg-neutral-200 rounded-xl w-48" />
+          <div className="space-y-4">
+            <div className="skeleton h-8 w-48" />
             <div className="grid grid-cols-5 gap-4">
               {[...Array(5)].map((_, i) => (
-                <div key={i} className="h-24 bg-neutral-200 rounded-2xl" />
+                <div key={i} className="skeleton h-24" />
               ))}
             </div>
-            <div className="h-64 bg-neutral-200 rounded-2xl" />
+            <div className="skeleton h-64" />
           </div>
         </div>
       </main>
@@ -178,14 +183,14 @@ export default function CoachPage() {
   const onTrackClients = clients.filter((c) => c.status === "on_track");
 
   return (
-    <main className="min-h-screen bg-neutral-50 text-black">
+    <main className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
       <div className="mx-auto max-w-4xl px-6 py-8 space-y-6">
 
         {/* ── Header ── */}
-        <header className="flex items-start justify-between">
+        <header className="flex items-start justify-between animate-fade-in">
           <div>
-            <h1 className="text-2xl font-semibold">Coach Dashboard</h1>
-            <p className="mt-0.5 text-sm text-neutral-500">
+            <h1 className="text-2xl font-bold tracking-tight">Coach Dashboard</h1>
+            <p className="mt-0.5 text-sm text-[var(--foreground-muted)]">
               {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
             </p>
           </div>
@@ -266,7 +271,7 @@ export default function CoachPage() {
 
         {clients.length === 0 && (
           <section className={components.card.base}>
-            <p className="text-center text-neutral-500">
+            <p className="text-center text-[var(--foreground-muted)]">
               No active clients yet. Once members subscribe, they&apos;ll appear here.
             </p>
           </section>
@@ -329,7 +334,7 @@ function ClientCard({
           <span className={`h-2.5 w-2.5 rounded-full ${statusConfig.dotClass}`} />
           <div>
             <p className="text-sm font-medium">{client.email}</p>
-            <p className="text-xs text-neutral-500">
+            <p className="text-xs text-[var(--foreground-muted)]">
               {client.planTier ?? "—"} · {client.goal ?? "no goal set"}
               {client.daysPerWeek ? ` · ${client.daysPerWeek}×/wk` : ""}
             </p>
@@ -338,17 +343,17 @@ function ClientCard({
 
         <div className="flex items-center gap-4 text-right">
           <div>
-            <p className="text-xs text-neutral-500">7d</p>
+            <p className="text-xs text-[var(--foreground-muted)]">7d</p>
             <p className={`text-sm font-semibold ${getAdherenceColor(client.adherence7d)}`}>
               {client.adherence7d}%
             </p>
           </div>
           <div>
-            <p className="text-xs text-neutral-500">Streak</p>
+            <p className="text-xs text-[var(--foreground-muted)]">Streak</p>
             <p className="text-sm font-semibold">{client.currentStreak}</p>
           </div>
           <div>
-            <p className="text-xs text-neutral-500">Last</p>
+            <p className="text-xs text-[var(--foreground-muted)]">Last</p>
             <p className="text-sm font-semibold">
               {client.daysSinceCheckIn !== null
                 ? client.daysSinceCheckIn === 0
@@ -357,13 +362,13 @@ function ClientCard({
                 : "Never"}
             </p>
           </div>
-          <span className="text-neutral-400 text-xs">{expanded ? "▲" : "▼"}</span>
+          <span className="text-[var(--foreground-muted)] text-xs">{expanded ? "▲" : "▼"}</span>
         </div>
       </button>
 
       {/* Expanded detail */}
       {expanded && (
-        <div className="mt-3 pt-3 border-t border-neutral-200 space-y-3">
+        <div className="mt-3 pt-3 border-t border-[var(--border)] space-y-3">
           {/* Status banner */}
           <div className={`rounded-lg px-3 py-2 ${statusConfig.bgClass}`}>
             <p className={`text-xs font-medium ${statusConfig.textClass}`}>
@@ -392,7 +397,7 @@ function ClientCard({
           {/* Recent check-ins mini timeline */}
           {client.recentCheckIns.length > 0 && (
             <div>
-              <p className="text-xs text-neutral-500 mb-1">Recent check-ins:</p>
+              <p className="text-xs text-[var(--foreground-muted)] mb-1">Recent check-ins:</p>
               <div className="flex gap-1">
                 {client.recentCheckIns.map((ci, i) => (
                   <div
@@ -400,7 +405,7 @@ function ClientCard({
                     className={`h-6 w-6 rounded text-[10px] flex items-center justify-center ${
                       ci.workout
                         ? "bg-green-100 text-green-800"
-                        : "bg-neutral-100 text-neutral-400"
+                        : "bg-[var(--background-secondary)] text-[var(--foreground-muted)]"
                     }`}
                     title={`${new Date(ci.date).toLocaleDateString()} — ${ci.workout ? "Workout ✓" : "No workout"}`}
                   >
@@ -421,7 +426,7 @@ function ClientCard({
 function MetricChip({ label, value }: { label: string; value: string }) {
   return (
     <div className="text-center">
-      <p className="text-xs text-neutral-500">{label}</p>
+      <p className="text-xs text-[var(--foreground-muted)]">{label}</p>
       <p className="text-sm font-semibold">{value}</p>
     </div>
   );
