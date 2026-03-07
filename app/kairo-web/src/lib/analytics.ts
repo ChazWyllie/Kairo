@@ -15,7 +15,10 @@ export type AnalyticsEvent =
   | { name: "checkout_error"; properties: { error: string; tier?: string } }
   | { name: "onboarding_submitted"; properties: { hasGoal: boolean } }
   | { name: "dashboard_loaded"; properties: { status: string } }
-  | { name: "checkin_submitted"; properties: { workout: boolean } };
+  | { name: "checkin_submitted"; properties: { workout: boolean } }
+  | { name: "quiz_started"; properties: { source?: string } }
+  | { name: "quiz_completed"; properties: { recommendedTier: string } }
+  | { name: "quiz_result_viewed"; properties: { tier: string } };
 
 /**
  * Track an analytics event.

@@ -77,6 +77,45 @@ describe("analytics", () => {
     );
   });
 
+  it("logs quiz_started event", () => {
+    track(
+      { name: "quiz_started", properties: { source: "landing" } },
+      { isDev: true }
+    );
+
+    expect(consoleSpy).toHaveBeenCalledWith(
+      "[analytics]",
+      "quiz_started",
+      { source: "landing" }
+    );
+  });
+
+  it("logs quiz_completed event with tier", () => {
+    track(
+      { name: "quiz_completed", properties: { recommendedTier: "coaching" } },
+      { isDev: true }
+    );
+
+    expect(consoleSpy).toHaveBeenCalledWith(
+      "[analytics]",
+      "quiz_completed",
+      { recommendedTier: "coaching" }
+    );
+  });
+
+  it("logs quiz_result_viewed event", () => {
+    track(
+      { name: "quiz_result_viewed", properties: { tier: "performance" } },
+      { isDev: true }
+    );
+
+    expect(consoleSpy).toHaveBeenCalledWith(
+      "[analytics]",
+      "quiz_result_viewed",
+      { tier: "performance" }
+    );
+  });
+
   it("logs onboarding_submitted event", () => {
     track(
       { name: "onboarding_submitted", properties: { hasGoal: true } },
