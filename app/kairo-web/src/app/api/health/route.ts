@@ -9,11 +9,16 @@ import { prisma } from "@/lib/prisma";
  * TEMPORARY — remove before production launch.
  */
 export async function GET() {
+  // Diagnostic: check if env var is even visible
+  const dbUrl = process.env.DATABASE_URL;
+  const hasUrl = !!dbUrl;
+  const urlPrefix = dbUrl ? dbUrl.substring(0, 20) + "..." : "NOT SET";
+
   try {
     const count = await prisma.member.count();
-    return NextResponse.json({ ok: true, memberCount: count });
+    return NextResponse.json({ ok: true, memberCount: count, hasUrl, urlPrefix });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
-    return NextResponse.json({ ok: false, error: message }, { status: 500 });
+    return NextResponse.json({ ok: false, error: message, hasUrl, urlPrefix }, { status: 500 });
   }
 }
