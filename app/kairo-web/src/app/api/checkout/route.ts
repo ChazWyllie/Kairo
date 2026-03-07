@@ -134,10 +134,20 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ url: session.url });
   } catch (err) {
-    // Log error type only — never log full Stripe error (may contain PII)
+    // Log error details for debugging — no PII, just error class + message
     const message =
       err instanceof Error ? err.message : "Unknown checkout error";
-    console.error("[checkout] Error:", message);
+    const errorName = err instanceof Error ? err.constructor.name : typeof err;
+    console.error("[checkout] Error:", errorName, "-", message);
+
+    // Surface Stripe-specific error codes (safe — these are API codes, not PII)
+    const stripeCode =
+      err && typeof err === "object" && "type" in err
+        ? (err as { type: string }).type
+        : undefined;
+    if (stripeCode) {
+      console.error("[checkout] Stripe error type:", stripeCode);
+    }
 
     return NextResponse.json(
       {
