@@ -10,6 +10,7 @@ import { NextRequest } from "next/server";
 import {
   mockStripeCheckoutCreate,
   mockPrisma,
+  mockRateLimitCheck,
 } from "@/test/setup";
 import {
   MOCK_CHECKOUT_SESSION,
@@ -29,6 +30,8 @@ describe("POST /api/checkout", () => {
   beforeEach(() => {
     mockStripeCheckoutCreate.mockReset();
     mockPrisma.member.upsert.mockReset();
+    mockRateLimitCheck.mockReset();
+    mockRateLimitCheck.mockReturnValue({ allowed: true, retryAfter: 0 });
   });
 
   // ── Happy Path ──
@@ -234,6 +237,51 @@ describe("POST /api/checkout", () => {
       expect(data).toHaveProperty("error");
       expect(data.error).toHaveProperty("code");
       expect(data.error).toHaveProperty("message");
+    });
+  });
+
+  // ── Rate Limiting ──
+
+  describe("rate limiting", () => {
+    it("returns 429 when rate limit is exceeded", async () => {
+      mockRateLimitCheck.mockReturnValue({ allowed: false, retryAfter: 42 });
+
+      const response = await POST(
+        makeRequest({ email: "rate@test.com" })
+      );
+      const data = await response.json();
+
+      expect(response.status).toBe(429);
+      expect(data.error.code).toBe("RATE_LIMIT_EXCEEDED");
+      expect(response.headers.get("Retry-After")).toBe("42");
+    });
+
+    it("does not call Stripe or Prisma when rate limited", async () => {
+      mockRateLimitCheck.mockReturnValue({ allowed: false, retryAfter: 10 });
+
+      await POST(makeRequest({ email: "blocked@test.com" }));
+
+      expect(mockPrisma.member.upsert).not.toHaveBeenCalled();
+      expect(mockStripeCheckoutCreate).not.toHaveBeenCalled();
+    });
+
+    it("extracts IP from x-forwarded-for header", async () => {
+      mockRateLimitCheck.mockReturnValue({ allowed: true, retryAfter: 0 });
+      mockPrisma.member.upsert.mockResolvedValue({});
+      mockStripeCheckoutCreate.mockResolvedValue(MOCK_CHECKOUT_SESSION);
+
+      const req = new NextRequest("http://localhost:3000/api/checkout", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-forwarded-for": "203.0.113.1, 10.0.0.1",
+        },
+        body: JSON.stringify({ email: "ip@test.com" }),
+      });
+
+      await POST(req);
+
+      expect(mockRateLimitCheck).toHaveBeenCalledWith("203.0.113.1");
     });
   });
 });

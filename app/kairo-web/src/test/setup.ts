@@ -59,3 +59,16 @@ export const mockNotifyAdmin = vi.fn();
 vi.mock("@/services/email", () => ({
   notifyAdmin: mockNotifyAdmin,
 }));
+
+// ── Mock rate limiter (always allow — rate-limit.test.ts tests it directly) ──
+export const mockRateLimitCheck = vi.fn().mockReturnValue({
+  allowed: true,
+  retryAfter: 0,
+});
+
+vi.mock("@/lib/rate-limit", () => ({
+  checkoutLimiter: {
+    check: (...args: unknown[]) => mockRateLimitCheck(...args),
+  },
+  createRateLimiter: vi.fn(),
+}));
