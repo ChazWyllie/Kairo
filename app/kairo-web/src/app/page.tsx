@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { track } from "@/lib/analytics";
 
 /**
  * Public landing page — Instagram bio link destination.
@@ -12,6 +13,10 @@ export default function HomePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    track({ name: "page_view", properties: { path: "/" } });
+  }, []);
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -22,6 +27,7 @@ export default function HomePage() {
     }
 
     setLoading(true);
+    track({ name: "checkout_started", properties: { hasPhone: !!phone.trim() } });
     try {
       const res = await fetch("/api/checkout", {
         method: "POST",
@@ -34,7 +40,9 @@ export default function HomePage() {
 
       window.location.href = data.url;
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Something went wrong.");
+      const msg = err instanceof Error ? err.message : "Something went wrong.";
+      track({ name: "checkout_error", properties: { error: msg } });
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -114,6 +122,7 @@ export default function HomePage() {
             <button
               type="submit"
               disabled={loading}
+              onClick={() => track({ name: "cta_click", properties: { location: "checkout_form" } })}
               className="w-full rounded-xl bg-black px-4 py-3 text-white font-medium transition-opacity disabled:opacity-60"
             >
               {loading ? "Redirecting…" : "Start Subscription →"}
