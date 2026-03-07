@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { isValidEmail } from "@/lib/validation";
 
 /**
  * GET /api/member?email=...
@@ -19,7 +20,7 @@ export async function GET(request: NextRequest) {
     const email = searchParams.get("email");
 
     // Validate email
-    if (!email || !/\S+@\S+\.\S+/.test(email)) {
+    if (!email || !isValidEmail(email)) {
       return NextResponse.json(
         {
           error: {
