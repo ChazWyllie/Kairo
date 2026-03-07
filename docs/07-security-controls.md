@@ -82,13 +82,28 @@
 |---------|---------------|--------|
 | HTTPS | Enforced by Vercel (production) | ✅ Platform |
 | Dependency pinning | `package-lock.json` committed; exact versions | ✅ Implemented |
-| Rate limiting | In-memory sliding-window limiter on `POST /api/checkout` — 5 req/60s per IP | ✅ Implemented |
+| Rate limiting (checkout) | In-memory sliding-window limiter on `POST /api/checkout` — 5 req/60s per IP | ✅ Implemented |
+| Rate limiting (quiz) | In-memory sliding-window limiter on `POST /api/quiz` — 10 req/60s per IP | ✅ Implemented |
 | Security headers | Edge middleware sets CSP, X-Content-Type-Options, X-Frame-Options, Referrer-Policy, Permissions-Policy, HSTS | ✅ Implemented |
 | CORS | Next.js defaults — same-origin only | ✅ Default |
 
 ---
 
-## 7. Landing Page (Static)
+## 7. Quiz & Lead Capture
+
+| Control | Implementation | File(s) | Status |
+|---------|---------------|---------|--------|
+| Quiz input validation | Zod schema — validates email (required), answers object (goal, experience, daysPerWeek, minutesPerSession, challenge) | `app/api/quiz/route.ts` | ✅ Implemented |
+| Quiz rate limiting | 10 req/60s per IP — prevents bot spam and abuse | `lib/rate-limit.ts`, `app/api/quiz/route.ts` | ✅ Implemented |
+| Lead upsert pattern | Uses Prisma `upsert` on email — safe for concurrent/duplicate submissions | `app/api/quiz/route.ts` | ✅ Implemented |
+| No PII in quiz analytics | Analytics events contain only tier name, source tag — no email, no answers | `lib/analytics.ts` | ✅ Implemented |
+| Shared email validation | `isValidEmail()` utility used on both client and server — prevents validation mismatch | `lib/validation.ts` | ✅ Implemented |
+| Lead conversion tracking | Webhook updates `convertedAt` on Lead record when email matches activated member | `app/api/webhook/route.ts` | ✅ Implemented |
+| Fire-and-forget welcome email | Quiz welcome email failure doesn't block lead creation | `services/email.ts` | ✅ Implemented |
+
+---
+
+## 8. Landing Page (Static)
 
 | Control | Status |
 |---------|--------|
@@ -100,25 +115,29 @@
 
 ---
 
-## 8. Test Coverage
+## 9. Test Coverage
 
 | Area | Tests | Status |
 |------|-------|--------|
-| Checkout route | 17 unit tests (Zod validation, error paths, Stripe session, rate limiting, pending member upsert) | ✅ Passing |
+| Checkout route | 19 unit tests (Zod validation, error paths, Stripe session, rate limiting, pending member upsert) | ✅ Passing |
 | Webhook route | 23 unit tests (signature, idempotency, member upsert, cancellation, welcome email, admin notification, edge cases) | ✅ Passing |
+| Quiz route | 23 unit tests (Zod validation, rate limiting, lead upsert, tier recommendation, welcome email) | ✅ Passing |
 | Onboarding route | 15 unit tests (Zod validation, active member gate, field persistence, error handling) | ✅ Passing |
 | Member lookup | 6 unit tests (validation, 404, profile + stats, no Stripe ID leakage) | ✅ Passing |
 | Check-in POST | 11 unit tests (validation, active gate, duplicate prevention, happy path, no memberId leakage) | ✅ Passing |
 | Check-in GET/history | 8 unit tests (validation, 404, history + stats, limit param, no memberId leakage) | ✅ Passing |
 | Rate limiter | 7 unit tests (allow/deny, window reset, IP isolation, retry-after) | ✅ Passing |
 | Security headers | 9 unit tests (all headers present on HTML/API paths, non-blocking) | ✅ Passing |
-| Analytics | 6 unit tests (SSR guard, dev logging, prod no-op) | ✅ Passing |
+| Quiz engine | 25 unit tests (scoring, tier boundaries, edge cases) | ✅ Passing |
+| Landing config | 15 unit tests (section types, content validation) | ✅ Passing |
+| Analytics | 9 unit tests (SSR guard, dev logging, prod no-op, quiz events) | ✅ Passing |
+| Lead conversion | 3 unit tests (webhook lead conversion tracking) | ✅ Passing |
 | End-to-end flow | Manual: Checkout → real Stripe payment → webhook → Member in DB | ✅ Verified |
-| Landing page | 50 tests (HTML structure, a11y, CSS, content) | ✅ Passing |
+| Landing page (static) | 50 tests (HTML structure, a11y, CSS, content) | ✅ Passing |
 
 ---
 
-## 9. Open Items
+## 10. Open Items
 
 | Item | Priority | Ticket |
 |------|----------|--------|
@@ -128,13 +147,14 @@
 
 ---
 
-## 10. Control ↔ Threat Mapping
+## 11. Control ↔ Threat Mapping
 
 | Threat (from 03-threat-model.md) | Controls Applied |
-|----------------------------------|-----------------|
+|----------------------------------|------------------|
 | T-01 Webhook Forgery | Signature verification, raw body, event allowlist |
 | T-02 Replay Attacks | Idempotency via StripeEvent table, upsert pattern |
 | T-03 Injection | Zod validation, Prisma parameterized queries |
 | T-04 Checkout Spam | Rate limiting on checkout — 5 req/60s per IP |
+| T-04b Quiz Spam | Rate limiting on quiz — 10 req/60s per IP; Zod validation; lead upsert (idempotent) |
 | T-05 Secrets Leakage | Env-only, validated at startup, no PII in logs |
 | T-06 Elevation of Privilege | No admin UI, Dependabot planned |

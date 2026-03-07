@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { track } from "@/lib/analytics";
 import { PLANS, type PlanConfig, type PlanTier } from "@/lib/stripe-prices";
+import { isValidEmail } from "@/lib/validation";
 
 /**
  * /quiz/result — Shows the recommended tier after quiz completion.
@@ -53,7 +54,7 @@ function ResultContent() {
     e.preventDefault();
     setError(null);
 
-    if (!/\S+@\S+\.\S+/.test(email)) {
+    if (!isValidEmail(email)) {
       setError("Please enter a valid email.");
       return;
     }
