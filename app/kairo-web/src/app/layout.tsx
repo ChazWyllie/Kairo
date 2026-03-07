@@ -14,7 +14,18 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Kairo Coaching — Simple, Structured Fitness Coaching",
-  description: "Personalized training plans, nutrition targets, and weekly check-ins. Your plan adapts. You stay consistent. $50/mo.",
+  description:
+    "Personalized training plans, nutrition coaching, and expert accountability. Take the quiz to find your plan.",
+  metadataBase: new URL(
+    process.env.APP_URL ?? "https://kairo-delta-sand.vercel.app"
+  ),
+  openGraph: {
+    title: "Kairo Coaching — Simple, Structured Fitness Coaching",
+    description:
+      "Personalized training plans, nutrition coaching, and expert accountability.",
+    type: "website",
+    siteName: "Kairo Coaching",
+  },
 };
 
 export default function RootLayout({

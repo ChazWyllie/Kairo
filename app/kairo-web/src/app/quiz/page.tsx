@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { track } from "@/lib/analytics";
+import { isValidEmail } from "@/lib/validation";
 
 /**
  * /quiz — 5-question stepped quiz with progress bar.
@@ -48,7 +49,7 @@ export default function QuizPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!/\S+@\S+\.\S+/.test(email)) {
+    if (!isValidEmail(email)) {
       setError("Please enter a valid email.");
       return;
     }
