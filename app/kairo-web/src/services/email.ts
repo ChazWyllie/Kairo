@@ -1,4 +1,8 @@
 import { env } from "@/lib/env";
+import {
+  getNurtureEmail,
+  type NurtureContext,
+} from "@/lib/nurture-emails";
 
 interface AdminNotification {
   memberEmail: string;
@@ -173,4 +177,59 @@ export async function sendQuizWelcomeEmail(
       <p>— Kairo Coaching</p>
     `,
   });
+}
+
+// ── Nurture Drip Email ──
+
+interface NurtureEmailParams {
+  email: string;
+  step: number;
+  recommendedTier: string | null;
+  goal: string | null;
+}
+
+/**
+ * Send a nurture drip email to a quiz lead.
+ *
+ * Returns true if the email was sent (or stubbed), false if the step
+ * is invalid (e.g. step 5 doesn't exist). Caller should update
+ * lastNurtureStep only when this returns true.
+ *
+ * Fire-and-forget — failures should not crash the nurture batch.
+ */
+export async function sendNurtureEmail(
+  data: NurtureEmailParams
+): Promise<boolean> {
+  const { email, step, recommendedTier, goal } = data;
+
+  const ctx: NurtureContext = {
+    email,
+    recommendedTier,
+    goal,
+    appUrl: env.APP_URL,
+  };
+
+  const content = getNurtureEmail(step, ctx);
+  if (!content) return false;
+
+  if (!env.RESEND_API_KEY) {
+    console.log("[email-stub] Nurture email:", {
+      to: email,
+      step,
+      subject: content.subject,
+    });
+    return true;
+  }
+
+  const { Resend } = await import("resend");
+  const resend = new Resend(env.RESEND_API_KEY);
+
+  await resend.emails.send({
+    from: env.EMAIL_FROM,
+    to: email,
+    subject: content.subject,
+    html: content.html,
+  });
+
+  return true;
 }
