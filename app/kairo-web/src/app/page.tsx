@@ -23,8 +23,8 @@ export default function HomePage() {
         <div className="text-center space-y-4">
           <h1 className="text-4xl font-semibold tracking-tight">Kairo Coaching</h1>
           <p className="text-lg text-neutral-600 max-w-2xl mx-auto">
-            Simple, structured fitness coaching — built for consistency.
-            Choose the plan that fits your goals.
+            Expert fitness coaching built for your goals.
+            Choose the level of support that fits your life.
           </p>
         </div>
 
@@ -175,6 +175,7 @@ function PricingCard({
       )}
 
       <h2 className="text-xl font-semibold">{plan.name}</h2>
+      <p className="mt-1 text-sm text-neutral-500">{plan.tagline}</p>
 
       <div className="mt-3">
         <span className="text-3xl font-bold">${perMonth}</span>
