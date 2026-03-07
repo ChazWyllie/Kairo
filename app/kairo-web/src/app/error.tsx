@@ -16,17 +16,20 @@ export default function GlobalError({
   reset: () => void;
 }) {
   return (
-    <main className="min-h-screen bg-white text-black flex flex-col items-center justify-center px-6">
-      <div className="max-w-md text-center space-y-4">
+    <main className="min-h-screen bg-[var(--background)] text-[var(--foreground)] flex flex-col items-center justify-center px-6">
+      <div className="max-w-md text-center space-y-6 animate-fade-in-up">
+        <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-red-100 text-3xl">
+          ⚠️
+        </div>
         <h1 className="text-2xl font-bold">Something went wrong</h1>
-        <p className="text-neutral-600 text-sm">
+        <p className="text-[var(--foreground-secondary)] text-sm leading-relaxed">
           We hit an unexpected error. Please try again — if the problem persists,
           reach out to us on Instagram.
         </p>
         <button
           type="button"
           onClick={reset}
-          className="rounded-xl bg-black px-6 py-3 text-white font-medium hover:opacity-90 transition-opacity"
+          className="btn-primary"
         >
           Try again
         </button>
