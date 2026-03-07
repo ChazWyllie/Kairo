@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { track } from "@/lib/analytics";
 
 /**
  * Onboarding form — collects training preferences after sign-up.
@@ -25,6 +26,10 @@ export default function OnboardingPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+
+  useEffect(() => {
+    track({ name: "page_view", properties: { path: "/onboarding" } });
+  }, []);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -55,6 +60,7 @@ export default function OnboardingPage() {
           data?.error?.message ?? "Failed to save onboarding data."
         );
 
+      track({ name: "onboarding_submitted", properties: { hasGoal: !!goal } });
       setDone(true);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
