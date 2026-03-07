@@ -30,8 +30,8 @@ export const PLANS: PlanConfig[] = [
     name: "Foundation",
     monthlyPrice: 49,
     annualPrice: 490,
-    monthlyPriceId: "price_1T7xEjGvnI8mNPSSxDFaLBjd",
-    annualPriceId: "price_1T7xFVGvnI8mNPSSqF6xPdwx",
+    monthlyPriceId: "price_1T8RSbGvnI8mNPSS6mKjsldI",
+    annualPriceId: "price_1T8RScGvnI8mNPSSesPZ4UTV",
     features: [
       "Personalized training plan template (updated monthly)",
       "Nutrition targets + simple meal structure",
@@ -44,8 +44,8 @@ export const PLANS: PlanConfig[] = [
     name: "Coaching",
     monthlyPrice: 129,
     annualPrice: 1290,
-    monthlyPriceId: "price_1T7xGPGvnI8mNPSSLaS6wL1x",
-    annualPriceId: "price_1T7xGuGvnI8mNPSSKVQ4W94S",
+    monthlyPriceId: "price_1T8RScGvnI8mNPSSxzQPFxsz",
+    annualPriceId: "price_1T8RScGvnI8mNPSSyyxMXUnH",
     features: [
       "Everything in Foundation",
       "Custom programming (periodized for your goals)",
@@ -59,8 +59,8 @@ export const PLANS: PlanConfig[] = [
     name: "Performance",
     monthlyPrice: 229,
     annualPrice: 2290,
-    monthlyPriceId: "price_1T7xHaGvnI8mNPSSjhiE6CDF",
-    annualPriceId: "price_1T7xI6GvnI8mNPSSWNJh2ywl",
+    monthlyPriceId: "price_1T8RScGvnI8mNPSSHzNmm8rR",
+    annualPriceId: "price_1T8RSdGvnI8mNPSS4rziJgi9",
     features: [
       "Everything in Coaching",
       "Weekly 1-on-1 video calls (30 min)",
@@ -74,8 +74,8 @@ export const PLANS: PlanConfig[] = [
     name: "VIP Elite",
     monthlyPrice: 349,
     annualPrice: 3490,
-    monthlyPriceId: "price_1T7xIpGvnI8mNPSSNwq7rxQx",
-    annualPriceId: "price_1T7xJKGvnI8mNPSSadMSr2D7",
+    monthlyPriceId: "price_1T8RSdGvnI8mNPSSJBzptu0L",
+    annualPriceId: "price_1T8RSdGvnI8mNPSS0WQMUyQW",
     features: [
       "Everything in Performance",
       "Daily messaging access",
