@@ -3,9 +3,10 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { track } from "@/lib/analytics";
+import { PLANS } from "@/lib/stripe-prices";
 
 /**
- * Client dashboard — member portal showing status, onboarding data,
+ * Client dashboard — member portal showing status, plan info, onboarding data,
  * check-in history, streak, and daily logging form.
  *
  * Identified by email (no auth in MVP — Stripe is identity provider).
@@ -16,6 +17,8 @@ import { track } from "@/lib/analytics";
 interface MemberProfile {
   email: string;
   status: string;
+  planTier: string | null;
+  billingInterval: string | null;
   goal: string | null;
   daysPerWeek: number | null;
   minutesPerSession: number | null;
@@ -242,6 +245,15 @@ export default function DashboardPage() {
           >
             {member.status}
           </span>
+          {member.planTier && (() => {
+            const planConfig = PLANS.find((p) => p.tier === member.planTier);
+            return planConfig ? (
+              <p className="mt-2 text-sm text-neutral-600">
+                {planConfig.name} plan
+                {member.billingInterval ? ` · ${member.billingInterval}` : ""}
+              </p>
+            ) : null;
+          })()}
         </div>
 
         {/* Pending member notice */}

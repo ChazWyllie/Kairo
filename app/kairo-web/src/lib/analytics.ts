@@ -10,9 +10,9 @@
 
 export type AnalyticsEvent =
   | { name: "page_view"; properties: { path: string } }
-  | { name: "cta_click"; properties: { location: string } }
-  | { name: "checkout_started"; properties: { hasPhone: boolean } }
-  | { name: "checkout_error"; properties: { error: string } }
+  | { name: "cta_click"; properties: { location: string; tier?: string } }
+  | { name: "checkout_started"; properties: { hasPhone: boolean; tier?: string; interval?: string } }
+  | { name: "checkout_error"; properties: { error: string; tier?: string } }
   | { name: "onboarding_submitted"; properties: { hasGoal: boolean } }
   | { name: "dashboard_loaded"; properties: { status: string } }
   | { name: "checkin_submitted"; properties: { workout: boolean } };

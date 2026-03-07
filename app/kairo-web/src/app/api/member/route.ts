@@ -69,6 +69,8 @@ export async function GET(request: NextRequest) {
       member: {
         email: member.email,
         status: member.status,
+        planTier: member.planTier,
+        billingInterval: member.billingInterval,
         goal: member.goal,
         daysPerWeek: member.daysPerWeek,
         minutesPerSession: member.minutesPerSession,

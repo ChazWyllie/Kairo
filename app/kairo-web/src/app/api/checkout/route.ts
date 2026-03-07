@@ -4,18 +4,20 @@ import { stripe } from "@/services/stripe";
 import { env } from "@/lib/env";
 import { prisma } from "@/lib/prisma";
 import { checkoutLimiter } from "@/lib/rate-limit";
+import { ALLOWED_PRICE_IDS, getPlanFromPriceId } from "@/lib/stripe-prices";
 
 /**
  * POST /api/checkout
  *
- * Accepts { email, phone? } from the landing page form.
- * 1. Validates input via Zod
- * 2. Upserts a "pending" Member in the database
- * 3. Creates a Stripe Checkout Session (with customer_email pre-filled)
+ * Accepts { email, phone?, planId } from the landing page pricing cards.
+ * 1. Validates input via Zod (including planId against ALLOWED_PRICE_IDS)
+ * 2. Upserts a "pending" Member with planTier + billingInterval
+ * 3. Creates a Stripe Checkout Session with plan metadata
  * 4. Returns { url } for client-side redirect to Stripe's hosted checkout
  *
  * Security:
  * - Zod input validation — no raw req.body access
+ * - planId validated against allowlist (ALLOWED_PRICE_IDS)
  * - STRIPE_SECRET_KEY stays server-side
  * - No PII logged
  */
@@ -23,6 +25,7 @@ import { checkoutLimiter } from "@/lib/rate-limit";
 const CheckoutSchema = z.object({
   email: z.string().email("A valid email is required"),
   phone: z.string().optional(),
+  planId: z.string().min(1, "Plan selection is required"),
 });
 
 export async function POST(request: NextRequest) {
@@ -64,13 +67,39 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { email, phone } = parsed.data;
+    const { email, phone, planId } = parsed.data;
+
+    // Validate planId against our allowlist
+    if (!ALLOWED_PRICE_IDS.has(planId)) {
+      return NextResponse.json(
+        {
+          error: {
+            code: "INVALID_PLAN",
+            message: "Invalid plan selection",
+          },
+        },
+        { status: 400 }
+      );
+    }
+
+    // Look up tier + interval from the price ID
+    const planInfo = getPlanFromPriceId(planId)!;
 
     // Upsert a pending member — webhook will activate on payment success
     await prisma.member.upsert({
       where: { email },
-      create: { email, phone: phone || null, status: "pending" },
-      update: { phone: phone || null },
+      create: {
+        email,
+        phone: phone || null,
+        status: "pending",
+        planTier: planInfo.plan.tier,
+        billingInterval: planInfo.interval,
+      },
+      update: {
+        phone: phone || null,
+        planTier: planInfo.plan.tier,
+        billingInterval: planInfo.interval,
+      },
     });
 
     const session = await stripe.checkout.sessions.create({
@@ -78,10 +107,14 @@ export async function POST(request: NextRequest) {
       customer_email: email,
       line_items: [
         {
-          price: env.STRIPE_PRICE_ID,
+          price: planId,
           quantity: 1,
         },
       ],
+      metadata: {
+        planTier: planInfo.plan.tier,
+        billingInterval: planInfo.interval,
+      },
       success_url: `${env.APP_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${env.APP_URL}`,
     });

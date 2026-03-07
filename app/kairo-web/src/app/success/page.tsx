@@ -1,4 +1,7 @@
+import { Suspense } from "react";
 import Link from "next/link";
+
+export const dynamic = "force-dynamic";
 
 /**
  * Post-checkout success page.
@@ -6,6 +9,22 @@ import Link from "next/link";
  * Note: membership activation is handled by the webhook, not this page.
  */
 export default function SuccessPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-white text-black">
+          <div className="mx-auto max-w-2xl px-6 py-16">
+            <p className="text-neutral-600">Loading…</p>
+          </div>
+        </main>
+      }
+    >
+      <SuccessContent />
+    </Suspense>
+  );
+}
+
+function SuccessContent() {
   return (
     <main className="min-h-screen bg-white text-black">
       <div className="mx-auto max-w-2xl px-6 py-16">

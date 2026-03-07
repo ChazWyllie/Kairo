@@ -3,6 +3,10 @@
  * No real secrets — all fake test data.
  */
 import Stripe from "stripe";
+import { PLANS } from "@/lib/stripe-prices";
+
+// ── Test Plan ID — first plan's monthly price (Foundation) ──
+export const TEST_PLAN_ID = PLANS[0].monthlyPriceId;
 
 // ── Stripe Checkout Session fixtures ──
 
@@ -26,6 +30,7 @@ export function makeCheckoutCompletedEvent(
     email?: string | null;
     customerId?: string | null;
     subscriptionId?: string | null;
+    metadata?: Record<string, string>;
   } = {}
 ): Stripe.Event {
   const {
@@ -33,6 +38,7 @@ export function makeCheckoutCompletedEvent(
     email = "member@test.com",
     customerId = "cus_test_abc",
     subscriptionId = "sub_test_xyz",
+    metadata = { planTier: "foundation", billingInterval: "monthly" },
   } = overrides;
 
   return {
@@ -53,6 +59,7 @@ export function makeCheckoutCompletedEvent(
         customer_details: {
           email,
         },
+        metadata,
         mode: "subscription",
       } as unknown as Stripe.Checkout.Session,
     },

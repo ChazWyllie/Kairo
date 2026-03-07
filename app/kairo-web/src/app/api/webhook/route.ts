@@ -115,7 +115,11 @@ export async function POST(request: NextRequest) {
       data: { id: event.id },
     });
 
-    // 6. Upsert member — create if new, update if existing
+    // 6. Extract plan metadata (set during checkout)
+    const planTier = (session.metadata?.planTier as string) || null;
+    const billingInterval = (session.metadata?.billingInterval as string) || null;
+
+    // 7. Upsert member — create if new, update if existing
     await prisma.member.upsert({
       where: { email },
       create: {
@@ -123,15 +127,19 @@ export async function POST(request: NextRequest) {
         stripeCustomerId: customerId,
         stripeSubId: subscriptionId,
         status: "active",
+        planTier,
+        billingInterval,
       },
       update: {
         stripeCustomerId: customerId,
         stripeSubId: subscriptionId,
         status: "active",
+        planTier,
+        billingInterval,
       },
     });
 
-    // 7. Notify admin (fire-and-forget — don't fail the webhook)
+    // 8. Notify admin (fire-and-forget — don't fail the webhook)
     try {
       await notifyAdmin({
         memberEmail: email,
@@ -143,7 +151,7 @@ export async function POST(request: NextRequest) {
       console.error("[webhook] Admin notification failed (non-fatal)");
     }
 
-    // 8. Send welcome email to new member (fire-and-forget)
+    // 9. Send welcome email to new member (fire-and-forget)
     try {
       await sendWelcomeEmail({ memberEmail: email });
     } catch (emailErr) {
