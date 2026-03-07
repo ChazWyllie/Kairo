@@ -32,12 +32,14 @@ export function middleware(_request: NextRequest): NextResponse {
     "camera=(), microphone=(), geolocation=(), interest-cohort=()"
   );
 
-  // Content Security Policy — strict but allows Stripe JS and inline styles (Tailwind)
+  // Content Security Policy — allows Stripe JS, inline styles (Tailwind),
+  // and inline scripts (Next.js hydration/Turbopack injects inline <script> tags).
+  // TODO: Migrate to nonce-based CSP for stricter script-src control.
   response.headers.set(
     "content-security-policy",
     [
       "default-src 'self'",
-      "script-src 'self' https://js.stripe.com",
+      "script-src 'self' 'unsafe-inline' https://js.stripe.com",
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: https:",
       "font-src 'self'",
