@@ -158,6 +158,22 @@ export async function POST(request: NextRequest) {
       console.error("[webhook] Welcome email failed (non-fatal)");
     }
 
+    // 10. Update lead conversion tracking (fire-and-forget)
+    try {
+      const lead = await prisma.lead.findUnique({
+        where: { email },
+      });
+      if (lead && !lead.convertedAt) {
+        await prisma.lead.update({
+          where: { email },
+          data: { convertedAt: new Date() },
+        });
+      }
+    } catch (leadErr) {
+      // Non-fatal — member is already activated
+      console.error("[webhook] Lead conversion tracking failed (non-fatal)");
+    }
+
     return NextResponse.json({ received: true, status: "processed" });
   }
 

@@ -135,3 +135,41 @@ export function makeCheckoutRequest(body: Record<string, unknown> = {}): Request
     body: JSON.stringify(body),
   });
 }
+
+// ── Quiz fixtures ──
+
+export const VALID_QUIZ_ANSWERS = {
+  goal: "muscle" as const,
+  experience: "intermediate" as const,
+  daysPerWeek: 4,
+  minutesPerSession: 30,
+  challenge: "consistency" as const,
+};
+
+export const MINIMAL_QUIZ_SUBMISSION = {
+  email: "quiz@test.com",
+  answers: {},
+};
+
+export const FULL_QUIZ_SUBMISSION = {
+  email: "quiz@test.com",
+  answers: VALID_QUIZ_ANSWERS,
+};
+
+export const MOCK_LEAD = {
+  id: "lead_test_abc",
+  email: "quiz@test.com",
+  quizAnswers: VALID_QUIZ_ANSWERS,
+  recommendedTier: "coaching",
+  source: "quiz",
+  capturedAt: new Date("2026-03-07T00:00:00Z"),
+  convertedAt: null,
+};
+
+export function makeQuizRequest(body: Record<string, unknown> = {}): Request {
+  return new Request("http://localhost:3000/api/quiz", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
