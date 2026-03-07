@@ -38,12 +38,14 @@ export default function HomePage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error?.message ?? "Failed to start checkout.");
 
+      // Redirect to Stripe — page will navigate away
       window.location.href = data.url;
+      // Don't setLoading(false) — we're leaving the page
+      return;
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Something went wrong.";
       track({ name: "checkout_error", properties: { error: msg } });
       setError(msg);
-    } finally {
       setLoading(false);
     }
   }
@@ -125,7 +127,7 @@ export default function HomePage() {
               onClick={() => track({ name: "cta_click", properties: { location: "checkout_form" } })}
               className="w-full rounded-xl bg-black px-4 py-3 text-white font-medium transition-opacity disabled:opacity-60"
             >
-              {loading ? "Redirecting…" : "Start Subscription →"}
+              {loading ? "Redirecting to Stripe…" : "Start Subscription →"}
             </button>
 
             <p className="text-xs text-neutral-500 text-center">
