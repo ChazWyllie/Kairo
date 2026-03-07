@@ -1,5 +1,5 @@
 /**
- * Next.js Edge Middleware — security headers on all responses.
+ * Next.js Edge Proxy — security headers on all responses.
  *
  * Sets OWASP-recommended headers:
  * - CSP (Content Security Policy)
@@ -14,7 +14,7 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 
-export function middleware(_request: NextRequest): NextResponse {
+export function proxy(_request: NextRequest): NextResponse {
   const response = NextResponse.next();
 
   // Prevent MIME type sniffing
