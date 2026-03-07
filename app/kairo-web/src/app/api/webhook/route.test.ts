@@ -11,6 +11,8 @@ import {
   mockPrisma,
   mockStripeConstructEvent,
   mockNotifyAdmin,
+  mockNotifyAdminCancellation,
+  mockSendWelcomeEmail,
 } from "@/test/setup";
 import {
   makeCheckoutCompletedEvent,
@@ -42,6 +44,12 @@ describe("POST /api/webhook", () => {
     mockPrisma.member.upsert.mockReset();
     mockPrisma.member.updateMany.mockReset();
     mockNotifyAdmin.mockReset();
+    mockNotifyAdminCancellation.mockReset();
+    mockSendWelcomeEmail.mockReset();
+    // Default: email functions succeed (fire-and-forget)
+    mockNotifyAdmin.mockResolvedValue(undefined);
+    mockNotifyAdminCancellation.mockResolvedValue(undefined);
+    mockSendWelcomeEmail.mockResolvedValue(undefined);
   });
 
   // ── Signature Verification ──
@@ -74,7 +82,6 @@ describe("POST /api/webhook", () => {
       mockPrisma.stripeEvent.findUnique.mockResolvedValue(null);
       mockPrisma.stripeEvent.create.mockResolvedValue({ id: event.id });
       mockPrisma.member.upsert.mockResolvedValue({});
-      mockNotifyAdmin.mockResolvedValue(undefined);
 
       await POST(makeRequest("raw_body_content", "sig_123"));
 
@@ -112,7 +119,6 @@ describe("POST /api/webhook", () => {
       mockPrisma.stripeEvent.findUnique.mockResolvedValue(null);
       mockPrisma.stripeEvent.create.mockResolvedValue({ id: event.id });
       mockPrisma.member.upsert.mockResolvedValue({});
-      mockNotifyAdmin.mockResolvedValue(undefined);
 
       await POST(makeRequest());
 
@@ -134,7 +140,6 @@ describe("POST /api/webhook", () => {
         callOrder.push("upsertMember");
         return {};
       });
-      mockNotifyAdmin.mockResolvedValue(undefined);
 
       await POST(makeRequest());
 
@@ -155,7 +160,6 @@ describe("POST /api/webhook", () => {
       mockPrisma.stripeEvent.findUnique.mockResolvedValue(null);
       mockPrisma.stripeEvent.create.mockResolvedValue({ id: event.id });
       mockPrisma.member.upsert.mockResolvedValue({});
-      mockNotifyAdmin.mockResolvedValue(undefined);
 
       const response = await POST(makeRequest());
       const data = await response.json();
@@ -188,7 +192,6 @@ describe("POST /api/webhook", () => {
       mockPrisma.stripeEvent.findUnique.mockResolvedValue(null);
       mockPrisma.stripeEvent.create.mockResolvedValue({ id: event.id });
       mockPrisma.member.upsert.mockResolvedValue({});
-      mockNotifyAdmin.mockResolvedValue(undefined);
 
       await POST(makeRequest());
 
@@ -206,6 +209,37 @@ describe("POST /api/webhook", () => {
       mockPrisma.stripeEvent.create.mockResolvedValue({ id: event.id });
       mockPrisma.member.upsert.mockResolvedValue({});
       mockNotifyAdmin.mockRejectedValue(new Error("Email service down"));
+
+      const response = await POST(makeRequest());
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.status).toBe("processed");
+    });
+
+    it("sends welcome email to the new member", async () => {
+      const event = makeCheckoutCompletedEvent({
+        email: "welcome@test.com",
+      });
+      mockStripeConstructEvent.mockReturnValue(event);
+      mockPrisma.stripeEvent.findUnique.mockResolvedValue(null);
+      mockPrisma.stripeEvent.create.mockResolvedValue({ id: event.id });
+      mockPrisma.member.upsert.mockResolvedValue({});
+
+      await POST(makeRequest());
+
+      expect(mockSendWelcomeEmail).toHaveBeenCalledWith({
+        memberEmail: "welcome@test.com",
+      });
+    });
+
+    it("still returns 200 if welcome email fails", async () => {
+      const event = makeCheckoutCompletedEvent();
+      mockStripeConstructEvent.mockReturnValue(event);
+      mockPrisma.stripeEvent.findUnique.mockResolvedValue(null);
+      mockPrisma.stripeEvent.create.mockResolvedValue({ id: event.id });
+      mockPrisma.member.upsert.mockResolvedValue({});
+      mockSendWelcomeEmail.mockRejectedValue(new Error("Welcome email failed"));
 
       const response = await POST(makeRequest());
       const data = await response.json();
@@ -335,6 +369,41 @@ describe("POST /api/webhook", () => {
       mockPrisma.stripeEvent.findUnique.mockResolvedValue(null);
       mockPrisma.stripeEvent.create.mockResolvedValue({ id: event.id });
       mockPrisma.member.updateMany.mockResolvedValue({ count: 0 });
+
+      const response = await POST(makeRequest());
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.status).toBe("processed");
+    });
+
+    it("sends admin cancellation notification", async () => {
+      const event = makeSubscriptionDeletedEvent({
+        subscriptionId: "sub_cancel_notify",
+      });
+      mockStripeConstructEvent.mockReturnValue(event);
+      mockPrisma.stripeEvent.findUnique.mockResolvedValue(null);
+      mockPrisma.stripeEvent.create.mockResolvedValue({ id: event.id });
+      mockPrisma.member.updateMany.mockResolvedValue({ count: 1 });
+
+      await POST(makeRequest());
+
+      expect(mockNotifyAdminCancellation).toHaveBeenCalledWith({
+        stripeSubId: "sub_cancel_notify",
+      });
+    });
+
+    it("still returns 200 if cancellation notification fails", async () => {
+      const event = makeSubscriptionDeletedEvent({
+        subscriptionId: "sub_cancel_fail",
+      });
+      mockStripeConstructEvent.mockReturnValue(event);
+      mockPrisma.stripeEvent.findUnique.mockResolvedValue(null);
+      mockPrisma.stripeEvent.create.mockResolvedValue({ id: event.id });
+      mockPrisma.member.updateMany.mockResolvedValue({ count: 1 });
+      mockNotifyAdminCancellation.mockRejectedValue(
+        new Error("Cancellation email failed")
+      );
 
       const response = await POST(makeRequest());
       const data = await response.json();

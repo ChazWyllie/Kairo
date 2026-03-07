@@ -13,6 +13,14 @@ model Member {
   stripeCustomerId String?  @unique
   stripeSubId      String?  @unique
   status           String   @default("pending") // pending | active | canceled
+
+  // Onboarding (Phase 4) — all optional, filled post-checkout
+  goal             String?  // "fat_loss" | "muscle" | "maintenance"
+  daysPerWeek      Int?     // 1-7
+  minutesPerSession Int?    // 15 | 20 | 30 | 45 | 60
+  injuries         String?  // free-text limitations
+  onboardedAt      DateTime?
+
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 }
