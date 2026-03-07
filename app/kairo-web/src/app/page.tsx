@@ -135,8 +135,11 @@ export default function HomePage() {
         </div>
 
         {/* Footer */}
-        <div className="mt-10 text-sm text-neutral-500">
+        <div className="mt-10 flex items-center justify-between text-sm text-neutral-500">
           <p>© {new Date().getFullYear()} Kairo Coaching. All rights reserved.</p>
+          <a href="/dashboard" className="hover:text-black transition-colors">
+            My Dashboard →
+          </a>
         </div>
       </div>
     </main>

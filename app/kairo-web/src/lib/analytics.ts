@@ -13,7 +13,9 @@ export type AnalyticsEvent =
   | { name: "cta_click"; properties: { location: string } }
   | { name: "checkout_started"; properties: { hasPhone: boolean } }
   | { name: "checkout_error"; properties: { error: string } }
-  | { name: "onboarding_submitted"; properties: { hasGoal: boolean } };
+  | { name: "onboarding_submitted"; properties: { hasGoal: boolean } }
+  | { name: "dashboard_loaded"; properties: { status: string } }
+  | { name: "checkin_submitted"; properties: { workout: boolean } };
 
 /**
  * Track an analytics event.

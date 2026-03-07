@@ -18,12 +18,20 @@ export default function SuccessPage() {
           You&apos;ll receive next steps by email shortly.
         </p>
 
-        <Link
-          href="/"
-          className="mt-8 inline-block rounded-xl bg-black px-6 py-3 text-white font-medium"
-        >
-          ← Back to home
-        </Link>
+        <div className="mt-8 flex flex-wrap gap-4">
+          <Link
+            href="/onboarding"
+            className="rounded-xl bg-black px-6 py-3 text-white font-medium"
+          >
+            Complete onboarding →
+          </Link>
+          <Link
+            href="/dashboard"
+            className="rounded-xl border border-neutral-300 px-6 py-3 font-medium hover:border-neutral-500"
+          >
+            View dashboard
+          </Link>
+        </div>
       </div>
     </main>
   );
