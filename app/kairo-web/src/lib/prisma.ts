@@ -1,6 +1,5 @@
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
-import { Pool as NeonPool } from "@neondatabase/serverless";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
@@ -9,12 +8,9 @@ const globalForPrisma = globalThis as unknown as {
 function createPrismaClient(): PrismaClient {
   const connectionString = process.env.DATABASE_URL!;
 
-  // Neon serverless Pool on Vercel, regular PoolConfig locally
-  const isServerless = !!process.env.VERCEL;
-
-  const adapter = isServerless
-    ? new PrismaPg(new NeonPool({ connectionString }))
-    : new PrismaPg({ connectionString });
+  // PrismaPg handles both local and serverless (Neon) connections
+  // via the standard PostgreSQL connection string
+  const adapter = new PrismaPg({ connectionString });
 
   return new PrismaClient({ adapter });
 }
