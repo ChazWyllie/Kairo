@@ -3,6 +3,7 @@ import { z } from "zod";
 import { stripe } from "@/services/stripe";
 import { env } from "@/lib/env";
 import { prisma } from "@/lib/prisma";
+import { checkoutLimiter } from "@/lib/rate-limit";
 
 /**
  * POST /api/checkout
@@ -25,6 +26,26 @@ const CheckoutSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
+  // Rate limit — 5 requests per 60s per IP (mitigates T-04 Checkout Spam)
+  const ip =
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  const limit = checkoutLimiter.check(ip);
+
+  if (!limit.allowed) {
+    return NextResponse.json(
+      {
+        error: {
+          code: "RATE_LIMIT_EXCEEDED",
+          message: "Too many requests. Please try again later.",
+        },
+      },
+      {
+        status: 429,
+        headers: { "Retry-After": String(limit.retryAfter) },
+      }
+    );
+  }
+
   try {
     const body = await request.json().catch(() => ({}));
     const parsed = CheckoutSchema.safeParse(body);

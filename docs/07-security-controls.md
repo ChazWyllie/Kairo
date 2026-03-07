@@ -1,7 +1,7 @@
 # Kairo Coaching — Security Controls
 
-> **Version:** 2.0
-> **Last Updated:** 2026-03-05
+> **Version:** 3.0
+> **Last Updated:** 2026-03-07
 > **Scope:** MVP (landing page + Stripe subscription flow)
 > **Cross-reference:** [03 — Threat Model](03-threat-model.md)
 
@@ -11,7 +11,7 @@
 
 | Control | Implementation | File(s) | Status |
 |---------|---------------|---------|--------|
-| Checkout request validation | Zod schema — validates `successUrl` and `cancelUrl` as required URL strings | `app/api/checkout/route.ts` | ✅ Implemented |
+| Checkout request validation | Zod schema — validates `email` (required) and `phone` (optional string) | `app/api/checkout/route.ts` | ✅ Implemented |
 | No raw `req.body` access | All request parsing goes through Zod; invalid payloads rejected with 400 | `app/api/checkout/route.ts` | ✅ Implemented |
 | Webhook body handling | Raw `request.text()` for signature verification — never JSON-parsed before validation | `app/api/webhook/route.ts` | ✅ Implemented |
 | SQL injection prevention | Prisma ORM — all queries use parameterized statements | `lib/prisma.ts` | ✅ Implemented |
@@ -37,7 +37,7 @@
 |---------|---------------|---------|--------|
 | Signature verification | `stripe.webhooks.constructEvent(rawBody, signature, secret)` on every request | `app/api/webhook/route.ts` | ✅ Implemented |
 | Raw body integrity | Uses `request.text()` — not `request.json()` — to preserve exact bytes for signature check | `app/api/webhook/route.ts` | ✅ Implemented |
-| Event type allowlist | Only `checkout.session.completed` is processed; all other types return 200 + `ignored` | `app/api/webhook/route.ts` | ✅ Implemented |
+| Event type allowlist | `checkout.session.completed` and `customer.subscription.deleted` are processed; all other types return 200 + `ignored` | `app/api/webhook/route.ts` | ✅ Implemented |
 | Idempotency guard | `StripeEvent` table stores processed event IDs; duplicates return 200 + `already_processed` | `app/api/webhook/route.ts` | ✅ Implemented |
 | Pre-processing event storage | Event ID stored *before* member upsert to prevent race condition on duplicate delivery | `app/api/webhook/route.ts` | ✅ Implemented |
 
@@ -74,8 +74,8 @@
 |---------|---------------|--------|
 | HTTPS | Enforced by Vercel (production) | ✅ Platform |
 | Dependency pinning | `package-lock.json` committed; exact versions | ✅ Implemented |
-| Rate limiting | **⚠️ Not yet implemented** — planned for `POST /api/checkout` | ❌ TODO |
-| CSP headers | **⚠️ Not yet implemented** — planned via `next.config.ts` | ❌ TODO |
+| Rate limiting | In-memory sliding-window limiter on `POST /api/checkout` — 5 req/60s per IP | ✅ Implemented |
+| Security headers | Edge middleware sets CSP, X-Content-Type-Options, X-Frame-Options, Referrer-Policy, Permissions-Policy, HSTS | ✅ Implemented |
 | CORS | Next.js defaults — same-origin only | ✅ Default |
 
 ---
@@ -96,8 +96,10 @@
 
 | Area | Tests | Status |
 |------|-------|--------|
-| Checkout route | 12 unit tests (Zod validation, error paths, Stripe session creation) | ✅ Passing |
-| Webhook route | 16 unit tests (signature, idempotency, member upsert, email, edge cases) | ✅ Passing |
+| Checkout route | 17 unit tests (Zod validation, error paths, Stripe session, rate limiting, pending member upsert) | ✅ Passing |
+| Webhook route | 19 unit tests (signature, idempotency, member upsert, cancellation, email, edge cases) | ✅ Passing |
+| Rate limiter | 7 unit tests (allow/deny, window reset, IP isolation, retry-after) | ✅ Passing |
+| Security headers | 9 unit tests (all headers present on HTML/API paths, non-blocking) | ✅ Passing |
 | End-to-end flow | Manual: Checkout → real Stripe payment → webhook → Member in DB | ✅ Verified |
 | Landing page | 50 tests (HTML structure, a11y, CSS, content) | ✅ Passing |
 
@@ -107,8 +109,6 @@
 
 | Item | Priority | Ticket |
 |------|----------|--------|
-| Rate limiting on `POST /api/checkout` | P2 | Pre-launch |
-| CSP + security headers via `next.config.ts` | P2 | Pre-launch |
 | Dependabot + `npm audit` in CI | P1 | CI pipeline setup |
 | Incident response playbook | P2 | Pre-launch |
 | CAPTCHA/honeypot if checkout spam observed | P3 | Post-launch |
@@ -122,6 +122,6 @@
 | T-01 Webhook Forgery | Signature verification, raw body, event allowlist |
 | T-02 Replay Attacks | Idempotency via StripeEvent table, upsert pattern |
 | T-03 Injection | Zod validation, Prisma parameterized queries |
-| T-04 Checkout Spam | ⚠️ Rate limiting TODO |
+| T-04 Checkout Spam | Rate limiting on checkout — 5 req/60s per IP |
 | T-05 Secrets Leakage | Env-only, validated at startup, no PII in logs |
 | T-06 Elevation of Privilege | No admin UI, Dependabot planned |
