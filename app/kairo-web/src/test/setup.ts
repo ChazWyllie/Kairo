@@ -14,6 +14,7 @@ vi.mock("@/lib/env", () => ({
     ADMIN_NOTIFY_EMAIL: "admin@test.com",
     RESEND_API_KEY: undefined,
     EMAIL_FROM: "Test <test@test.com>",
+    COACH_SECRET: "test-coach-secret-1234567890",
   },
 }));
 
@@ -22,6 +23,8 @@ export const mockPrisma = {
   member: {
     upsert: vi.fn(),
     findUnique: vi.fn(),
+    findMany: vi.fn(),
+    count: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
     updateMany: vi.fn(),
@@ -39,6 +42,7 @@ export const mockPrisma = {
   lead: {
     upsert: vi.fn(),
     findUnique: vi.fn(),
+    count: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
   },

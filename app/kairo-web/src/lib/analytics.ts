@@ -15,6 +15,7 @@ export type AnalyticsEvent =
   | { name: "checkout_error"; properties: { error: string; tier?: string } }
   | { name: "onboarding_submitted"; properties: { hasGoal: boolean } }
   | { name: "dashboard_loaded"; properties: { status: string } }
+  | { name: "coach_dashboard_loaded"; properties: { clients: number } }
   | { name: "checkin_submitted"; properties: { workout: boolean } }
   | { name: "quiz_started"; properties: { source?: string } }
   | { name: "quiz_completed"; properties: { recommendedTier: string } }

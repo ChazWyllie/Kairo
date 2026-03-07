@@ -14,6 +14,10 @@ export const env = createEnv({
     ADMIN_NOTIFY_EMAIL: z.string().email("ADMIN_NOTIFY_EMAIL must be valid"),
     RESEND_API_KEY: z.string().min(1, "RESEND_API_KEY is required").optional(),
     EMAIL_FROM: z.string().min(1, "EMAIL_FROM is required"),
+    COACH_SECRET: z
+      .string()
+      .min(16, "COACH_SECRET must be at least 16 characters")
+      .optional(),
   },
   // No client-side env vars — Stripe keys stay server-side
   client: {},
@@ -25,6 +29,7 @@ export const env = createEnv({
     ADMIN_NOTIFY_EMAIL: process.env.ADMIN_NOTIFY_EMAIL,
     RESEND_API_KEY: process.env.RESEND_API_KEY,
     EMAIL_FROM: process.env.EMAIL_FROM,
+    COACH_SECRET: process.env.COACH_SECRET,
   },
   // Skip validation during Vercel build if env vars aren't configured yet
   skipValidation: !!process.env.SKIP_ENV_VALIDATION,
