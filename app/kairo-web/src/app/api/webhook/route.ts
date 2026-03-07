@@ -3,7 +3,7 @@ import Stripe from "stripe";
 import { stripe } from "@/services/stripe";
 import { env } from "@/lib/env";
 import { prisma } from "@/lib/prisma";
-import { notifyAdmin } from "@/services/email";
+import { notifyAdmin, notifyAdminCancellation, sendWelcomeEmail } from "@/services/email";
 
 /**
  * POST /api/webhook
@@ -143,6 +143,13 @@ export async function POST(request: NextRequest) {
       console.error("[webhook] Admin notification failed (non-fatal)");
     }
 
+    // 8. Send welcome email to new member (fire-and-forget)
+    try {
+      await sendWelcomeEmail({ memberEmail: email });
+    } catch (emailErr) {
+      console.error("[webhook] Welcome email failed (non-fatal)");
+    }
+
     return NextResponse.json({ received: true, status: "processed" });
   }
 
@@ -178,6 +185,13 @@ export async function POST(request: NextRequest) {
       where: { stripeSubId: subscriptionId },
       data: { status: "canceled" },
     });
+
+    // Notify admin of cancellation (fire-and-forget)
+    try {
+      await notifyAdminCancellation({ stripeSubId: subscriptionId });
+    } catch (emailErr) {
+      console.error("[webhook] Cancellation notification failed (non-fatal)");
+    }
 
     return NextResponse.json({ received: true, status: "processed" });
   }

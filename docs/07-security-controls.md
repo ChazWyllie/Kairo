@@ -1,8 +1,8 @@
 # Kairo Coaching — Security Controls
 
-> **Version:** 3.0
+> **Version:** 4.0
 > **Last Updated:** 2026-03-07
-> **Scope:** MVP (landing page + Stripe subscription flow)
+> **Scope:** MVP (landing page + Stripe subscription + onboarding flow)
 > **Cross-reference:** [03 — Threat Model](03-threat-model.md)
 
 ---
@@ -16,6 +16,8 @@
 | Webhook body handling | Raw `request.text()` for signature verification — never JSON-parsed before validation | `app/api/webhook/route.ts` | ✅ Implemented |
 | SQL injection prevention | Prisma ORM — all queries use parameterized statements | `lib/prisma.ts` | ✅ Implemented |
 | Required field enforcement | Webhook rejects `checkout.session.completed` events missing email, customer ID, or subscription ID | `app/api/webhook/route.ts` | ✅ Implemented |
+| Onboarding request validation | Zod schema — validates email (required), goal (enum), daysPerWeek (1-7), minutesPerSession (enum), injuries (max 500 chars) | `app/api/onboarding/route.ts` | ✅ Implemented |
+| Active member gate | Onboarding endpoint only updates members with `status: "active"` — pending/canceled members receive 404 | `app/api/onboarding/route.ts` | ✅ Implemented |
 
 ---
 
@@ -27,7 +29,7 @@
 | Webhook caller verification | `stripe.webhooks.constructEvent()` — cryptographic signature verification on every event | ✅ Implemented |
 | Signature header required | Missing `stripe-signature` header → 400 rejection before any processing | ✅ Implemented |
 
-> **Note:** MVP has no user login. Stripe is the identity provider. This eliminates an entire class of auth vulnerabilities (credential stuffing, session hijacking, password storage).
+> **Note:** MVP has no user login. Stripe is the identity provider. This eliminates an entire class of auth vulnerabilities (credential stuffing, session hijacking, password storage). Onboarding uses email as identity key — only active (paid) members can submit onboarding data.
 
 ---
 
@@ -60,7 +62,7 @@
 
 | Control | Implementation | Status |
 |---------|---------------|--------|
-| PII minimization | Only email stored; phone optional; no health/fitness data | ✅ Implemented |
+| PII minimization | Only email + phone stored as PII; onboarding fields (goal, schedule, injuries) are training preferences, not medical data | ✅ Implemented |
 | Unique constraints | `email`, `stripeCustomerId`, `stripeSubId` all unique — prevents duplicate member records | ✅ Implemented |
 | Upsert pattern | Member creation uses `upsert` — safe for concurrent/duplicate webhook delivery | ✅ Implemented |
 | No admin UI | Admin notifications via email only — no dashboard to attack in MVP | ✅ By design |
@@ -97,7 +99,8 @@
 | Area | Tests | Status |
 |------|-------|--------|
 | Checkout route | 17 unit tests (Zod validation, error paths, Stripe session, rate limiting, pending member upsert) | ✅ Passing |
-| Webhook route | 19 unit tests (signature, idempotency, member upsert, cancellation, email, edge cases) | ✅ Passing |
+| Webhook route | 23 unit tests (signature, idempotency, member upsert, cancellation, welcome email, admin notification, edge cases) | ✅ Passing |
+| Onboarding route | 15 unit tests (Zod validation, active member gate, field persistence, error handling) | ✅ Passing |
 | Rate limiter | 7 unit tests (allow/deny, window reset, IP isolation, retry-after) | ✅ Passing |
 | Security headers | 9 unit tests (all headers present on HTML/API paths, non-blocking) | ✅ Passing |
 | End-to-end flow | Manual: Checkout → real Stripe payment → webhook → Member in DB | ✅ Verified |

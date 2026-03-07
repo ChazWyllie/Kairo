@@ -24,6 +24,7 @@ export const mockPrisma = {
     upsert: vi.fn(),
     findUnique: vi.fn(),
     create: vi.fn(),
+    update: vi.fn(),
     updateMany: vi.fn(),
   },
   stripeEvent: {
@@ -55,9 +56,13 @@ vi.mock("@/services/stripe", () => ({
 
 // ── Mock email service ──
 export const mockNotifyAdmin = vi.fn();
+export const mockNotifyAdminCancellation = vi.fn();
+export const mockSendWelcomeEmail = vi.fn();
 
 vi.mock("@/services/email", () => ({
   notifyAdmin: mockNotifyAdmin,
+  notifyAdminCancellation: mockNotifyAdminCancellation,
+  sendWelcomeEmail: mockSendWelcomeEmail,
 }));
 
 // ── Mock rate limiter (always allow — rate-limit.test.ts tests it directly) ──
