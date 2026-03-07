@@ -5,24 +5,22 @@ import Link from "next/link";
  */
 export default function NotFound() {
   return (
-    <main className="min-h-screen bg-[var(--background)] text-[var(--foreground)] flex flex-col items-center justify-center px-6">
-      <div className="max-w-md text-center space-y-6 animate-fade-in-up">
-        <div className="text-7xl font-bold tracking-tighter text-[var(--foreground-muted)]">
-          404
-        </div>
-        <p className="text-[var(--foreground-secondary)]">
+    <main className="min-h-screen bg-white text-black flex flex-col items-center justify-center px-6">
+      <div className="max-w-md text-center space-y-4">
+        <h1 className="text-4xl font-bold">404</h1>
+        <p className="text-neutral-600">
           This page doesn&apos;t exist. Let&apos;s get you back on track.
         </p>
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
           <Link
             href="/"
-            className="btn-primary"
+            className="rounded-xl bg-black px-6 py-3 text-white font-medium hover:opacity-90 transition-opacity"
           >
             Go home
           </Link>
           <Link
             href="/quiz"
-            className="text-sm font-medium text-[var(--foreground-muted)] hover:text-[var(--foreground)] transition-colors"
+            className="text-sm font-medium text-neutral-500 hover:text-black transition-colors"
           >
             Take the quiz →
           </Link>

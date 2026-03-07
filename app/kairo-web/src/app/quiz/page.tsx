@@ -81,22 +81,19 @@ export default function QuizPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-hero text-white flex flex-col relative overflow-hidden">
-      {/* Ambient glow */}
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full bg-amber-500/8 blur-[120px] pointer-events-none" />
-
+    <main className="min-h-screen bg-white text-black flex flex-col">
       {/* Progress Bar */}
-      <div className="w-full bg-white/10 h-1.5 relative z-10">
+      <div className="w-full bg-neutral-100 h-1.5">
         <div
-          className="h-1.5 bg-gradient-to-r from-amber-400 to-amber-500 transition-all duration-500 ease-out"
+          className="h-1.5 bg-black transition-all duration-300"
           style={{ width: `${progress}%` }}
         />
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 relative z-10">
+      <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
         <div className="w-full max-w-md">
           {/* Step indicator */}
-          <p className="text-xs text-white/40 mb-8 text-center font-medium tracking-wide">
+          <p className="text-xs text-neutral-400 mb-6 text-center">
             {step + 1} of {TOTAL_STEPS}
           </p>
 
@@ -175,13 +172,10 @@ export default function QuizPage() {
 
           {/* ─── Step 5: Email capture ─── */}
           {step === 5 && (
-            <div className="space-y-8 animate-fade-in-up">
+            <div className="space-y-6">
               <div className="text-center">
-                <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-500/20 text-3xl mb-5">
-                  🎯
-                </div>
-                <h2 className="text-2xl font-bold text-white">Your plan is ready!</h2>
-                <p className="mt-3 text-white/50">
+                <h2 className="text-2xl font-bold">Your plan is ready! 🎯</h2>
+                <p className="mt-2 text-neutral-600">
                   Enter your email to see your personalized recommendation.
                 </p>
               </div>
@@ -191,25 +185,25 @@ export default function QuizPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
-                  className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3.5 text-base text-white placeholder-white/30 outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400 backdrop-blur-sm transition-all"
+                  className="w-full rounded-xl border border-neutral-300 px-4 py-3 text-base outline-none focus:border-black focus:ring-1 focus:ring-black"
                   inputMode="email"
                   autoComplete="email"
                   autoFocus
                   required
                 />
                 {error && (
-                  <p className="text-sm text-red-400" role="alert">
+                  <p className="text-sm text-red-600" role="alert">
                     {error}
                   </p>
                 )}
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full rounded-xl bg-amber-500 px-6 py-3.5 text-neutral-950 font-semibold text-base transition-all hover:bg-amber-400 hover:shadow-[0_0_20px_rgba(245,158,11,0.25)] disabled:opacity-50"
+                  className="w-full rounded-xl bg-black px-6 py-3.5 text-white font-semibold text-base transition-opacity disabled:opacity-60"
                 >
                   {loading ? "Loading…" : "See My Recommendation →"}
                 </button>
-                <p className="text-xs text-white/30 text-center">
+                <p className="text-xs text-neutral-400 text-center">
                   No spam. Unsubscribe anytime.
                 </p>
               </form>
@@ -221,7 +215,7 @@ export default function QuizPage() {
             <button
               type="button"
               onClick={() => setStep((s) => s - 1)}
-              className="mt-8 text-sm text-white/30 hover:text-white/60 transition-colors mx-auto block"
+              className="mt-6 text-sm text-neutral-400 hover:text-black transition-colors mx-auto block"
             >
               ← Back
             </button>
@@ -246,21 +240,21 @@ function QuizStep({
   selected?: string;
 }) {
   return (
-    <div className="space-y-8 animate-fade-in-up">
-      <h2 className="text-2xl font-bold text-center text-white">{question}</h2>
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold text-center">{question}</h2>
       <div className="space-y-3">
         {options.map((opt) => (
           <button
             key={opt.value}
             type="button"
             onClick={() => onSelect(opt.value)}
-            className={`w-full flex items-center gap-4 rounded-xl border px-5 py-4 text-left text-base font-medium transition-all backdrop-blur-sm ${
+            className={`w-full flex items-center gap-3 rounded-xl border px-4 py-3.5 text-left text-base font-medium transition-all ${
               selected === opt.value
-                ? "border-amber-400 bg-amber-500/15 text-white shadow-[0_0_20px_rgba(245,158,11,0.1)]"
-                : "border-white/10 bg-white/5 text-white/80 hover:border-white/25 hover:bg-white/8"
+                ? "border-black bg-neutral-50 ring-1 ring-black"
+                : "border-neutral-200 hover:border-neutral-400"
             }`}
           >
-            <span className="text-xl w-8 text-center">{opt.emoji}</span>
+            <span className="text-xl">{opt.emoji}</span>
             <span>{opt.label}</span>
           </button>
         ))}

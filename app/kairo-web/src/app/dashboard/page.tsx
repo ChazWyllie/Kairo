@@ -175,17 +175,12 @@ export default function DashboardPage() {
   // ── Identify screen ──
   if (state.phase === "identify" || state.phase === "error") {
     return (
-      <main className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
+      <main className="min-h-screen bg-neutral-50 text-black">
         <div className="mx-auto max-w-md px-6 py-16">
-          <div className="text-center animate-fade-in-up">
-            <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-100 text-2xl mb-5">
-              👋
-            </div>
-            <h1 className="text-2xl font-bold tracking-tight">Welcome back</h1>
-            <p className="mt-2 text-[var(--foreground-secondary)] text-sm">
-              Enter your email to view your dashboard.
-            </p>
-          </div>
+          <h1 className="text-2xl font-semibold text-center">Welcome back</h1>
+          <p className="mt-2 text-center text-neutral-500 text-sm">
+            Enter your email to view your dashboard.
+          </p>
 
           <form onSubmit={onIdentify} className="mt-8 space-y-4">
             <input
@@ -222,15 +217,15 @@ export default function DashboardPage() {
   // ── Loading ──
   if (state.phase === "loading") {
     return (
-      <main className="min-h-screen bg-[var(--background)]">
+      <main className="min-h-screen bg-neutral-50 text-black">
         <div className="mx-auto max-w-2xl px-6 py-16">
-          <div className="space-y-4">
-            <div className="skeleton h-8 w-48" />
-            <div className="skeleton h-40 w-full" />
+          <div className="space-y-4 animate-pulse">
+            <div className="h-8 bg-neutral-200 rounded-xl w-48" />
+            <div className="h-40 bg-neutral-200 rounded-2xl" />
             <div className="grid grid-cols-3 gap-4">
-              <div className="skeleton h-24" />
-              <div className="skeleton h-24" />
-              <div className="skeleton h-24" />
+              <div className="h-24 bg-neutral-200 rounded-2xl" />
+              <div className="h-24 bg-neutral-200 rounded-2xl" />
+              <div className="h-24 bg-neutral-200 rounded-2xl" />
             </div>
           </div>
         </div>
@@ -270,16 +265,16 @@ export default function DashboardPage() {
   const milestoneProgress = Math.round((totalCheckIns / nextMilestone) * 100);
 
   return (
-    <main className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
+    <main className="min-h-screen bg-neutral-50 text-black">
       <div className="mx-auto max-w-2xl px-6 py-8 space-y-6">
 
         {/* ── Header ── */}
-        <header className="flex items-start justify-between animate-fade-in">
+        <header className="flex items-start justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">
+            <h1 className="text-2xl font-semibold">
               {getGreeting()}{member.onboardedAt ? "" : " 👋"}
             </h1>
-            <p className="mt-0.5 text-sm text-[var(--foreground-muted)]">
+            <p className="mt-0.5 text-sm text-neutral-500">
               {member.email}
             </p>
           </div>
@@ -337,7 +332,7 @@ export default function DashboardPage() {
                 {new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
               </span>
             </div>
-            <p className="mt-1 text-sm text-[var(--foreground-muted)]">
+            <p className="mt-1 text-sm text-neutral-500">
               Log what you did today. Takes &lt; 30 seconds.
             </p>
 
@@ -366,17 +361,17 @@ export default function DashboardPage() {
 
               {/* Meals counter */}
               <div className="flex items-center gap-3">
-                <span className="text-sm font-medium text-[var(--foreground-secondary)]">🍽️ Meals on plan:</span>
+                <span className="text-sm font-medium text-neutral-600">🍽️ Meals on plan:</span>
                 <div className="flex gap-2">
                   {[0, 1, 2, 3].map((n) => (
                     <button
                       key={n}
                       type="button"
                       onClick={() => setMeals(n)}
-                      className={`h-9 w-9 rounded-lg text-sm font-medium transition-all ${
+                      className={`h-9 w-9 rounded-lg text-sm font-medium transition-colors ${
                         meals === n
-                          ? "bg-amber-500 text-neutral-950 shadow-sm"
-                          : "border border-[var(--border)] bg-[var(--surface)] text-[var(--foreground-secondary)] hover:border-amber-300"
+                          ? "bg-black text-white"
+                          : "border border-neutral-300 bg-white text-neutral-700 hover:border-neutral-500"
                       }`}
                       aria-label={`${n} meals`}
                       aria-pressed={meals === n}
@@ -390,7 +385,7 @@ export default function DashboardPage() {
               {/* Note */}
               <input
                 type="text"
-                className="input-base text-sm"
+                className="w-full rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-2 text-sm outline-none focus:border-black focus:bg-white"
                 placeholder="Add a note… (optional)"
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
@@ -462,13 +457,13 @@ export default function DashboardPage() {
 
             {/* Milestone progress bar */}
             <div className="mt-4">
-              <div className="flex justify-between text-xs text-[var(--foreground-muted)]">
+              <div className="flex justify-between text-xs text-neutral-500">
                 <span>{totalCheckIns} check-ins</span>
                 <span>Next milestone: {nextMilestone}</span>
               </div>
-              <div className="mt-1 h-2 rounded-full bg-[var(--background-tertiary)] overflow-hidden">
+              <div className="mt-1 h-2 rounded-full bg-neutral-200 overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-amber-400 to-amber-500 transition-all duration-500"
+                  className="h-full rounded-full bg-black transition-all duration-500"
                   style={{ width: `${Math.min(milestoneProgress, 100)}%` }}
                 />
               </div>
@@ -483,7 +478,7 @@ export default function DashboardPage() {
             <div className="mt-3 space-y-3">
               {planConfig && (
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-[var(--foreground-muted)]">Your plan</span>
+                  <span className="text-neutral-500">Your plan</span>
                   <span className="font-medium">
                     {planConfig.name}
                     {member.billingInterval ? ` · ${member.billingInterval}` : ""}
@@ -492,25 +487,25 @@ export default function DashboardPage() {
               )}
               {goalLabel && (
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-[var(--foreground-muted)]">Goal</span>
+                  <span className="text-neutral-500">Goal</span>
                   <span className="font-medium">{goalLabel}</span>
                 </div>
               )}
               {member.daysPerWeek && (
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-[var(--foreground-muted)]">Training schedule</span>
+                  <span className="text-neutral-500">Training schedule</span>
                   <span className="font-medium">{member.daysPerWeek}× per week</span>
                 </div>
               )}
               {member.minutesPerSession && (
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-[var(--foreground-muted)]">Session length</span>
+                  <span className="text-neutral-500">Session length</span>
                   <span className="font-medium">{member.minutesPerSession} min</span>
                 </div>
               )}
               {member.injuries && (
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-[var(--foreground-muted)]">Considerations</span>
+                  <span className="text-neutral-500">Considerations</span>
                   <span className="font-medium">{member.injuries}</span>
                 </div>
               )}
@@ -532,7 +527,7 @@ export default function DashboardPage() {
             <h2 className="text-lg font-semibold">Recent Check-Ins</h2>
 
             {checkIns.length === 0 ? (
-              <p className="mt-3 text-sm text-[var(--foreground-muted)]">
+              <p className="mt-3 text-sm text-neutral-500">
                 No check-ins yet. Start logging today!
               </p>
             ) : (
@@ -540,7 +535,7 @@ export default function DashboardPage() {
                 {checkIns.slice(0, 14).map((ci) => (
                   <div
                     key={ci.id}
-                    className="flex items-center justify-between rounded-xl bg-[var(--background-secondary)] px-4 py-3"
+                    className="flex items-center justify-between rounded-xl bg-neutral-50 px-4 py-3"
                   >
                     <div>
                       <p className="text-sm font-medium">
@@ -551,7 +546,7 @@ export default function DashboardPage() {
                         })}
                       </p>
                       {ci.note && (
-                        <p className="mt-0.5 text-xs text-[var(--foreground-muted)] italic">
+                        <p className="mt-0.5 text-xs text-neutral-500 italic">
                           {ci.note}
                         </p>
                       )}
@@ -614,10 +609,10 @@ function CheckToggle({
       type="button"
       onClick={onToggle}
       aria-pressed={checked}
-      className={`flex flex-col items-center gap-1 rounded-xl border px-4 py-3 text-sm font-medium transition-all ${
+      className={`flex flex-col items-center gap-1 rounded-xl border px-4 py-3 text-sm font-medium transition-colors ${
         checked
-          ? "border-amber-400 bg-amber-500 text-neutral-950 shadow-sm"
-          : "border-[var(--border)] bg-[var(--surface)] text-[var(--foreground-secondary)] hover:border-amber-300"
+          ? "border-black bg-black text-white"
+          : "border-neutral-200 bg-white text-neutral-700 hover:border-neutral-400"
       }`}
     >
       <span className="text-lg">{emoji}</span>

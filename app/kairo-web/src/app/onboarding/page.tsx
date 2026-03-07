@@ -71,50 +71,42 @@ export default function OnboardingPage() {
 
   if (done) {
     return (
-      <main className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
+      <main className="min-h-screen bg-white text-black">
         <div className="mx-auto max-w-2xl px-6 py-16">
-          <div className="animate-scale-in">
-            <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-100 text-3xl mb-6">
-              🎯
-            </div>
-            <h1 className="text-3xl font-bold tracking-tight">All set!</h1>
-            <p className="mt-4 text-[var(--foreground-secondary)] leading-relaxed">
-              Thanks for filling out your info. We&apos;ll use this to build your
-              first plan — expect it within 48 hours.
-            </p>
-            <Link
-              href="/"
-              className="mt-10 btn-primary inline-flex"
-            >
-              ← Back to home
-            </Link>
-          </div>
+          <h1 className="text-3xl font-semibold">All set 🎯</h1>
+          <p className="mt-4 text-neutral-700">
+            Thanks for filling out your info. We&apos;ll use this to build your
+            first plan — expect it within 48 hours.
+          </p>
+          <Link
+            href="/"
+            className="mt-8 inline-block rounded-xl bg-black px-6 py-3 text-white font-medium"
+          >
+            ← Back to home
+          </Link>
         </div>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
+    <main className="min-h-screen bg-white text-black">
       <div className="mx-auto max-w-2xl px-6 py-16">
-        <div className="animate-fade-in-up">
-          <span className="badge bg-amber-100 text-amber-800 mb-4 inline-block">Setup</span>
-          <h1 className="text-3xl font-bold tracking-tight">Tell us about yourself</h1>
-          <p className="mt-3 text-[var(--foreground-secondary)]">
-            This helps us build a plan that fits your life. Everything is optional.
-          </p>
-        </div>
+        <h1 className="text-3xl font-semibold">Tell us about yourself</h1>
+        <p className="mt-2 text-neutral-600">
+          This helps us build a plan that fits your life. Everything is optional.
+        </p>
 
-        <form onSubmit={onSubmit} className="mt-10 space-y-8">
+        <form onSubmit={onSubmit} className="mt-8 space-y-6">
           {/* Email — identity check */}
-          <div className="space-y-2 animate-fade-in-up" style={{ animationDelay: "100ms" }}>
-            <label htmlFor="ob-email" className="block text-sm font-semibold text-[var(--foreground)]">
+          <div className="space-y-1">
+            <label htmlFor="ob-email" className="block text-sm font-medium">
               Email (used to sign up)
             </label>
             <input
               id="ob-email"
               type="email"
-              className="input-base"
+              className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-900"
               placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -123,10 +115,10 @@ export default function OnboardingPage() {
           </div>
 
           {/* Goal */}
-          <fieldset className="space-y-3 animate-fade-in-up" style={{ animationDelay: "150ms" }}>
-            <legend className="text-sm font-semibold text-[var(--foreground)]">
+          <fieldset className="space-y-2">
+            <legend className="text-sm font-medium">
               Primary goal{" "}
-              <span className="text-[var(--foreground-muted)] font-normal">(optional)</span>
+              <span className="text-neutral-400">(optional)</span>
             </legend>
             <div className="flex flex-wrap gap-2">
               {GOALS.map((g) => (
@@ -134,10 +126,10 @@ export default function OnboardingPage() {
                   key={g.value}
                   type="button"
                   onClick={() => setGoal(g.value)}
-                  className={`rounded-xl border px-5 py-2.5 text-sm font-medium transition-all ${
+                  className={`rounded-xl border px-4 py-2 text-sm font-medium transition-colors ${
                     goal === g.value
-                      ? "border-amber-400 bg-amber-500 text-neutral-950 shadow-sm"
-                      : "border-[var(--border)] bg-[var(--surface)] text-[var(--foreground-secondary)] hover:border-amber-300"
+                      ? "border-black bg-black text-white"
+                      : "border-neutral-300 bg-white text-neutral-700 hover:border-neutral-500"
                   }`}
                 >
                   {g.label}
@@ -147,10 +139,10 @@ export default function OnboardingPage() {
           </fieldset>
 
           {/* Days per week */}
-          <div className="space-y-2 animate-fade-in-up" style={{ animationDelay: "200ms" }}>
-            <label htmlFor="ob-days" className="block text-sm font-semibold text-[var(--foreground)]">
+          <div className="space-y-1">
+            <label htmlFor="ob-days" className="block text-sm font-medium">
               Training days per week{" "}
-              <span className="text-[var(--foreground-muted)] font-normal">(optional)</span>
+              <span className="text-neutral-400">(optional)</span>
             </label>
             <input
               id="ob-days"
@@ -159,18 +151,16 @@ export default function OnboardingPage() {
               max={7}
               value={daysPerWeek}
               onChange={(e) => setDaysPerWeek(Number(e.target.value))}
-              className="w-full accent-amber-500"
+              className="w-full accent-black"
             />
-            <p className="text-sm text-[var(--foreground-secondary)]">
-              <span className="font-semibold text-amber-600">{daysPerWeek}</span> days
-            </p>
+            <p className="text-sm text-neutral-600">{daysPerWeek} days</p>
           </div>
 
           {/* Minutes per session */}
-          <fieldset className="space-y-3 animate-fade-in-up" style={{ animationDelay: "250ms" }}>
-            <legend className="text-sm font-semibold text-[var(--foreground)]">
+          <fieldset className="space-y-2">
+            <legend className="text-sm font-medium">
               Time per session{" "}
-              <span className="text-[var(--foreground-muted)] font-normal">(optional)</span>
+              <span className="text-neutral-400">(optional)</span>
             </legend>
             <div className="flex flex-wrap gap-2">
               {TIME_OPTIONS.map((m) => (
@@ -178,10 +168,10 @@ export default function OnboardingPage() {
                   key={m}
                   type="button"
                   onClick={() => setMinutesPerSession(m)}
-                  className={`rounded-xl border px-5 py-2.5 text-sm font-medium transition-all ${
+                  className={`rounded-xl border px-4 py-2 text-sm font-medium transition-colors ${
                     minutesPerSession === m
-                      ? "border-amber-400 bg-amber-500 text-neutral-950 shadow-sm"
-                      : "border-[var(--border)] bg-[var(--surface)] text-[var(--foreground-secondary)] hover:border-amber-300"
+                      ? "border-black bg-black text-white"
+                      : "border-neutral-300 bg-white text-neutral-700 hover:border-neutral-500"
                   }`}
                 >
                   {m} min
@@ -191,14 +181,14 @@ export default function OnboardingPage() {
           </fieldset>
 
           {/* Injuries / limitations */}
-          <div className="space-y-2 animate-fade-in-up" style={{ animationDelay: "300ms" }}>
-            <label htmlFor="ob-injuries" className="block text-sm font-semibold text-[var(--foreground)]">
+          <div className="space-y-1">
+            <label htmlFor="ob-injuries" className="block text-sm font-medium">
               Injuries or limitations{" "}
-              <span className="text-[var(--foreground-muted)] font-normal">(optional)</span>
+              <span className="text-neutral-400">(optional)</span>
             </label>
             <textarea
               id="ob-injuries"
-              className="input-base"
+              className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-900"
               rows={3}
               placeholder="e.g., Bad left knee — no jumping"
               value={injuries}
@@ -216,12 +206,12 @@ export default function OnboardingPage() {
           <button
             type="submit"
             disabled={loading}
-            className="btn-primary w-full"
+            className="w-full rounded-xl bg-black px-4 py-3 text-white font-medium transition-opacity disabled:opacity-60"
           >
             {loading ? "Saving…" : "Submit"}
           </button>
 
-          <p className="text-xs text-[var(--foreground-muted)] text-center">
+          <p className="text-xs text-neutral-500 text-center">
             All fields are optional — you can always update later.
           </p>
         </form>
