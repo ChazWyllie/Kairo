@@ -23,9 +23,30 @@ model Member {
 
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
+
+  checkIns         CheckIn[]
 }
 
 model StripeEvent {
   id        String   @id // Stripe event id
   createdAt DateTime @default(now())
+}
+
+model CheckIn {
+  id        String   @id @default(cuid())
+  memberId  String
+  member    Member   @relation(fields: [memberId], references: [id])
+  date      DateTime @db.Date // one check-in per day
+
+  workout   Boolean  @default(false)
+  meals     Int      @default(0) // 0-3 meals logged
+  water     Boolean  @default(false)
+  steps     Boolean  @default(false)
+  note      String?  // optional "I missed because…"
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([memberId, date])
+  @@index([memberId, date(sort: Desc)])
 }

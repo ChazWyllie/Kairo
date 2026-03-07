@@ -1,8 +1,8 @@
 # Kairo Coaching — Security Controls
 
-> **Version:** 4.0
+> **Version:** 5.0
 > **Last Updated:** 2026-03-07
-> **Scope:** MVP (landing page + Stripe subscription + onboarding flow)
+> **Scope:** MVP + client dashboard, check-in logging, member lookup
 > **Cross-reference:** [03 — Threat Model](03-threat-model.md)
 
 ---
@@ -18,6 +18,12 @@
 | Required field enforcement | Webhook rejects `checkout.session.completed` events missing email, customer ID, or subscription ID | `app/api/webhook/route.ts` | ✅ Implemented |
 | Onboarding request validation | Zod schema — validates email (required), goal (enum), daysPerWeek (1-7), minutesPerSession (enum), injuries (max 500 chars) | `app/api/onboarding/route.ts` | ✅ Implemented |
 | Active member gate | Onboarding endpoint only updates members with `status: "active"` — pending/canceled members receive 404 | `app/api/onboarding/route.ts` | ✅ Implemented |
+| Check-in request validation | Zod schema — validates email (required), workout (bool), meals (0-3), water (bool), steps (bool), note (max 500 chars) | `app/api/checkin/route.ts` | ✅ Implemented |
+| Check-in active member gate | Only active members can create check-ins or view history — 404 for pending/canceled | `app/api/checkin/route.ts` | ✅ Implemented |
+| Check-in duplicate prevention | One check-in per member per day — DB unique constraint + application-level check returns 409 | `app/api/checkin/route.ts` | ✅ Implemented |
+| Member lookup validation | Email query param validated before DB query — 400 for missing/invalid | `app/api/member/route.ts` | ✅ Implemented |
+| No Stripe ID leakage | Member lookup response omits `stripeCustomerId` and `stripeSubId` — prevents data leakage | `app/api/member/route.ts` | ✅ Implemented |
+| No internal ID leakage | Check-in responses omit `memberId` — internal IDs not exposed | `app/api/checkin/route.ts` | ✅ Implemented |
 
 ---
 
@@ -65,7 +71,7 @@
 | PII minimization | Only email + phone stored as PII; onboarding fields (goal, schedule, injuries) are training preferences, not medical data | ✅ Implemented |
 | Unique constraints | `email`, `stripeCustomerId`, `stripeSubId` all unique — prevents duplicate member records | ✅ Implemented |
 | Upsert pattern | Member creation uses `upsert` — safe for concurrent/duplicate webhook delivery | ✅ Implemented |
-| No admin UI | Admin notifications via email only — no dashboard to attack in MVP | ✅ By design |
+| Client dashboard (email-only) | Dashboard uses email as identity — no auth tokens, no session hijacking surface. Stripe remains the identity provider | ✅ By design |
 | Fire-and-forget notifications | Email send failure doesn't block webhook processing or expose errors | ✅ Implemented |
 
 ---
@@ -101,8 +107,12 @@
 | Checkout route | 17 unit tests (Zod validation, error paths, Stripe session, rate limiting, pending member upsert) | ✅ Passing |
 | Webhook route | 23 unit tests (signature, idempotency, member upsert, cancellation, welcome email, admin notification, edge cases) | ✅ Passing |
 | Onboarding route | 15 unit tests (Zod validation, active member gate, field persistence, error handling) | ✅ Passing |
+| Member lookup | 6 unit tests (validation, 404, profile + stats, no Stripe ID leakage) | ✅ Passing |
+| Check-in POST | 11 unit tests (validation, active gate, duplicate prevention, happy path, no memberId leakage) | ✅ Passing |
+| Check-in GET/history | 8 unit tests (validation, 404, history + stats, limit param, no memberId leakage) | ✅ Passing |
 | Rate limiter | 7 unit tests (allow/deny, window reset, IP isolation, retry-after) | ✅ Passing |
 | Security headers | 9 unit tests (all headers present on HTML/API paths, non-blocking) | ✅ Passing |
+| Analytics | 6 unit tests (SSR guard, dev logging, prod no-op) | ✅ Passing |
 | End-to-end flow | Manual: Checkout → real Stripe payment → webhook → Member in DB | ✅ Verified |
 | Landing page | 50 tests (HTML structure, a11y, CSS, content) | ✅ Passing |
 
