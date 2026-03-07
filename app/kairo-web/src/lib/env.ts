@@ -18,6 +18,10 @@ export const env = createEnv({
       .string()
       .min(16, "COACH_SECRET must be at least 16 characters")
       .optional(),
+    CRON_SECRET: z
+      .string()
+      .min(16, "CRON_SECRET must be at least 16 characters")
+      .optional(),
   },
   // No client-side env vars — Stripe keys stay server-side
   client: {},
@@ -30,6 +34,7 @@ export const env = createEnv({
     RESEND_API_KEY: process.env.RESEND_API_KEY,
     EMAIL_FROM: process.env.EMAIL_FROM,
     COACH_SECRET: process.env.COACH_SECRET,
+    CRON_SECRET: process.env.CRON_SECRET,
   },
   // Skip validation during Vercel build if env vars aren't configured yet
   skipValidation: !!process.env.SKIP_ENV_VALIDATION,

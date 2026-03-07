@@ -64,5 +64,10 @@ model Lead {
   capturedAt      DateTime @default(now())
   convertedAt     DateTime? // set when lead becomes a paying member
 
+  // Nurture sequence tracking (Milestone J)
+  lastNurtureStep Int      @default(0)  // 0=welcome sent, 1-4=drip emails
+  lastNurtureAt   DateTime? // when the last nurture email was sent
+  nurtureOptedOut Boolean  @default(false) // unsubscribe flag
+
   @@index([email])
 }

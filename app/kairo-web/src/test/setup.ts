@@ -15,6 +15,7 @@ vi.mock("@/lib/env", () => ({
     RESEND_API_KEY: undefined,
     EMAIL_FROM: "Test <test@test.com>",
     COACH_SECRET: "test-coach-secret-1234567890",
+    CRON_SECRET: "test-cron-secret-1234567890",
   },
 }));
 
@@ -42,9 +43,11 @@ export const mockPrisma = {
   lead: {
     upsert: vi.fn(),
     findUnique: vi.fn(),
+    findMany: vi.fn(),
     count: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
+    updateMany: vi.fn(),
   },
 };
 
@@ -74,12 +77,14 @@ export const mockNotifyAdmin = vi.fn();
 export const mockNotifyAdminCancellation = vi.fn();
 export const mockSendWelcomeEmail = vi.fn();
 export const mockSendQuizWelcomeEmail = vi.fn();
+export const mockSendNurtureEmail = vi.fn();
 
 vi.mock("@/services/email", () => ({
   notifyAdmin: mockNotifyAdmin,
   notifyAdminCancellation: mockNotifyAdminCancellation,
   sendWelcomeEmail: mockSendWelcomeEmail,
   sendQuizWelcomeEmail: mockSendQuizWelcomeEmail,
+  sendNurtureEmail: mockSendNurtureEmail,
 }));
 
 // ── Mock rate limiter (always allow — rate-limit.test.ts tests it directly) ──
