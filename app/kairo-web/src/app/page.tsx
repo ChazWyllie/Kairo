@@ -1,13 +1,30 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { track } from "@/lib/analytics";
 import { PLANS, type PlanConfig } from "@/lib/stripe-prices";
+import {
+  LANDING_SECTIONS,
+  type HeroSection,
+  type SocialProofSection,
+  type HowItWorksSection,
+  type PricingSection,
+  type TrustSection,
+} from "@/lib/landing-config";
+
+// ── Helpers to pull typed sections ──
+const hero = LANDING_SECTIONS.find((s) => s.id === "hero") as HeroSection;
+const socialProof = LANDING_SECTIONS.find((s) => s.id === "social-proof") as SocialProofSection;
+const howItWorks = LANDING_SECTIONS.find((s) => s.id === "how-it-works") as HowItWorksSection;
+const pricingSection = LANDING_SECTIONS.find((s) => s.id === "pricing") as PricingSection;
+const trust = LANDING_SECTIONS.find((s) => s.id === "trust") as TrustSection;
 
 /**
  * Public landing page — Instagram bio link destination.
- * Shows 4 pricing tiers with monthly/annual toggle.
- * Each card has its own inline checkout form.
+ *
+ * Section order follows quiz-first funnel research:
+ * hero (quiz CTA) → social-proof → how-it-works → pricing → trust
  */
 export default function HomePage() {
   const [billingInterval, setBillingInterval] = useState<"monthly" | "annual">("monthly");
@@ -18,71 +35,167 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen bg-white text-black">
-      <div className="mx-auto max-w-6xl px-6 py-16">
-        {/* Header */}
-        <div className="text-center space-y-4">
-          <h1 className="text-4xl font-semibold tracking-tight">Kairo Coaching</h1>
-          <p className="text-lg text-neutral-600 max-w-2xl mx-auto">
-            Expert fitness coaching built for your goals.
-            Choose the level of support that fits your life.
-          </p>
+      {/* ─── Hero ─── */}
+      <section className="mx-auto max-w-4xl px-6 pt-20 pb-16 text-center">
+        <h1 className="text-4xl sm:text-5xl font-bold tracking-tight leading-tight">
+          {hero.headline}
+        </h1>
+        <p className="mt-4 text-lg sm:text-xl text-neutral-600 max-w-2xl mx-auto">
+          {hero.subtitle}
+        </p>
+        <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+          <Link
+            href="/quiz"
+            onClick={() => track({ name: "cta_click", properties: { location: "hero" } })}
+            className="rounded-xl bg-black px-8 py-4 text-lg font-semibold text-white shadow-lg hover:opacity-90 transition-opacity"
+          >
+            {hero.cta} →
+          </Link>
+          <a
+            href="#pricing"
+            className="text-sm font-medium text-neutral-500 hover:text-black transition-colors"
+          >
+            Or compare plans ↓
+          </a>
         </div>
+      </section>
 
-        {/* Billing Toggle */}
-        <div className="mt-10 flex items-center justify-center gap-3">
-          <span
-            className={`text-sm font-medium ${billingInterval === "monthly" ? "text-black" : "text-neutral-400"}`}
-          >
-            Monthly
-          </span>
-          <button
-            type="button"
-            onClick={() =>
-              setBillingInterval((prev) => (prev === "monthly" ? "annual" : "monthly"))
-            }
-            className="relative inline-flex h-7 w-12 items-center rounded-full transition-colors"
-            style={{ backgroundColor: billingInterval === "annual" ? "#000" : "#d4d4d4" }}
-            aria-label="Toggle annual billing"
-          >
+      {/* ─── Social Proof ─── */}
+      <section className="bg-neutral-50 py-16">
+        <div className="mx-auto max-w-5xl px-6">
+          <h2 className="text-center text-2xl font-semibold mb-10">
+            Real results from real people
+          </h2>
+          <div className="grid gap-6 sm:grid-cols-3">
+            {socialProof.testimonials.map((t) => (
+              <blockquote
+                key={t.name}
+                className="rounded-2xl bg-white p-6 shadow-sm border border-neutral-100"
+              >
+                <p className="text-neutral-700 text-sm leading-relaxed">
+                  &ldquo;{t.text}&rdquo;
+                </p>
+                <footer className="mt-4 text-sm">
+                  <span className="font-semibold text-black">{t.name}</span>
+                  {t.role && (
+                    <span className="text-neutral-400"> · {t.role}</span>
+                  )}
+                </footer>
+              </blockquote>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── How It Works ─── */}
+      <section className="py-16">
+        <div className="mx-auto max-w-4xl px-6 text-center">
+          <h2 className="text-2xl font-semibold mb-12">
+            How Kairo works
+          </h2>
+          <div className="grid gap-8 sm:grid-cols-3">
+            {howItWorks.steps.map((step, i) => (
+              <div key={step.title} className="flex flex-col items-center">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-black text-white text-lg font-bold mb-4">
+                  {i + 1}
+                </div>
+                <h3 className="text-lg font-semibold">{step.title}</h3>
+                <p className="mt-2 text-sm text-neutral-600 max-w-xs">
+                  {step.description}
+                </p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-10">
+            <Link
+              href="/quiz"
+              onClick={() => track({ name: "cta_click", properties: { location: "how-it-works" } })}
+              className="inline-block rounded-xl bg-black px-6 py-3 text-white font-medium hover:opacity-90 transition-opacity"
+            >
+              Find your plan →
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── Pricing ─── */}
+      <section id="pricing" className="bg-neutral-50 py-16">
+        <div className="mx-auto max-w-6xl px-6">
+          <div className="text-center space-y-2 mb-10">
+            <h2 className="text-2xl font-semibold">{pricingSection.headline}</h2>
+            <p className="text-neutral-600">{pricingSection.subtitle}</p>
+          </div>
+
+          {/* Billing Toggle */}
+          <div className="flex items-center justify-center gap-3 mb-8">
             <span
-              className="inline-block h-5 w-5 rounded-full bg-white transition-transform"
-              style={{
-                transform: billingInterval === "annual" ? "translateX(24px)" : "translateX(4px)",
-              }}
-            />
-          </button>
-          <span
-            className={`text-sm font-medium ${billingInterval === "annual" ? "text-black" : "text-neutral-400"}`}
-          >
-            Annual
-          </span>
-          {billingInterval === "annual" && (
-            <span className="ml-2 rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
-              Save ~17%
+              className={`text-sm font-medium ${billingInterval === "monthly" ? "text-black" : "text-neutral-400"}`}
+            >
+              Monthly
             </span>
-          )}
-        </div>
+            <button
+              type="button"
+              onClick={() =>
+                setBillingInterval((prev) => (prev === "monthly" ? "annual" : "monthly"))
+              }
+              className="relative inline-flex h-7 w-12 items-center rounded-full transition-colors"
+              style={{ backgroundColor: billingInterval === "annual" ? "#000" : "#d4d4d4" }}
+              aria-label="Toggle annual billing"
+            >
+              <span
+                className="inline-block h-5 w-5 rounded-full bg-white transition-transform"
+                style={{
+                  transform: billingInterval === "annual" ? "translateX(24px)" : "translateX(4px)",
+                }}
+              />
+            </button>
+            <span
+              className={`text-sm font-medium ${billingInterval === "annual" ? "text-black" : "text-neutral-400"}`}
+            >
+              Annual
+            </span>
+            {billingInterval === "annual" && (
+              <span className="ml-2 rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                Save ~17%
+              </span>
+            )}
+          </div>
 
-        {/* Pricing Cards */}
-        <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {PLANS.map((plan) => (
-            <PricingCard
-              key={plan.tier}
-              plan={plan}
-              billingInterval={billingInterval}
-              highlighted={plan.tier === "coaching"}
-            />
-          ))}
+          {/* Pricing Cards */}
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {PLANS.map((plan) => (
+              <PricingCard
+                key={plan.tier}
+                plan={plan}
+                billingInterval={billingInterval}
+                highlighted={plan.tier === "coaching"}
+              />
+            ))}
+          </div>
         </div>
+      </section>
 
-        {/* Disclaimer */}
-        <div className="mt-10 mx-auto max-w-2xl rounded-xl bg-neutral-50 p-4 text-sm text-neutral-600 text-center">
+      {/* ─── Trust ─── */}
+      <section className="py-12">
+        <div className="mx-auto max-w-3xl px-6">
+          <div className="grid gap-4 sm:grid-cols-2">
+            {trust.items.map((item) => (
+              <div key={item} className="flex items-start gap-3 text-sm text-neutral-600">
+                <span className="text-green-600 shrink-0 mt-0.5">✓</span>
+                <span>{item}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── Disclaimer + Footer ─── */}
+      <div className="mx-auto max-w-6xl px-6 pb-12">
+        <div className="rounded-xl bg-neutral-50 p-4 text-sm text-neutral-600 text-center">
           <p className="font-medium">Note:</p>
           <p>This is fitness coaching and general nutrition guidance — not medical advice.</p>
         </div>
-
-        {/* Footer */}
-        <div className="mt-10 flex items-center justify-between text-sm text-neutral-500">
+        <div className="mt-6 flex items-center justify-between text-sm text-neutral-500">
           <p>© {new Date().getFullYear()} Kairo Coaching. All rights reserved.</p>
           <a href="/dashboard" className="hover:text-black transition-colors">
             My Dashboard →
