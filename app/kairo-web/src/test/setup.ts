@@ -24,6 +24,7 @@ export const mockPrisma = {
     upsert: vi.fn(),
     findUnique: vi.fn(),
     create: vi.fn(),
+    updateMany: vi.fn(),
   },
   stripeEvent: {
     findUnique: vi.fn(),

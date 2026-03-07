@@ -75,6 +75,35 @@ export function makeUnknownEvent(type = "invoice.payment_failed"): Stripe.Event 
   } as unknown as Stripe.Event;
 }
 
+export function makeSubscriptionDeletedEvent(
+  overrides: {
+    eventId?: string;
+    subscriptionId?: string | null;
+  } = {}
+): Stripe.Event {
+  const {
+    eventId = "evt_sub_del_123",
+    subscriptionId = "sub_canceled_xyz",
+  } = overrides;
+
+  return {
+    id: eventId,
+    object: "event",
+    type: "customer.subscription.deleted",
+    api_version: "2025-12-18.acacia",
+    created: Math.floor(Date.now() / 1000),
+    livemode: false,
+    pending_webhooks: 0,
+    request: null,
+    data: {
+      object: {
+        id: subscriptionId,
+        object: "subscription",
+      } as unknown as Stripe.Subscription,
+    },
+  } as unknown as Stripe.Event;
+}
+
 // ── Request helpers ──
 
 export function makeWebhookRequest(

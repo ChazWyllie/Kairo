@@ -1,13 +1,15 @@
 /**
  * Tests for POST /api/checkout
  *
- * Coverage: happy path, validation errors, Stripe failures, edge cases.
- * All Stripe calls are mocked — no real API hits.
+ * Coverage: happy path, validation errors, Stripe failures, edge cases,
+ * pending member upsert, customer_email pre-fill.
+ * All Stripe/Prisma calls are mocked — no real API hits.
  */
 import { describe, it, expect, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 import {
   mockStripeCheckoutCreate,
+  mockPrisma,
 } from "@/test/setup";
 import {
   MOCK_CHECKOUT_SESSION,
@@ -26,95 +28,130 @@ function makeRequest(body: Record<string, unknown> = {}): NextRequest {
 describe("POST /api/checkout", () => {
   beforeEach(() => {
     mockStripeCheckoutCreate.mockReset();
+    mockPrisma.member.upsert.mockReset();
   });
 
   // ── Happy Path ──
 
   describe("happy path", () => {
     it("creates a checkout session and returns the URL", async () => {
+      mockPrisma.member.upsert.mockResolvedValue({});
       mockStripeCheckoutCreate.mockResolvedValue(MOCK_CHECKOUT_SESSION);
 
-      const response = await POST(makeRequest());
+      const response = await POST(
+        makeRequest({ email: "user@test.com" })
+      );
       const data = await response.json();
 
       expect(response.status).toBe(200);
       expect(data).toEqual({ url: MOCK_CHECKOUT_SESSION.url });
     });
 
-    it("passes the correct line_items to Stripe", async () => {
+    it("passes the correct line_items and customer_email to Stripe", async () => {
+      mockPrisma.member.upsert.mockResolvedValue({});
       mockStripeCheckoutCreate.mockResolvedValue(MOCK_CHECKOUT_SESSION);
 
-      await POST(makeRequest());
+      await POST(makeRequest({ email: "stripe@test.com" }));
 
       expect(mockStripeCheckoutCreate).toHaveBeenCalledWith(
         expect.objectContaining({
           mode: "subscription",
+          customer_email: "stripe@test.com",
           line_items: [{ price: "price_test_fake", quantity: 1 }],
         })
       );
     });
 
-    it("uses default success/cancel URLs from APP_URL", async () => {
+    it("uses APP_URL-based success/cancel URLs", async () => {
+      mockPrisma.member.upsert.mockResolvedValue({});
       mockStripeCheckoutCreate.mockResolvedValue(MOCK_CHECKOUT_SESSION);
 
-      await POST(makeRequest());
+      await POST(makeRequest({ email: "url@test.com" }));
 
       expect(mockStripeCheckoutCreate).toHaveBeenCalledWith(
         expect.objectContaining({
           success_url:
             "http://localhost:3000/success?session_id={CHECKOUT_SESSION_ID}",
-          cancel_url: "http://localhost:3000/cancel",
+          cancel_url: "http://localhost:3000",
         })
       );
     });
 
-    it("accepts custom success and cancel URLs", async () => {
+    it("accepts email with optional phone", async () => {
+      mockPrisma.member.upsert.mockResolvedValue({});
       mockStripeCheckoutCreate.mockResolvedValue(MOCK_CHECKOUT_SESSION);
 
-      await POST(
-        makeRequest({
-          successUrl: "https://example.com/thanks",
-          cancelUrl: "https://example.com/back",
-        })
+      const response = await POST(
+        makeRequest({ email: "phone@test.com", phone: "+15551234567" })
       );
 
-      expect(mockStripeCheckoutCreate).toHaveBeenCalledWith(
-        expect.objectContaining({
-          success_url: "https://example.com/thanks",
-          cancel_url: "https://example.com/back",
-        })
-      );
+      expect(response.status).toBe(200);
+    });
+  });
+
+  // ── Pending Member Upsert ──
+
+  describe("pending member upsert", () => {
+    it("upserts a pending member before creating Stripe session", async () => {
+      const callOrder: string[] = [];
+      mockPrisma.member.upsert.mockImplementation(async () => {
+        callOrder.push("upsert");
+        return {};
+      });
+      mockStripeCheckoutCreate.mockImplementation(async () => {
+        callOrder.push("stripe");
+        return MOCK_CHECKOUT_SESSION;
+      });
+
+      await POST(makeRequest({ email: "order@test.com", phone: "+1555" }));
+
+      expect(callOrder).toEqual(["upsert", "stripe"]);
+      expect(mockPrisma.member.upsert).toHaveBeenCalledWith({
+        where: { email: "order@test.com" },
+        create: { email: "order@test.com", phone: "+1555", status: "pending" },
+        update: { phone: "+1555" },
+      });
+    });
+
+    it("stores phone as null when not provided", async () => {
+      mockPrisma.member.upsert.mockResolvedValue({});
+      mockStripeCheckoutCreate.mockResolvedValue(MOCK_CHECKOUT_SESSION);
+
+      await POST(makeRequest({ email: "nophone@test.com" }));
+
+      expect(mockPrisma.member.upsert).toHaveBeenCalledWith({
+        where: { email: "nophone@test.com" },
+        create: { email: "nophone@test.com", phone: null, status: "pending" },
+        update: { phone: null },
+      });
     });
   });
 
   // ── Validation Errors ──
 
   describe("validation errors", () => {
-    it("returns 400 for invalid successUrl", async () => {
-      const response = await POST(
-        makeRequest({ successUrl: "not-a-url" })
-      );
+    it("returns 400 when email is missing", async () => {
+      const response = await POST(makeRequest({}));
       const data = await response.json();
 
       expect(response.status).toBe(400);
       expect(data.error.code).toBe("VALIDATION_ERROR");
     });
 
-    it("returns 400 for invalid cancelUrl", async () => {
-      const response = await POST(
-        makeRequest({ cancelUrl: "not-a-url" })
-      );
+    it("returns 400 for invalid email", async () => {
+      const response = await POST(makeRequest({ email: "not-an-email" }));
       const data = await response.json();
 
       expect(response.status).toBe(400);
       expect(data.error.code).toBe("VALIDATION_ERROR");
     });
 
-    it("accepts empty body (all fields optional)", async () => {
-      mockStripeCheckoutCreate.mockResolvedValue(MOCK_CHECKOUT_SESSION);
+    it("returns 400 for non-string email", async () => {
+      const response = await POST(makeRequest({ email: 123 }));
+      const data = await response.json();
 
-      const response = await POST(makeRequest());
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(400);
+      expect(data.error.code).toBe("VALIDATION_ERROR");
     });
   });
 
@@ -122,11 +159,14 @@ describe("POST /api/checkout", () => {
 
   describe("Stripe failures", () => {
     it("returns 500 when Stripe session has no URL", async () => {
+      mockPrisma.member.upsert.mockResolvedValue({});
       mockStripeCheckoutCreate.mockResolvedValue(
         MOCK_CHECKOUT_SESSION_NO_URL
       );
 
-      const response = await POST(makeRequest());
+      const response = await POST(
+        makeRequest({ email: "nourl@test.com" })
+      );
       const data = await response.json();
 
       expect(response.status).toBe(500);
@@ -134,11 +174,14 @@ describe("POST /api/checkout", () => {
     });
 
     it("returns 500 when Stripe throws an error", async () => {
+      mockPrisma.member.upsert.mockResolvedValue({});
       mockStripeCheckoutCreate.mockRejectedValue(
         new Error("Stripe API down")
       );
 
-      const response = await POST(makeRequest());
+      const response = await POST(
+        makeRequest({ email: "err@test.com" })
+      );
       const data = await response.json();
 
       expect(response.status).toBe(500);
@@ -148,9 +191,12 @@ describe("POST /api/checkout", () => {
     });
 
     it("handles non-Error throws gracefully", async () => {
+      mockPrisma.member.upsert.mockResolvedValue({});
       mockStripeCheckoutCreate.mockRejectedValue("string error");
 
-      const response = await POST(makeRequest());
+      const response = await POST(
+        makeRequest({ email: "str@test.com" })
+      );
       const data = await response.json();
 
       expect(response.status).toBe(500);
@@ -162,11 +208,14 @@ describe("POST /api/checkout", () => {
 
   describe("security", () => {
     it("never exposes STRIPE_SECRET_KEY in response", async () => {
+      mockPrisma.member.upsert.mockResolvedValue({});
       mockStripeCheckoutCreate.mockRejectedValue(
         new Error("sk_test_fake is invalid")
       );
 
-      const response = await POST(makeRequest());
+      const response = await POST(
+        makeRequest({ email: "sec@test.com" })
+      );
       const text = await response.text();
 
       expect(text).not.toContain("sk_test");
@@ -174,9 +223,12 @@ describe("POST /api/checkout", () => {
     });
 
     it("returns structured error format", async () => {
+      mockPrisma.member.upsert.mockResolvedValue({});
       mockStripeCheckoutCreate.mockRejectedValue(new Error("boom"));
 
-      const response = await POST(makeRequest());
+      const response = await POST(
+        makeRequest({ email: "fmt@test.com" })
+      );
       const data = await response.json();
 
       expect(data).toHaveProperty("error");
