@@ -73,3 +73,13 @@ export const checkoutLimiter = createRateLimiter({
   maxRequests: 5,
   windowMs: 60_000,
 });
+
+/**
+ * Shared quiz rate limiter instance.
+ * 10 requests per 60 seconds per IP — more generous than checkout
+ * since quiz retakes are legitimate.
+ */
+export const quizLimiter = createRateLimiter({
+  maxRequests: 10,
+  windowMs: 60_000,
+});

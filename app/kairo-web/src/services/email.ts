@@ -120,3 +120,57 @@ export async function sendWelcomeEmail(data: WelcomeEmail): Promise<void> {
     `,
   });
 }
+
+// ── Quiz Welcome Email ──
+
+interface QuizWelcomeEmail {
+  email: string;
+  recommendedTier: string;
+}
+
+/**
+ * Send a welcome email after quiz completion with recommended tier info.
+ * Fire-and-forget — failures should not disrupt quiz submission.
+ *
+ * In development or when Resend isn't configured, logs to console.
+ */
+export async function sendQuizWelcomeEmail(
+  data: QuizWelcomeEmail
+): Promise<void> {
+  const { email, recommendedTier } = data;
+
+  if (!env.RESEND_API_KEY) {
+    console.log("[email-stub] Quiz welcome email:", {
+      to: email,
+      subject: "Your Kairo recommendation is ready",
+      recommendedTier,
+    });
+    return;
+  }
+
+  const { Resend } = await import("resend");
+  const resend = new Resend(env.RESEND_API_KEY);
+
+  const tierNames: Record<string, string> = {
+    foundation: "Foundation",
+    coaching: "Coaching",
+    performance: "Performance",
+    vip: "VIP Elite",
+  };
+
+  const tierName = tierNames[recommendedTier] ?? "Foundation";
+
+  await resend.emails.send({
+    from: env.EMAIL_FROM,
+    to: email,
+    subject: "Your Kairo recommendation is ready 🎯",
+    html: `
+      <h2>Your personalized plan is ready</h2>
+      <p>Based on your quiz answers, we recommend the <strong>${tierName}</strong> plan.</p>
+      <p>This plan is tailored to match your goals, experience level, and training schedule.</p>
+      <p><a href="${env.APP_URL}/quiz/result?tier=${recommendedTier}">View your recommendation →</a></p>
+      <p>Questions? Just reply to this email.</p>
+      <p>— Kairo Coaching</p>
+    `,
+  });
+}

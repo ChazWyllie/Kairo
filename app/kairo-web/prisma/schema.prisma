@@ -54,3 +54,15 @@ model CheckIn {
   @@unique([memberId, date])
   @@index([memberId, date(sort: Desc)])
 }
+
+model Lead {
+  id              String   @id @default(cuid())
+  email           String   @unique
+  quizAnswers     Json?    // stored quiz answers
+  recommendedTier String?  // tier recommended by quiz engine
+  source          String   @default("quiz") // "quiz" | "waitlist" | etc.
+  capturedAt      DateTime @default(now())
+  convertedAt     DateTime? // set when lead becomes a paying member
+
+  @@index([email])
+}

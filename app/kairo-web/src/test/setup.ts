@@ -36,6 +36,12 @@ export const mockPrisma = {
     findMany: vi.fn(),
     count: vi.fn(),
   },
+  lead: {
+    upsert: vi.fn(),
+    findUnique: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+  },
 };
 
 vi.mock("@/lib/prisma", () => ({
@@ -63,11 +69,13 @@ vi.mock("@/services/stripe", () => ({
 export const mockNotifyAdmin = vi.fn();
 export const mockNotifyAdminCancellation = vi.fn();
 export const mockSendWelcomeEmail = vi.fn();
+export const mockSendQuizWelcomeEmail = vi.fn();
 
 vi.mock("@/services/email", () => ({
   notifyAdmin: mockNotifyAdmin,
   notifyAdminCancellation: mockNotifyAdminCancellation,
   sendWelcomeEmail: mockSendWelcomeEmail,
+  sendQuizWelcomeEmail: mockSendQuizWelcomeEmail,
 }));
 
 // ── Mock rate limiter (always allow — rate-limit.test.ts tests it directly) ──
@@ -76,9 +84,17 @@ export const mockRateLimitCheck = vi.fn().mockReturnValue({
   retryAfter: 0,
 });
 
+export const mockQuizRateLimitCheck = vi.fn().mockReturnValue({
+  allowed: true,
+  retryAfter: 0,
+});
+
 vi.mock("@/lib/rate-limit", () => ({
   checkoutLimiter: {
     check: (...args: unknown[]) => mockRateLimitCheck(...args),
+  },
+  quizLimiter: {
+    check: (...args: unknown[]) => mockQuizRateLimitCheck(...args),
   },
   createRateLimiter: vi.fn(),
 }));
