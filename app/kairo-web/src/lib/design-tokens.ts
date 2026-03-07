@@ -3,44 +3,32 @@
  *
  * Follows ui-designer.md principles:
  * - Primitive tokens → semantic tokens → component tokens
- * - 60-75% neutrals, 15-25% brand primary (amber/gold), 5-10% semantic
+ * - 60-75% neutrals, 15-25% brand primary, 5-10% semantic
  * - 4/8pt spacing rhythm
  * - WCAG 2.1 AA contrast (4.5:1 text, 3:1 UI)
  *
- * Brand identity: warm amber/gold — energy, motivation, confidence.
- * Visual language: modern rounded surfaces, subtle shadows, glass effects.
+ * These tokens are used as Tailwind class references.
+ * When we move to CSS custom properties, this becomes the
+ * single source of truth for light/dark/high-contrast modes.
  */
 
 // ── Primitive Palette ──
 
 export const palette = {
-  black: "#09090b",
-  white: "#ffffff",
+  black: "#000000",
+  white: "#FFFFFF",
   neutral: {
-    25: "#fcfcfd",
     50: "#fafafa",
-    100: "#f4f4f5",
-    200: "#e4e4e7",
-    300: "#d4d4d8",
-    400: "#a1a1aa",
-    500: "#71717a",
-    600: "#52525b",
-    700: "#3f3f46",
-    800: "#27272a",
-    900: "#18181b",
-    950: "#09090b",
-  },
-  brand: {
-    50: "#fffbeb",
-    100: "#fef3c7",
-    200: "#fde68a",
-    300: "#fcd34d",
-    400: "#fbbf24",
-    500: "#f59e0b",
-    600: "#d97706",
-    700: "#b45309",
-    800: "#92400e",
-    900: "#78350f",
+    100: "#f5f5f5",
+    200: "#e5e5e5",
+    300: "#d4d4d4",
+    400: "#a3a3a3",
+    500: "#737373",
+    600: "#525252",
+    700: "#404040",
+    800: "#262626",
+    900: "#171717",
+    950: "#0a0a0a",
   },
   green: {
     50: "#f0fdf4",
@@ -100,32 +88,29 @@ export const spacing = {
 
 export const components = {
   card: {
-    base: "rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 shadow-card transition-all duration-300",
-    highlighted: "rounded-2xl border-2 border-amber-400 bg-[var(--surface)] p-6 shadow-card glow-brand",
-    interactive: "rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 shadow-card transition-all duration-300 hover:shadow-card-hover hover:-translate-y-0.5",
+    base: "rounded-2xl border border-neutral-200 p-6",
+    highlighted: "rounded-2xl border-2 border-black p-6",
     status: {
       success: "rounded-2xl border border-green-200 bg-green-50 p-6",
-      warning: "rounded-2xl border border-amber-200 bg-amber-50 p-6",
+      warning: "rounded-2xl border border-yellow-200 bg-yellow-50 p-6",
       error: "rounded-2xl border border-red-200 bg-red-50 p-6",
     },
   },
   button: {
-    primary: "btn-primary",
-    secondary: "btn-secondary",
-    ghost: "text-sm font-medium text-[var(--foreground-muted)] hover:text-[var(--foreground)] transition-colors",
+    primary: "rounded-xl bg-black px-6 py-3 text-white font-medium hover:opacity-90 transition-opacity disabled:opacity-60",
+    secondary: "rounded-xl border border-neutral-300 px-6 py-3 text-neutral-700 font-medium hover:border-neutral-500 transition-colors",
+    ghost: "text-sm font-medium text-neutral-500 hover:text-black transition-colors",
   },
   badge: {
-    base: "badge",
-    brand: "badge bg-amber-100 text-amber-800",
-    subtle: "badge bg-[var(--background-tertiary)] text-[var(--foreground-secondary)]",
+    base: "inline-block rounded-full px-3 py-1 text-xs font-medium",
   },
   input: {
-    base: "input-base",
+    base: "w-full rounded-xl border border-neutral-300 px-4 py-3 text-base outline-none focus:border-black focus:ring-1 focus:ring-black",
   },
   stat: {
-    container: "rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 text-center shadow-card",
-    value: "text-3xl font-bold tracking-tight",
-    label: "mt-1 text-sm text-[var(--foreground-secondary)]",
+    container: "rounded-2xl border border-neutral-200 p-4 text-center",
+    value: "text-3xl font-bold",
+    label: "mt-1 text-sm text-neutral-500",
   },
 } as const;
 
@@ -134,16 +119,16 @@ export const components = {
 export const dashboard = {
   /** Member dashboard: action-first, motivational language */
   member: {
-    todayCard: "rounded-2xl border-2 border-amber-400/50 bg-[var(--surface)] p-6 shadow-card glow-brand",
-    progressBlock: "rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 shadow-card",
-    coachConnection: "rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 shadow-card",
+    todayCard: "rounded-2xl border-2 border-black p-6",
+    progressBlock: "rounded-2xl border border-neutral-200 p-6",
+    coachConnection: "rounded-2xl border border-neutral-200 p-6",
   },
 
   /** Coach dashboard: exception-first, triage-oriented */
   coach: {
-    attentionQueue: "rounded-2xl border-2 border-red-200 bg-red-50/50 p-6 shadow-card",
-    todaysOps: "rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 shadow-card",
-    clientHealth: "rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-card transition-all duration-300 hover:shadow-card-hover",
-    portfolioStat: "rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 text-center shadow-card",
+    attentionQueue: "rounded-2xl border-2 border-red-200 bg-red-50 p-6",
+    todaysOps: "rounded-2xl border border-neutral-200 p-6",
+    clientHealth: "rounded-2xl border border-neutral-200 p-4",
+    portfolioStat: "rounded-2xl border border-neutral-200 p-4 text-center",
   },
 } as const;
