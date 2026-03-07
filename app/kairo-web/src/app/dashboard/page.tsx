@@ -68,26 +68,31 @@ export default function DashboardPage() {
     setState({ phase: "loading" });
 
     try {
-      // Fetch member + check-in history in parallel
-      const [memberRes, historyRes] = await Promise.all([
-        fetch(`/api/member?email=${encodeURIComponent(memberEmail)}`),
-        fetch(`/api/checkin?email=${encodeURIComponent(memberEmail)}`),
-      ]);
+      // Fetch member profile first
+      const memberRes = await fetch(`/api/member?email=${encodeURIComponent(memberEmail)}`);
 
       if (!memberRes.ok) {
-        const data = await memberRes.json();
-        throw new Error(data?.error?.message ?? "Member not found");
+        const data = await memberRes.json().catch(() => null);
+        throw new Error(data?.error?.message ?? "No account found for this email. Have you completed checkout?");
       }
 
       const memberData = await memberRes.json();
 
+      // Only fetch check-in history if member is active
       let checkIns: CheckIn[] = [];
       let stats: Stats = { currentStreak: 0, weeklyWorkouts: 0, weeklyAdherence: 0 };
 
-      if (historyRes.ok) {
-        const historyData = await historyRes.json();
-        checkIns = historyData.checkIns ?? [];
-        stats = historyData.stats ?? stats;
+      if (memberData.member.status === "active") {
+        try {
+          const historyRes = await fetch(`/api/checkin?email=${encodeURIComponent(memberEmail)}`);
+          if (historyRes.ok) {
+            const historyData = await historyRes.json();
+            checkIns = historyData.checkIns ?? [];
+            stats = historyData.stats ?? stats;
+          }
+        } catch {
+          // Non-fatal — dashboard still loads without history
+        }
       }
 
       setState({
@@ -239,7 +244,46 @@ export default function DashboardPage() {
           </span>
         </div>
 
-        {/* Stats Cards */}
+        {/* Pending member notice */}
+        {member.status === "pending" && (
+          <div className="rounded-2xl border border-yellow-200 bg-yellow-50 p-6">
+            <h2 className="text-lg font-semibold text-yellow-800">
+              Payment pending
+            </h2>
+            <p className="mt-2 text-sm text-yellow-700">
+              Your membership isn&apos;t active yet. Please complete checkout to
+              unlock your dashboard, check-ins, and coaching.
+            </p>
+            <a
+              href="/"
+              className="mt-4 inline-block rounded-xl bg-black px-6 py-3 text-white font-medium text-sm"
+            >
+              Complete checkout →
+            </a>
+          </div>
+        )}
+
+        {/* Canceled member notice */}
+        {member.status === "canceled" && (
+          <div className="rounded-2xl border border-red-200 bg-red-50 p-6">
+            <h2 className="text-lg font-semibold text-red-800">
+              Membership canceled
+            </h2>
+            <p className="mt-2 text-sm text-red-700">
+              Your subscription has been canceled. Re-subscribe to regain access
+              to coaching and check-ins.
+            </p>
+            <a
+              href="/"
+              className="mt-4 inline-block rounded-xl bg-black px-6 py-3 text-white font-medium text-sm"
+            >
+              Re-subscribe →
+            </a>
+          </div>
+        )}
+
+        {/* Stats Cards — only for active members */}
+        {member.status === "active" && (
         <div className="grid grid-cols-3 gap-4">
           <div className="rounded-2xl border border-neutral-200 p-4 text-center">
             <p className="text-3xl font-bold">{stats.currentStreak}</p>
@@ -254,6 +298,7 @@ export default function DashboardPage() {
             <p className="mt-1 text-sm text-neutral-500">Weekly adherence</p>
           </div>
         </div>
+        )}
 
         {/* Quick Check-In (FR-8) */}
         {member.status === "active" && !hasCheckedInToday && (
