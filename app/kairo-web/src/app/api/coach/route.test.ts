@@ -20,6 +20,8 @@ function makeRequest(secret?: string): NextRequest {
 describe("GET /api/coach", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Default: no applications (coach route now queries these)
+    mockPrisma.application.findMany.mockResolvedValue([]);
   });
 
   // ── Auth ──
