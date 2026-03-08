@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { track } from "@/lib/analytics";
 import { PLANS } from "@/lib/stripe-prices";
-import { isValidEmail } from "@/lib/validation";
+// isValidEmail removed — auth is now session-based
 import { semantic, components, dashboard } from "@/lib/design-tokens";
 
 /**
@@ -122,13 +122,12 @@ interface Stats {
 }
 
 type DashboardState =
-  | { phase: "identify" }
   | { phase: "loading" }
   | { phase: "error"; message: string }
   | { phase: "dashboard"; member: MemberProfile; checkIns: CheckIn[]; stats: Stats; reviews: Review[]; programs: ProgramBlock[]; macros: MacroTarget[] };
 
 export default function DashboardPage() {
-  const [state, setState] = useState<DashboardState>({ phase: "identify" });
+  const [state, setState] = useState<DashboardState>({ phase: "loading" });
   const [email, setEmail] = useState("");
 
   // Check-in form state
@@ -155,10 +154,32 @@ export default function DashboardPage() {
   const [biggestWin, setBiggestWin] = useState("");
   const [biggestStruggle, setBiggestStruggle] = useState("");
   const [helpNeeded, setHelpNeeded] = useState("");
+  const [cancelLoading, setCancelLoading] = useState(false);
+  const [cancelMessage, setCancelMessage] = useState<string | null>(null);
 
   useEffect(() => {
     track({ name: "page_view", properties: { path: "/dashboard" } });
-  }, []);
+
+    // Auto-authenticate from session cookie
+    async function autoAuth() {
+      try {
+        const meRes = await fetch("/api/auth/me");
+        if (!meRes.ok) {
+          // No session — redirect to login
+          window.location.href = "/login";
+          return;
+        }
+        const meData = await meRes.json();
+        const memberEmail = meData.member.email;
+        setEmail(memberEmail);
+        await loadDashboard(memberEmail);
+      } catch {
+        window.location.href = "/login";
+      }
+    }
+
+    autoAuth();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadDashboard = useCallback(async (memberEmail: string) => {
     setState({ phase: "loading" });
@@ -241,13 +262,36 @@ export default function DashboardPage() {
     }
   }, []);
 
-  async function onIdentify(e: React.FormEvent) {
-    e.preventDefault();
-    if (!isValidEmail(email)) {
-      setState({ phase: "error", message: "Please enter a valid email." });
+  async function handleCancelMembership() {
+    if (!confirm("Are you sure you want to cancel your membership? You'll keep access until the end of your billing period.")) {
       return;
     }
-    await loadDashboard(email);
+    setCancelLoading(true);
+    setCancelMessage(null);
+
+    try {
+      const res = await fetch("/api/member/cancel", {
+        method: "POST",
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error?.message ?? "Failed to cancel membership");
+      }
+
+      setCancelMessage("Your membership has been cancelled. You'll keep access until the end of your billing period.");
+      // Refresh dashboard
+      await loadDashboard(email);
+    } catch (err) {
+      setCancelMessage(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setCancelLoading(false);
+    }
+  }
+
+  async function handleLogout() {
+    await fetch("/api/auth/logout", { method: "POST" });
+    window.location.href = "/login";
   }
 
   async function onCheckIn(e: React.FormEvent) {
@@ -321,41 +365,24 @@ export default function DashboardPage() {
     }
   }
 
-  // ── Identify screen ──
-  if (state.phase === "identify" || state.phase === "error") {
+  // ── Error state ──
+  if (state.phase === "error") {
     return (
       <main className="min-h-screen bg-neutral-50 text-black">
         <div className="mx-auto max-w-md px-6 py-16">
-          <h1 className="text-2xl font-semibold text-center">Welcome back</h1>
-          <p className="mt-2 text-center text-neutral-500 text-sm">
-            Enter your email to view your dashboard.
+          <h1 className="text-2xl font-semibold text-center">Dashboard</h1>
+          <p className="mt-4 text-sm text-red-600 text-center" role="alert">
+            {state.message}
           </p>
-
-          <form onSubmit={onIdentify} className="mt-8 space-y-4">
-            <input
-              type="email"
-              className={components.input.base}
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              aria-label="Email address"
-            />
-
-            {state.phase === "error" && (
-              <p className="text-sm text-red-600" role="alert">
-                {state.message}
-              </p>
-            )}
-
-            <button type="submit" className={`w-full ${components.button.primary}`}>
-              View Dashboard
+          <div className="mt-8 text-center space-y-2">
+            <button
+              onClick={() => window.location.reload()}
+              className={`w-full ${components.button.primary}`}
+            >
+              Try Again
             </button>
-          </form>
-
-          <div className="mt-8 text-center">
-            <Link href="/" className={components.button.ghost}>
-              ← Back to home
+            <Link href="/login" className={components.button.ghost}>
+              Sign in with a different account
             </Link>
           </div>
         </div>
@@ -434,10 +461,12 @@ export default function DashboardPage() {
                   ? `${semantic.memberStatus.active.bg} ${semantic.memberStatus.active.text}`
                   : member.status === "pending"
                     ? `${semantic.memberStatus.pending.bg} ${semantic.memberStatus.pending.text}`
-                    : `${semantic.memberStatus.canceled.bg} ${semantic.memberStatus.canceled.text}`
+                    : member.status === "past_due"
+                      ? "bg-amber-100 text-amber-700"
+                      : `${semantic.memberStatus.canceled.bg} ${semantic.memberStatus.canceled.text}`
               }`}
             >
-              {member.status}
+              {member.status === "past_due" ? "past due" : member.status}
             </span>
           </div>
         </header>
@@ -1133,16 +1162,73 @@ export default function DashboardPage() {
           </section>
         )}
 
-        {/* ── Navigation ── */}
-        <nav className="flex gap-4 text-sm pb-8">
-          <Link href="/" className={components.button.ghost}>
-            ← Home
-          </Link>
-          {!member.onboardedAt && (
-            <Link href="/onboarding" className={components.button.ghost}>
-              Complete onboarding →
-            </Link>
+        {/* ── MEMBERSHIP & ACCOUNT ── */}
+        <section className={components.card.base}>
+          <h2 className="text-lg font-semibold">Membership</h2>
+          <div className="mt-3 space-y-3">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-neutral-500">Status</span>
+              <span className={`font-medium ${
+                member.status === "active" ? "text-green-700"
+                  : member.status === "past_due" ? "text-amber-600"
+                    : "text-red-600"
+              }`}>
+                {member.status === "past_due" ? "⚠️ Payment past due" : member.status}
+              </span>
+            </div>
+            {planConfig && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-neutral-500">Plan</span>
+                <span className="font-medium">
+                  {planConfig.name}{member.billingInterval ? ` · ${member.billingInterval}` : ""}
+                </span>
+              </div>
+            )}
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-neutral-500">Member since</span>
+              <span className="font-medium">
+                {new Date(member.createdAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+              </span>
+            </div>
+          </div>
+
+          {cancelMessage && (
+            <p className={`mt-3 text-sm rounded-lg px-3 py-2 ${
+              cancelMessage.includes("cancelled") ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"
+            }`}>
+              {cancelMessage}
+            </p>
           )}
+
+          {member.status === "active" && (
+            <button
+              onClick={handleCancelMembership}
+              disabled={cancelLoading}
+              className="mt-4 w-full rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
+            >
+              {cancelLoading ? "Cancelling…" : "Cancel membership"}
+            </button>
+          )}
+        </section>
+
+        {/* ── Navigation ── */}
+        <nav className="flex items-center justify-between text-sm pb-8">
+          <div className="flex gap-4">
+            <Link href="/" className={components.button.ghost}>
+              ← Home
+            </Link>
+            {!member.onboardedAt && (
+              <Link href="/onboarding" className={components.button.ghost}>
+                Complete onboarding →
+              </Link>
+            )}
+          </div>
+          <button
+            onClick={handleLogout}
+            className="text-neutral-400 hover:text-black text-sm transition-colors"
+          >
+            Sign out
+          </button>
         </nav>
       </div>
     </main>

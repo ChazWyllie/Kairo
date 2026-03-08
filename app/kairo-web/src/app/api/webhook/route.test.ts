@@ -298,7 +298,7 @@ describe("POST /api/webhook", () => {
 
   describe("unknown events", () => {
     it("returns 200 with status 'ignored' for unhandled event types", async () => {
-      const event = makeUnknownEvent("invoice.payment_failed");
+      const event = makeUnknownEvent("invoice.created");
       mockStripeConstructEvent.mockReturnValue(event);
       mockPrisma.stripeEvent.findUnique.mockResolvedValue(null);
 

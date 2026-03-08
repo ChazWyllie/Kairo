@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { env } from "@/lib/env";
+import { stripe } from "@/services/stripe";
 
 /**
  * GET /api/coach?secret=...
@@ -30,6 +31,7 @@ interface ClientHealth {
   onboarded: boolean;
   memberSince: string;
   status: "on_track" | "needs_attention" | "at_risk";
+  paymentStatus: "active" | "past_due" | "canceled" | "unknown";
   lastCheckIn: string | null;
   daysSinceCheckIn: number | null;
   adherence7d: number;
@@ -106,7 +108,7 @@ export async function GET(request: NextRequest) {
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
     const members = await prisma.member.findMany({
-      where: { status: "active" },
+      where: { status: { in: ["active", "past_due"] } },
       include: {
         checkIns: {
           where: { date: { gte: thirtyDaysAgo } },
@@ -145,6 +147,7 @@ export async function GET(request: NextRequest) {
         status: true,
         createdAt: true,
         approvedAt: true,
+        convertedToMember: true,
       },
     });
 
@@ -199,6 +202,7 @@ export async function GET(request: NextRequest) {
         onboarded: !!m.onboardedAt,
         memberSince: m.createdAt.toISOString(),
         status,
+        paymentStatus: (m.status === "active" ? "active" : m.status === "past_due" ? "past_due" : m.status === "canceled" ? "canceled" : "unknown") as ClientHealth["paymentStatus"],
         lastCheckIn: lastCheckIn ? new Date(lastCheckIn).toISOString() : null,
         daysSinceCheckIn,
         adherence7d,
@@ -285,6 +289,7 @@ export async function GET(request: NextRequest) {
         status: a.status,
         createdAt: a.createdAt.toISOString(),
         approvedAt: a.approvedAt?.toISOString() ?? null,
+        convertedToMember: a.convertedToMember,
       })),
     });
   } catch (err) {

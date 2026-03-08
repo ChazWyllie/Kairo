@@ -174,6 +174,22 @@ export async function POST(request: NextRequest) {
       console.error("[webhook] Lead conversion tracking failed (non-fatal)");
     }
 
+    // 11. Bridge application→member conversion (fire-and-forget)
+    try {
+      const application = await prisma.application.findUnique({
+        where: { email },
+      });
+      if (application && !application.convertedToMember) {
+        await prisma.application.update({
+          where: { email },
+          data: { convertedToMember: true },
+        });
+      }
+    } catch (appErr) {
+      // Non-fatal — member is already activated
+      console.error("[webhook] Application conversion tracking failed (non-fatal)");
+    }
+
     return NextResponse.json({ received: true, status: "processed" });
   }
 
@@ -215,6 +231,60 @@ export async function POST(request: NextRequest) {
       await notifyAdminCancellation({ stripeSubId: subscriptionId });
     } catch (emailErr) {
       console.error("[webhook] Cancellation notification failed (non-fatal)");
+    }
+
+    return NextResponse.json({ received: true, status: "processed" });
+  }
+
+  // ── invoice.payment_failed — mark member as past_due ──
+
+  if (event.type === "invoice.payment_failed") {
+    const invoice = event.data.object as Stripe.Invoice;
+    const subDetails = invoice.parent?.subscription_details;
+    const subscriptionId =
+      subDetails
+        ? typeof subDetails.subscription === "string"
+          ? subDetails.subscription
+          : subDetails.subscription?.id ?? null
+        : null;
+
+    if (subscriptionId) {
+      // Record event for idempotency
+      await prisma.stripeEvent.create({
+        data: { id: event.id },
+      });
+
+      await prisma.member.updateMany({
+        where: { stripeSubId: subscriptionId },
+        data: { status: "past_due" },
+      });
+    }
+
+    return NextResponse.json({ received: true, status: "processed" });
+  }
+
+  // ── invoice.payment_succeeded — restore active status if was past_due ──
+
+  if (event.type === "invoice.payment_succeeded") {
+    const invoice = event.data.object as Stripe.Invoice;
+    const subDetails = invoice.parent?.subscription_details;
+    const subscriptionId =
+      subDetails
+        ? typeof subDetails.subscription === "string"
+          ? subDetails.subscription
+          : subDetails.subscription?.id ?? null
+        : null;
+
+    if (subscriptionId) {
+      // Record event for idempotency
+      await prisma.stripeEvent.create({
+        data: { id: event.id },
+      });
+
+      await prisma.member.updateMany({
+        where: { stripeSubId: subscriptionId, status: "past_due" },
+        data: { status: "active" },
+      });
     }
 
     return NextResponse.json({ received: true, status: "processed" });

@@ -20,7 +20,11 @@ export type AnalyticsEvent =
   | { name: "quiz_started"; properties: { source?: string } }
   | { name: "quiz_completed"; properties: { recommendedTier: string } }
   | { name: "quiz_result_viewed"; properties: { tier: string } }
-  | { name: "application_submitted"; properties: { goal: string; tier: string } };
+  | { name: "application_submitted"; properties: { goal: string; tier: string } }
+  | { name: "member_login"; properties: Record<string, never> }
+  | { name: "member_registered"; properties: Record<string, never> }
+  | { name: "member_logout"; properties: Record<string, never> }
+  | { name: "membership_cancelled"; properties: Record<string, never> };
 
 /**
  * Track an analytics event.
