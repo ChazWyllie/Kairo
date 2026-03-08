@@ -14,6 +14,9 @@ model Member {
   stripeSubId      String?  @unique
   status           String   @default("pending") // pending | active | canceled
 
+  // Auth (Milestone O3)
+  passwordHash     String?  // bcrypt hash, null until member sets password
+
   // Multi-tier pricing (Phase 7+)
   planTier         String?  // "foundation" | "coaching" | "performance" | "vip"
   billingInterval  String?  // "monthly" | "annual"

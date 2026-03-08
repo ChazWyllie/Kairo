@@ -28,6 +28,7 @@ interface ClientHealth {
   onboarded: boolean;
   memberSince: string;
   status: "on_track" | "needs_attention" | "at_risk";
+  paymentStatus: "active" | "past_due" | "canceled" | "unknown";
   lastCheckIn: string | null;
   daysSinceCheckIn: number | null;
   adherence7d: number;
@@ -84,6 +85,7 @@ interface ApplicationInfo {
   whyNow: string | null;
   biggestObstacle: string | null;
   status: string;
+  convertedToMember: boolean;
   createdAt: string;
   approvedAt: string | null;
 }
@@ -391,6 +393,31 @@ function ClientCard({
   const [responseText, setResponseText] = useState("");
   const [selectedCheckIn, setSelectedCheckIn] = useState<string | null>(null);
   const [showTemplateHelper, setShowTemplateHelper] = useState(false);
+  const [cancelLoading, setCancelLoading] = useState(false);
+  const [cancelMsg, setCancelMsg] = useState<string | null>(null);
+
+  async function handleCancelClient() {
+    if (!confirm(`Cancel membership for ${client.email}? They'll keep access until end of billing period.`)) return;
+    setCancelLoading(true);
+    setCancelMsg(null);
+    try {
+      const res = await fetch(`/api/coach/cancel-member`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: client.email, secret: coachSecret }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error?.message ?? "Failed to cancel");
+      }
+      setCancelMsg("Cancelled — access until end of billing period.");
+      onRefresh();
+    } catch (err) {
+      setCancelMsg(err instanceof Error ? err.message : "Error");
+    } finally {
+      setCancelLoading(false);
+    }
+  }
 
   async function handleTriage(checkInId: string, coachStatus: "green" | "yellow" | "red") {
     setTriageLoading(true);
@@ -438,8 +465,17 @@ function ClientCard({
             <p className="text-xs text-neutral-500">
               {client.planTier ?? "—"} · {client.goal ?? "no goal set"}
               {client.daysPerWeek ? ` · ${client.daysPerWeek}×/wk` : ""}
+              {" · "}
+              <span className="text-neutral-400">
+                since {new Date(client.memberSince).toLocaleDateString("en-US", { month: "short", year: "numeric" })}
+              </span>
             </p>
           </div>
+          {client.paymentStatus === "past_due" && (
+            <span className="rounded-full bg-amber-100 text-amber-700 text-[10px] font-medium px-2 py-0.5">
+              ⚠️ Past due
+            </span>
+          )}
         </div>
 
         <div className="flex items-center gap-4 text-right">
@@ -681,6 +717,22 @@ function ClientCard({
               </div>
             </div>
           )}
+
+          {/* Cancel membership action */}
+          <div className="pt-3 border-t border-neutral-200">
+            {cancelMsg && (
+              <p className={`text-xs mb-2 ${cancelMsg.includes("Cancelled") ? "text-green-600" : "text-red-600"}`}>
+                {cancelMsg}
+              </p>
+            )}
+            <button
+              onClick={handleCancelClient}
+              disabled={cancelLoading}
+              className="w-full rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
+            >
+              {cancelLoading ? "Cancelling…" : "Cancel membership"}
+            </button>
+          </div>
         </div>
       )}
     </div>
@@ -920,6 +972,11 @@ function ApplicationsSection({
                       app.status === "approved" ? "text-green-700" : "text-red-700"
                     }`}>
                       {app.status === "approved" ? "✅ Approved" : "❌ Rejected"}
+                      {app.status === "approved" && (
+                        <span className={`ml-1 ${app.convertedToMember ? "text-green-600" : "text-amber-500"}`}>
+                          {app.convertedToMember ? "· Subscribed ✓" : "· Awaiting payment ⏳"}
+                        </span>
+                      )}
                       {app.approvedAt && (
                         <span className="text-neutral-400 ml-1">
                           {new Date(app.approvedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
