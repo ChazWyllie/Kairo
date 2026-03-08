@@ -314,7 +314,7 @@ export default function CoachPage() {
         {atRiskClients.length === 0 && needsAttentionClients.length === 0 && clients.length > 0 && (
           <section className={components.card.status.success}>
             <p className="text-center text-green-800 font-medium">
-              ✅ All clients on track — no interventions needed right now.
+              ✅ All clients on track. No interventions needed right now.
             </p>
           </section>
         )}
@@ -463,7 +463,7 @@ function ClientCard({
           <div>
             <p className="text-sm font-medium">{client.email}</p>
             <p className="text-xs text-neutral-500">
-              {client.planTier ?? "—"} · {client.goal ?? "no goal set"}
+              {client.planTier ?? "…"} · {client.goal ?? "no goal set"}
               {client.daysPerWeek ? ` · ${client.daysPerWeek}×/wk` : ""}
               {" · "}
               <span className="text-neutral-400">

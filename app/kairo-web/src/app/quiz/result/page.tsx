@@ -155,7 +155,7 @@ function ResultContent() {
               <span className="text-neutral-500">/mo</span>
               {billingInterval === "annual" && (
                 <p className="mt-1 text-xs text-neutral-500">
-                  ${totalPrice}/yr — billed annually
+                  ${totalPrice}/yr, billed annually
                 </p>
               )}
             </div>
@@ -186,7 +186,7 @@ function ResultContent() {
                 type="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                placeholder="Phone (optional — for coaching texts)"
+                placeholder="Phone (optional, for coaching texts)"
                 className="w-full rounded-xl border border-neutral-300 px-4 py-3 text-base outline-none focus:border-black focus:ring-1 focus:ring-black"
                 inputMode="tel"
                 autoComplete="tel"

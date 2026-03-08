@@ -194,7 +194,7 @@ export default function OnboardingPage() {
           <h1 className="text-3xl font-semibold">All set 🎯</h1>
           <p className="mt-4 text-neutral-700">
             Thanks for filling out your info. We&apos;ll use this to build your
-            first plan — expect it within 48 hours.
+            first plan. Expect it within 48 hours.
           </p>
           <Link
             href="/"
@@ -398,7 +398,7 @@ export default function OnboardingPage() {
                   Injuries or limitations
                 </label>
                 <textarea id="ob-injuries" className={inputClass} rows={2}
-                  placeholder="e.g., Bad left knee — no jumping"
+                  placeholder="e.g., Bad left knee, no jumping"
                   value={injuries} onChange={(e) => setInjuries(e.target.value)} maxLength={500} />
               </div>
 
@@ -593,7 +593,7 @@ export default function OnboardingPage() {
               </div>
 
               <p className="text-xs text-neutral-500 text-center">
-                All fields are optional — you can always update later.
+                All fields are optional. You can always update later.
               </p>
             </div>
           )}

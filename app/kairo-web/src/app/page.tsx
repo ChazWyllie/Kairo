@@ -35,8 +35,18 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen bg-white text-black">
+      {/* ─── Top Bar ─── */}
+      <nav className="mx-auto max-w-6xl px-6 pt-5 flex justify-end">
+        <Link
+          href="/login"
+          className="text-sm font-medium text-neutral-500 hover:text-black transition-colors"
+        >
+          Sign In
+        </Link>
+      </nav>
+
       {/* ─── Hero ─── */}
-      <section className="mx-auto max-w-4xl px-6 pt-20 pb-16 text-center">
+      <section className="mx-auto max-w-4xl px-6 pt-12 pb-16 text-center">
         <h1 className="text-4xl sm:text-5xl font-bold tracking-tight leading-tight">
           {hero.headline}
         </h1>
@@ -197,13 +207,10 @@ export default function HomePage() {
       <div className="mx-auto max-w-6xl px-6 pb-12">
         <div className="rounded-xl bg-neutral-50 p-4 text-sm text-neutral-600 text-center">
           <p className="font-medium">Note:</p>
-          <p>This is fitness coaching and general nutrition guidance — not medical advice.</p>
+          <p>This is fitness coaching and general nutrition guidance, not medical advice.</p>
         </div>
-        <div className="mt-6 flex items-center justify-between text-sm text-neutral-500">
+        <div className="mt-6 text-center text-sm text-neutral-500">
           <p>© {new Date().getFullYear()} Kairo Coaching. All rights reserved.</p>
-          <a href="/dashboard" className="hover:text-black transition-colors">
-            My Dashboard →
-          </a>
         </div>
       </div>
     </main>
@@ -299,7 +306,7 @@ function PricingCard({
         <span className="text-neutral-500">/mo</span>
         {billingInterval === "annual" && (
           <p className="mt-1 text-xs text-neutral-500">
-            ${price}/yr — billed annually
+            ${price}/yr, billed annually
           </p>
         )}
       </div>

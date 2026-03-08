@@ -33,10 +33,10 @@ const GYM_ACCESS = [
 ] as const;
 
 const TIERS = [
-  { value: "foundation", label: "Foundation — $49/mo", desc: "Templates + async check-ins" },
-  { value: "coaching", label: "Coaching — $129/mo", desc: "Personalized programming + priority support" },
-  { value: "performance", label: "Performance — $229/mo", desc: "Video reviews + weekly calls" },
-  { value: "vip", label: "VIP Elite — $349/mo", desc: "Daily access + priority everything" },
+  { value: "foundation", label: "Foundation · $49/mo", desc: "Templates + async check-ins" },
+  { value: "coaching", label: "Coaching · $129/mo", desc: "Personalized programming + priority support" },
+  { value: "performance", label: "Performance · $229/mo", desc: "Video reviews + weekly calls" },
+  { value: "vip", label: "VIP Elite · $349/mo", desc: "Daily access + priority everything" },
 ] as const;
 
 type FormStep = "info" | "training" | "goals" | "review";
@@ -508,7 +508,7 @@ export default function ApplyPage() {
               <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-4 text-sm space-y-1">
                 <p className="font-medium">Application Summary</p>
                 <p className="text-neutral-600">
-                  {fullName || "—"} · {email || "—"}
+                  {fullName || "…"} · {email || "…"}
                 </p>
                 <p className="text-neutral-600">
                   Goal: {GOALS.find((g) => g.value === goal)?.label || "Not selected"}

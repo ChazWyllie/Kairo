@@ -62,7 +62,7 @@ export const LANDING_SECTIONS: LandingSection[] = [
     id: "hero",
     headline: "Your plan adapts. You stay consistent.",
     subtitle:
-      "Expert fitness coaching that fits your real life — not a rigid 12-week program that breaks when you miss a day.",
+      "Expert fitness coaching that fits your real life, not a rigid 12-week program that breaks when you miss a day.",
     cta: "Apply Now",
   },
   {
@@ -80,7 +80,7 @@ export const LANDING_SECTIONS: LandingSection[] = [
       },
       {
         name: "Marcus T.",
-        text: "Having a coach who adjusts my plan when work gets crazy — that's the difference. I haven't missed a week in 3 months.",
+        text: "Having a coach who adjusts my plan when work gets crazy? That's the difference. I haven't missed a week in 3 months.",
         role: "Sales Director",
       },
     ],
@@ -91,12 +91,12 @@ export const LANDING_SECTIONS: LandingSection[] = [
       {
         title: "Set your constraints",
         description:
-          "Time, equipment, travel, stress — tell us what's real today.",
+          "Time, equipment, travel, stress: tell us what's real today.",
       },
       {
         title: "Get today's plan",
         description:
-          "2–3 workout options plus protein targets, built for your day.",
+          "2 to 3 workout options plus protein targets, built for your day.",
       },
       {
         title: "Log in 30 seconds",
@@ -114,10 +114,10 @@ export const LANDING_SECTIONS: LandingSection[] = [
   {
     id: "trust",
     items: [
-      "Cancel anytime — no contracts, no commitments",
+      "Cancel anytime. No contracts, no commitments.",
       "Secure payments powered by Stripe",
       "30-day money-back guarantee",
-      "Your data stays private — we never sell your information",
+      "Your data stays private. We never sell your information.",
     ],
   },
 ];
