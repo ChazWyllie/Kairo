@@ -77,7 +77,7 @@ export default function HomePage() {
         buttonBgColor="#111"
         buttonTextColor="#fff"
         ctaHref="/login"
-        ctaLabel="Get Started"
+        ctaLabel="Sign In"
         ease="power3.out"
       />
 
@@ -259,63 +259,12 @@ function PricingCard({
   billingInterval: "monthly" | "annual";
   highlighted?: boolean;
 }) {
-  const [expanded, setExpanded] = useState(false);
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const priceId =
-    billingInterval === "monthly" ? plan.monthlyPriceId : plan.annualPriceId;
   const price =
     billingInterval === "monthly" ? plan.monthlyPrice : plan.annualPrice;
   const perMonth =
     billingInterval === "annual"
       ? Math.round(plan.annualPrice / 12)
       : plan.monthlyPrice;
-
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-
-    if (!/\S+@\S+\.\S+/.test(email)) {
-      setError("Please enter a valid email.");
-      return;
-    }
-
-    setLoading(true);
-    track({
-      name: "checkout_started",
-      properties: {
-        tier: plan.tier,
-        interval: billingInterval,
-        hasPhone: !!phone.trim(),
-      },
-    });
-
-    try {
-      const res = await fetch("/api/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          phone: phone.trim() || undefined,
-          planId: priceId,
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error?.message ?? "Failed to start checkout.");
-
-      window.location.href = data.url;
-      return; // Don't reset loading — we're leaving the page
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Something went wrong.";
-      track({ name: "checkout_error", properties: { error: msg, tier: plan.tier } });
-      setError(msg);
-      setLoading(false);
-    }
-  }
 
   return (
     <div
@@ -352,61 +301,6 @@ function PricingCard({
           </li>
         ))}
       </ul>
-
-      {/* CTA / Form */}
-      {!expanded ? (
-        <button
-          type="button"
-          onClick={() => {
-            setExpanded(true);
-            track({ name: "cta_click", properties: { tier: plan.tier, location: "pricing_card" } });
-          }}
-          className={`mt-6 w-full rounded-xl px-4 py-3 font-medium transition-opacity ${
-            highlighted
-              ? "bg-black text-white"
-              : "border border-neutral-300 text-black hover:border-neutral-500"
-          }`}
-        >
-          Get Started →
-        </button>
-      ) : (
-        <form onSubmit={onSubmit} className="mt-6 space-y-3">
-          <input
-            type="email"
-            className="w-full rounded-xl border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-900"
-            placeholder="you@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            inputMode="email"
-            autoComplete="email"
-            required
-          />
-          <input
-            type="tel"
-            className="w-full rounded-xl border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-900"
-            placeholder="Phone (optional)"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            inputMode="tel"
-            autoComplete="tel"
-          />
-          {error && (
-            <p className="text-xs text-red-600" role="alert">
-              {error}
-            </p>
-          )}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-xl bg-black px-4 py-3 text-white font-medium text-sm transition-opacity disabled:opacity-60"
-          >
-            {loading ? "Redirecting to Stripe…" : "Start Subscription →"}
-          </button>
-          <p className="text-xs text-neutral-500 text-center">
-            Secure payment via Stripe. Cancel anytime.
-          </p>
-        </form>
-      )}
     </div>
   );
 }
