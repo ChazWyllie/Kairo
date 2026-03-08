@@ -57,6 +57,22 @@ interface ClientHealth {
     coachStatus: string | null;
     coachResponse: string | null;
   }[];
+  activeProgram: {
+    name: string;
+    primaryGoal: string | null;
+    split: string | null;
+    daysPerWeek: number | null;
+    status: string;
+    nextUpdateDate: string | null;
+  } | null;
+  activeMacro: {
+    calories: number;
+    protein: number;
+    fatsMin: number | null;
+    carbs: number | null;
+    stepsTarget: number | null;
+    effectiveDate: string;
+  } | null;
 }
 
 interface PortfolioStats {
@@ -96,6 +112,16 @@ export async function GET(request: NextRequest) {
           where: { date: { gte: thirtyDaysAgo } },
           orderBy: { date: "desc" },
           take: 30,
+        },
+        programBlocks: {
+          where: { status: "active" },
+          orderBy: { startDate: "desc" },
+          take: 1,
+        },
+        macroTargets: {
+          where: { status: "active" },
+          orderBy: { effectiveDate: "desc" },
+          take: 1,
         },
       },
     });
@@ -180,6 +206,26 @@ export async function GET(request: NextRequest) {
           coachStatus: ci.coachStatus,
           coachResponse: ci.coachResponse,
         })),
+        activeProgram: m.programBlocks[0]
+          ? {
+              name: m.programBlocks[0].name,
+              primaryGoal: m.programBlocks[0].primaryGoal,
+              split: m.programBlocks[0].split,
+              daysPerWeek: m.programBlocks[0].daysPerWeek,
+              status: m.programBlocks[0].status,
+              nextUpdateDate: m.programBlocks[0].nextUpdateDate?.toISOString() ?? null,
+            }
+          : null,
+        activeMacro: m.macroTargets[0]
+          ? {
+              calories: m.macroTargets[0].calories,
+              protein: m.macroTargets[0].protein,
+              fatsMin: m.macroTargets[0].fatsMin,
+              carbs: m.macroTargets[0].carbs,
+              stepsTarget: m.macroTargets[0].stepsTarget,
+              effectiveDate: m.macroTargets[0].effectiveDate.toISOString(),
+            }
+          : null,
       };
     });
 

@@ -383,6 +383,13 @@ export async function notifyAdminNewApplication(
 
 // ── Review / Check-in Emails (Milestone L) ──
 
+interface ProgramUpdatedEmail {
+  email: string;
+  fullName: string;
+  programName: string;
+  adjustmentsMade?: string | null;
+}
+
 interface ReviewDeliveredEmail {
   email: string;
   fullName: string;
@@ -441,6 +448,42 @@ export async function sendReviewDelivered(
         ${summary}
       </div>
       ${loomSection}
+      <p>Check your <a href="${env.APP_URL}/dashboard">dashboard</a> for the full details.</p>
+      <p>— Kairo Coaching</p>
+    `,
+  });
+}
+
+/**
+ * Send email when a program is updated (adjustments made).
+ * Fire-and-forget.
+ */
+export async function sendProgramUpdated(
+  data: ProgramUpdatedEmail
+): Promise<void> {
+  const { email, fullName, programName, adjustmentsMade } = data;
+  const firstName = fullName.split(" ")[0] || "there";
+
+  if (!env.RESEND_API_KEY) {
+    console.log("[email-stub] Program updated:", {
+      to: email,
+      subject: "Program updated",
+      programName,
+    });
+    return;
+  }
+
+  const { Resend } = await import("resend");
+  const resend = new Resend(env.RESEND_API_KEY);
+
+  await resend.emails.send({
+    from: env.EMAIL_FROM,
+    to: email,
+    subject: `Your program has been updated 🔄`,
+    html: `
+      <h2>Hey ${firstName},</h2>
+      <p>Your training program <strong>${programName}</strong> has been updated.</p>
+      ${adjustmentsMade ? `<div style="background:#f5f5f5;padding:16px;border-radius:12px;margin:16px 0;"><p style="margin:0;"><strong>What changed:</strong></p><p style="margin:8px 0 0;">${adjustmentsMade}</p></div>` : ""}
       <p>Check your <a href="${env.APP_URL}/dashboard">dashboard</a> for the full details.</p>
       <p>— Kairo Coaching</p>
     `,

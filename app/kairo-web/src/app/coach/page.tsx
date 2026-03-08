@@ -55,6 +55,22 @@ interface ClientHealth {
     coachStatus: string | null;
     coachResponse: string | null;
   }[];
+  activeProgram: {
+    name: string;
+    primaryGoal: string | null;
+    split: string | null;
+    daysPerWeek: number | null;
+    status: string;
+    nextUpdateDate: string | null;
+  } | null;
+  activeMacro: {
+    calories: number;
+    protein: number;
+    fatsMin: number | null;
+    carbs: number | null;
+    stepsTarget: number | null;
+    effectiveDate: string;
+  } | null;
 }
 
 interface PortfolioStats {
@@ -320,6 +336,9 @@ export default function CoachPage() {
             ← Home
           </Link>
         </nav>
+
+        {/* ── TEMPLATES — quick-access coach scripts ── */}
+        <TemplatesSection coachSecret={secret} />
       </div>
     </main>
   );
@@ -345,6 +364,7 @@ function ClientCard({
   const [triageMessage, setTriageMessage] = useState<string | null>(null);
   const [responseText, setResponseText] = useState("");
   const [selectedCheckIn, setSelectedCheckIn] = useState<string | null>(null);
+  const [showTemplateHelper, setShowTemplateHelper] = useState(false);
 
   async function handleTriage(checkInId: string, coachStatus: "green" | "yellow" | "red") {
     setTriageLoading(true);
@@ -449,6 +469,44 @@ function ClientCard({
             </p>
           )}
 
+          {/* Active program + macros summary */}
+          {(client.activeProgram || client.activeMacro) && (
+            <div className="grid grid-cols-2 gap-3">
+              {client.activeProgram && (
+                <div className="rounded-lg bg-neutral-50 p-3">
+                  <p className="text-xs font-medium text-neutral-500 mb-1">Program</p>
+                  <p className="text-sm font-medium">{client.activeProgram.name}</p>
+                  <div className="mt-1 text-xs text-neutral-500 space-y-0.5">
+                    {client.activeProgram.primaryGoal && (
+                      <p className="capitalize">{client.activeProgram.primaryGoal.replace("_", " ")}</p>
+                    )}
+                    {client.activeProgram.split && (
+                      <p className="capitalize">{client.activeProgram.split.replace("_", " / ")}</p>
+                    )}
+                    {client.activeProgram.daysPerWeek && (
+                      <p>{client.activeProgram.daysPerWeek}×/week</p>
+                    )}
+                    {client.activeProgram.nextUpdateDate && (
+                      <p>Update: {new Date(client.activeProgram.nextUpdateDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</p>
+                    )}
+                  </div>
+                </div>
+              )}
+              {client.activeMacro && (
+                <div className="rounded-lg bg-neutral-50 p-3">
+                  <p className="text-xs font-medium text-neutral-500 mb-1">Macros</p>
+                  <p className="text-sm font-medium">{client.activeMacro.calories} cal · {client.activeMacro.protein}g P</p>
+                  <div className="mt-1 text-xs text-neutral-500 space-y-0.5">
+                    {client.activeMacro.fatsMin && <p>{client.activeMacro.fatsMin}g F min</p>}
+                    {client.activeMacro.carbs && <p>{client.activeMacro.carbs}g C</p>}
+                    {client.activeMacro.stepsTarget && <p>{client.activeMacro.stepsTarget.toLocaleString()} steps</p>}
+                    <p className="text-neutral-400">Since {new Date(client.activeMacro.effectiveDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Recent check-ins with triage */}
           {client.recentCheckIns.length > 0 && (
             <div>
@@ -541,6 +599,21 @@ function ClientCard({
                     {/* Triage controls */}
                     {selectedCheckIn === ci.id && !ci.coachStatus && (
                       <div className="mt-2 space-y-2 pt-2 border-t border-neutral-200">
+                        <div className="flex items-center justify-between">
+                          <button
+                            onClick={() => {
+                              if (!showTemplateHelper) {
+                                setResponseText(
+                                  `Win: \n\nData: \n\nDecision: \n\nFocus: `
+                                );
+                              }
+                              setShowTemplateHelper(!showTemplateHelper);
+                            }}
+                            className="text-xs text-neutral-400 hover:text-black underline"
+                          >
+                            {showTemplateHelper ? "Free-form" : "Use template (Win/Data/Decision/Focus)"}
+                          </button>
+                        </div>
                         <textarea
                           className="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-xs outline-none focus:border-black"
                           placeholder="Coach response (optional)…"
@@ -635,4 +708,125 @@ function getAdherenceColor(adherence: number): string {
   if (adherence < 30) return "text-red-600";
   if (adherence < 60) return "text-amber-600";
   return "text-green-600";
+}
+
+// ── Templates Section ──
+
+interface Template {
+  id: string;
+  name: string;
+  category: string;
+  subject?: string;
+  body: string;
+  variables: string[];
+}
+
+function TemplatesSection({ coachSecret }: { coachSecret: string }) {
+  const [templates, setTemplates] = useState<Template[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  async function loadTemplates() {
+    if (templates.length > 0) {
+      setExpanded(!expanded);
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/templates?secret=${encodeURIComponent(coachSecret)}`);
+      if (res.ok) {
+        const data = await res.json();
+        setTemplates(data.templates ?? []);
+        setExpanded(true);
+      }
+    } catch {
+      // Non-fatal
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function copyToClipboard(text: string, id: string) {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+    });
+  }
+
+  const categoryLabels: Record<string, string> = {
+    lead: "Lead Management",
+    onboarding: "Onboarding",
+    checkin: "Check-In",
+    review: "Reviews",
+    retention: "Retention",
+  };
+
+  return (
+    <section className="pb-8">
+      <button
+        onClick={loadTemplates}
+        className="w-full text-left flex items-center justify-between rounded-2xl border border-neutral-200 bg-white p-4 hover:border-neutral-400 transition-colors"
+      >
+        <div>
+          <h2 className="text-lg font-semibold">📝 Message Templates</h2>
+          <p className="text-xs text-neutral-500 mt-0.5">
+            Pre-built scripts for leads, reviews, check-ins, and retention
+          </p>
+        </div>
+        <span className="text-neutral-400 text-sm">
+          {loading ? "Loading…" : expanded ? "▲" : "▼"}
+        </span>
+      </button>
+
+      {expanded && templates.length > 0 && (
+        <div className="mt-3 space-y-4">
+          {Object.entries(categoryLabels).map(([cat, label]) => {
+            const catTemplates = templates.filter((t) => t.category === cat);
+            if (catTemplates.length === 0) return null;
+            return (
+              <div key={cat}>
+                <h3 className="text-xs font-medium text-neutral-500 uppercase tracking-wide mb-2">
+                  {label}
+                </h3>
+                <div className="space-y-2">
+                  {catTemplates.map((t) => (
+                    <div
+                      key={t.id}
+                      className="rounded-xl border border-neutral-200 bg-white p-4"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium">{t.name}</p>
+                          {t.subject && (
+                            <p className="text-xs text-neutral-500 mt-0.5">
+                              Subject: {t.subject}
+                            </p>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => copyToClipboard(t.body, t.id)}
+                          className="text-xs text-neutral-500 hover:text-black border border-neutral-200 rounded-lg px-2 py-1 transition-colors"
+                        >
+                          {copiedId === t.id ? "✅ Copied" : "📋 Copy"}
+                        </button>
+                      </div>
+                      <p className="mt-2 text-sm text-neutral-700 whitespace-pre-line bg-neutral-50 rounded-lg p-3">
+                        {t.body}
+                      </p>
+                      {t.variables.length > 0 && (
+                        <p className="mt-2 text-xs text-neutral-400">
+                          Variables: {t.variables.join(", ")}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
 }
