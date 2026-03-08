@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import dynamic from "next/dynamic";
 import Link from "next/link";
 import { track } from "@/lib/analytics";
 import { PLANS, type PlanConfig } from "@/lib/stripe-prices";
@@ -13,10 +12,6 @@ import {
   type PricingSection,
   type TrustSection,
 } from "@/lib/landing-config";
-
-const ColorBends = dynamic(() => import("@/components/ColorBends"), {
-  ssr: false,
-});
 
 // ── Helpers to pull typed sections ──
 const hero = LANDING_SECTIONS.find((s) => s.id === "hero") as HeroSection;
@@ -39,68 +34,48 @@ export default function HomePage() {
   }, []);
 
   return (
-    <main className="relative min-h-screen bg-black text-black">
-      {/* ─── Full-page ColorBends background ─── */}
-      <div className="fixed inset-0 z-0" aria-hidden="true">
-        <ColorBends
-          colors={["#ff5c7a", "#8a5cff", "#00ffd1"]}
-          rotation={0}
-          speed={0.2}
-          scale={1}
-          frequency={1}
-          warpStrength={1}
-          mouseInfluence={0.5}
-          parallax={0.3}
-          noise={0.08}
-          transparent={false}
-          autoRotate={0}
-        />
-      </div>
+    <main className="min-h-screen bg-white text-black">
+      {/* ─── Top Bar ─── */}
+      <nav className="mx-auto max-w-6xl px-6 pt-5 flex justify-end">
+        <Link
+          href="/login"
+          className="text-sm font-medium text-neutral-500 hover:text-black transition-colors"
+        >
+          Sign In
+        </Link>
+      </nav>
 
       {/* ─── Hero ─── */}
-      <section className="relative z-10">
-        {/* Top bar */}
-        <nav className="mx-auto max-w-6xl px-6 pt-5 flex justify-end">
+      <section className="mx-auto max-w-4xl px-6 pt-12 pb-16 text-center">
+        <h1 className="text-4xl sm:text-5xl font-bold tracking-tight leading-tight">
+          {hero.headline}
+        </h1>
+        <p className="mt-4 text-lg sm:text-xl text-neutral-600 max-w-2xl mx-auto">
+          {hero.subtitle}
+        </p>
+        <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link
-            href="/login"
-            className="text-sm font-medium text-white/60 hover:text-white transition-colors"
+            href="/apply"
+            onClick={() => track({ name: "cta_click", properties: { location: "hero" } })}
+            className="rounded-xl bg-black px-8 py-4 text-lg font-semibold text-white shadow-lg hover:opacity-90 transition-opacity"
           >
-            Sign In
+            {hero.cta}
           </Link>
-        </nav>
-
-        {/* Hero content */}
-        <div className="mx-auto max-w-4xl px-6 pt-16 pb-24 text-center">
-          <h1 className="text-4xl sm:text-5xl font-bold tracking-tight leading-tight text-white">
-            {hero.headline}
-          </h1>
-          <p className="mt-4 text-lg sm:text-xl text-white/70 max-w-2xl mx-auto">
-            {hero.subtitle}
-          </p>
-          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link
-              href="/apply"
-              onClick={() => track({ name: "cta_click", properties: { location: "hero" } })}
-              className="rounded-xl bg-white px-8 py-4 text-lg font-semibold text-black shadow-lg hover:bg-neutral-100 transition-colors"
-            >
-              {hero.cta}
-            </Link>
-            <a
-              href="#pricing"
-              onClick={() => track({ name: "cta_click", properties: { location: "hero_pricing" } })}
-              className="rounded-xl border border-white/30 px-8 py-4 text-lg font-semibold text-white hover:border-white/60 transition-colors"
-            >
-              Compare Plans
-            </a>
-          </div>
-          <p className="mt-3 text-sm text-white/50">
-            Not sure yet? <a href="#pricing" className="underline hover:text-white">Compare plans</a>
-          </p>
+          <a
+            href="#pricing"
+            onClick={() => track({ name: "cta_click", properties: { location: "hero_pricing" } })}
+            className="rounded-xl border border-neutral-300 px-8 py-4 text-lg font-semibold text-black hover:border-neutral-500 transition-colors"
+          >
+            Compare Plans
+          </a>
         </div>
+        <p className="mt-3 text-sm text-neutral-500">
+          Not sure yet? <a href="#pricing" className="underline hover:text-black">Compare plans</a>
+        </p>
       </section>
 
       {/* ─── Social Proof ─── */}
-      <section className="relative z-10 bg-white/95 backdrop-blur-sm py-16">
+      <section className="bg-neutral-50 py-16">
         <div className="mx-auto max-w-5xl px-6">
           <h2 className="text-center text-2xl font-semibold mb-10">
             Real results from real people
@@ -127,7 +102,7 @@ export default function HomePage() {
       </section>
 
       {/* ─── How It Works ─── */}
-      <section className="relative z-10 bg-white/95 backdrop-blur-sm py-16">
+      <section className="py-16">
         <div className="mx-auto max-w-4xl px-6 text-center">
           <h2 className="text-2xl font-semibold mb-12">
             How Kairo works
@@ -158,7 +133,7 @@ export default function HomePage() {
       </section>
 
       {/* ─── Pricing ─── */}
-      <section id="pricing" className="relative z-10 bg-neutral-50/95 backdrop-blur-sm py-16">
+      <section id="pricing" className="bg-neutral-50 py-16">
         <div className="mx-auto max-w-6xl px-6">
           <div className="text-center space-y-2 mb-10">
             <h2 className="text-2xl font-semibold">{pricingSection.headline}</h2>
@@ -215,7 +190,7 @@ export default function HomePage() {
       </section>
 
       {/* ─── Trust ─── */}
-      <section className="relative z-10 bg-white/95 backdrop-blur-sm py-12">
+      <section className="py-12">
         <div className="mx-auto max-w-3xl px-6">
           <div className="grid gap-4 sm:grid-cols-2">
             {trust.items.map((item) => (
@@ -229,7 +204,7 @@ export default function HomePage() {
       </section>
 
       {/* ─── Disclaimer + Footer ─── */}
-      <div className="relative z-10 bg-white/95 backdrop-blur-sm mx-auto max-w-6xl px-6 pb-12">
+      <div className="mx-auto max-w-6xl px-6 pb-12">
         <div className="rounded-xl bg-neutral-50 p-4 text-sm text-neutral-600 text-center">
           <p className="font-medium">Note:</p>
           <p>This is fitness coaching and general nutrition guidance, not medical advice.</p>
