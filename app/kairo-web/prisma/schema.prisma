@@ -70,6 +70,8 @@ model Member {
 
   checkIns         CheckIn[]
   reviews          Review[]
+  programBlocks    ProgramBlock[]
+  macroTargets     MacroTarget[]
 }
 
 model StripeEvent {
@@ -196,4 +198,73 @@ model Review {
   updatedAt      DateTime  @updatedAt
 
   @@index([memberId])
+}
+
+/// Training program block — represents a mesocycle or training phase.
+/// Follows backend.md Table 4 (Program Updates) + Section 11 (Programming).
+model ProgramBlock {
+  id              String    @id @default(cuid())
+  memberId        String
+  member          Member    @relation(fields: [memberId], references: [id])
+
+  name            String    // e.g. "Hypertrophy Block 1", "Cut Phase A"
+  status          String    @default("active") // "active" | "completed" | "upcoming"
+
+  startDate       DateTime
+  endDate         DateTime?
+
+  // Programming details
+  primaryGoal     String?   // "hypertrophy" | "strength" | "fat_loss" | "maintenance"
+  split           String?   // "upper_lower" | "ppl" | "full_body" | "bro_split" | custom
+  daysPerWeek     Int?      // 2-6
+  progressionModel String?  // e.g. "double progression", "linear", "wave"
+  deloadPlanned   Boolean   @default(false)
+  deloadWeek      Int?      // which week is the deload (e.g. 4)
+
+  // Content
+  keyExercises    String?   // JSON array or comma-separated
+  workoutNotes    String?   @db.Text // full workout plan or notes
+  cardioTarget    String?   // e.g. "3x30min LISS + 10k steps"
+  stepsTarget     Int?      // daily step target
+
+  // Adjustments (filled when updating)
+  adjustmentsMade String?   @db.Text
+  adjustmentReason String?  @db.Text
+  nextUpdateDate  DateTime?
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([memberId])
+  @@index([memberId, status])
+}
+
+/// Macro/nutrition targets — tracks calorie & macro prescriptions per client.
+/// Follows backend.md Section 10 (Macros System).
+model MacroTarget {
+  id              String    @id @default(cuid())
+  memberId        String
+  member          Member    @relation(fields: [memberId], references: [id])
+
+  status          String    @default("active") // "active" | "previous"
+  effectiveDate   DateTime  // when these targets take effect
+
+  // Targets
+  calories        Int       // daily calorie target
+  protein         Int       // grams
+  fatsMin         Int?      // minimum fat grams
+  carbs           Int?      // fill the rest
+  stepsTarget     Int?      // daily steps
+  hydrationTarget String?   // e.g. "3L" or "100 oz"
+
+  // Adjustment context
+  adjustmentReason String?  @db.Text // why this change was made
+  previousCalories Int?     // what calories were before
+  previousProtein  Int?     // what protein was before
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([memberId])
+  @@index([memberId, status])
 }

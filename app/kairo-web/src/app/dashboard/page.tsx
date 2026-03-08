@@ -77,6 +77,44 @@ interface Review {
   createdAt: string;
 }
 
+interface ProgramBlock {
+  id: string;
+  name: string;
+  status: string;
+  startDate: string;
+  endDate: string | null;
+  primaryGoal: string | null;
+  split: string | null;
+  daysPerWeek: number | null;
+  progressionModel: string | null;
+  deloadPlanned: boolean;
+  deloadWeek: number | null;
+  keyExercises: string | null;
+  workoutNotes: string | null;
+  cardioTarget: string | null;
+  stepsTarget: number | null;
+  adjustmentsMade: string | null;
+  adjustmentReason: string | null;
+  nextUpdateDate: string | null;
+  createdAt: string;
+}
+
+interface MacroTarget {
+  id: string;
+  status: string;
+  effectiveDate: string;
+  calories: number;
+  protein: number;
+  fatsMin: number | null;
+  carbs: number | null;
+  stepsTarget: number | null;
+  hydrationTarget: string | null;
+  adjustmentReason: string | null;
+  previousCalories: number | null;
+  previousProtein: number | null;
+  createdAt: string;
+}
+
 interface Stats {
   currentStreak: number;
   weeklyWorkouts: number;
@@ -87,7 +125,7 @@ type DashboardState =
   | { phase: "identify" }
   | { phase: "loading" }
   | { phase: "error"; message: string }
-  | { phase: "dashboard"; member: MemberProfile; checkIns: CheckIn[]; stats: Stats; reviews: Review[] };
+  | { phase: "dashboard"; member: MemberProfile; checkIns: CheckIn[]; stats: Stats; reviews: Review[]; programs: ProgramBlock[]; macros: MacroTarget[] };
 
 export default function DashboardPage() {
   const [state, setState] = useState<DashboardState>({ phase: "identify" });
@@ -138,6 +176,8 @@ export default function DashboardPage() {
       let checkIns: CheckIn[] = [];
       let stats: Stats = { currentStreak: 0, weeklyWorkouts: 0, weeklyAdherence: 0 };
       let reviews: Review[] = [];
+      let programs: ProgramBlock[] = [];
+      let macros: MacroTarget[] = [];
 
       if (memberData.member.status === "active") {
         try {
@@ -160,6 +200,26 @@ export default function DashboardPage() {
         } catch {
           // Non-fatal — dashboard still loads without reviews
         }
+
+        try {
+          const programsRes = await fetch(`/api/program?email=${encodeURIComponent(memberEmail)}`);
+          if (programsRes.ok) {
+            const programsData = await programsRes.json();
+            programs = programsData.programs ?? [];
+          }
+        } catch {
+          // Non-fatal — dashboard still loads without programs
+        }
+
+        try {
+          const macrosRes = await fetch(`/api/macro?email=${encodeURIComponent(memberEmail)}`);
+          if (macrosRes.ok) {
+            const macrosData = await macrosRes.json();
+            macros = macrosData.macros ?? [];
+          }
+        } catch {
+          // Non-fatal — dashboard still loads without macros
+        }
       }
 
       setState({
@@ -168,6 +228,8 @@ export default function DashboardPage() {
         checkIns,
         stats,
         reviews,
+        programs,
+        macros,
       });
 
       track({ name: "dashboard_loaded", properties: { status: memberData.member.status } });
@@ -321,7 +383,7 @@ export default function DashboardPage() {
   }
 
   // ── Dashboard ──
-  const { member, checkIns, stats, reviews } = state;
+  const { member, checkIns, stats, reviews, programs, macros } = state;
   const hasCheckedInToday = checkIns.some((ci) => {
     const ciDate = new Date(ci.date);
     const today = new Date();
@@ -749,6 +811,177 @@ export default function DashboardPage() {
             </div>
           </section>
         )}
+
+        {/* ── CURRENT PROGRAM — training block overview ── */}
+        {member.status === "active" && programs.length > 0 && (() => {
+          const activeProgram = programs.find((p) => p.status === "active");
+          const displayProgram = activeProgram ?? programs[0];
+          return (
+            <section className={components.card.base}>
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold">Current Program</h2>
+                <span className={`${components.badge.base} ${
+                  displayProgram.status === "active"
+                    ? "bg-green-100 text-green-700"
+                    : displayProgram.status === "upcoming"
+                      ? "bg-blue-100 text-blue-700"
+                      : "bg-neutral-100 text-neutral-700"
+                }`}>
+                  {displayProgram.status}
+                </span>
+              </div>
+              <p className="mt-1 text-sm font-medium">{displayProgram.name}</p>
+
+              <div className="mt-3 grid grid-cols-2 gap-3">
+                {displayProgram.primaryGoal && (
+                  <div className="text-sm">
+                    <span className="text-neutral-500">Goal</span>
+                    <p className="font-medium capitalize">{displayProgram.primaryGoal.replace("_", " ")}</p>
+                  </div>
+                )}
+                {displayProgram.split && (
+                  <div className="text-sm">
+                    <span className="text-neutral-500">Split</span>
+                    <p className="font-medium capitalize">{displayProgram.split.replace("_", " / ")}</p>
+                  </div>
+                )}
+                {displayProgram.daysPerWeek && (
+                  <div className="text-sm">
+                    <span className="text-neutral-500">Days/week</span>
+                    <p className="font-medium">{displayProgram.daysPerWeek}×</p>
+                  </div>
+                )}
+                {displayProgram.progressionModel && (
+                  <div className="text-sm">
+                    <span className="text-neutral-500">Progression</span>
+                    <p className="font-medium capitalize">{displayProgram.progressionModel}</p>
+                  </div>
+                )}
+              </div>
+
+              {displayProgram.deloadPlanned && displayProgram.deloadWeek && (
+                <p className="mt-2 text-xs text-neutral-500">
+                  📅 Deload scheduled: Week {displayProgram.deloadWeek}
+                </p>
+              )}
+
+              {displayProgram.keyExercises && (
+                <div className="mt-3">
+                  <p className="text-xs font-medium text-neutral-500 uppercase tracking-wide mb-1">Key Exercises</p>
+                  <p className="text-sm text-neutral-700">{displayProgram.keyExercises}</p>
+                </div>
+              )}
+
+              {displayProgram.cardioTarget && (
+                <div className="mt-2 text-sm">
+                  <span className="text-neutral-500">Cardio: </span>
+                  <span>{displayProgram.cardioTarget}</span>
+                </div>
+              )}
+
+              {displayProgram.stepsTarget && (
+                <div className="text-sm">
+                  <span className="text-neutral-500">Daily steps: </span>
+                  <span className="font-medium">{displayProgram.stepsTarget.toLocaleString()}</span>
+                </div>
+              )}
+
+              {displayProgram.workoutNotes && (
+                <div className="mt-3 rounded-lg bg-neutral-50 p-3">
+                  <p className="text-xs font-medium text-neutral-500 mb-1">Coach Notes</p>
+                  <p className="text-sm text-neutral-700 whitespace-pre-line">{displayProgram.workoutNotes}</p>
+                </div>
+              )}
+
+              {displayProgram.nextUpdateDate && (
+                <p className="mt-2 text-xs text-neutral-500">
+                  Next program update: {new Date(displayProgram.nextUpdateDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                </p>
+              )}
+
+              {displayProgram.adjustmentsMade && (
+                <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
+                  <p className="text-xs font-medium text-amber-700 mb-1">Recent Adjustments</p>
+                  <p className="text-sm text-amber-800">{displayProgram.adjustmentsMade}</p>
+                  {displayProgram.adjustmentReason && (
+                    <p className="mt-1 text-xs text-amber-600">Reason: {displayProgram.adjustmentReason}</p>
+                  )}
+                </div>
+              )}
+            </section>
+          );
+        })()}
+
+        {/* ── MACROS — nutrition targets ── */}
+        {member.status === "active" && macros.length > 0 && (() => {
+          const activeMacro = macros.find((m) => m.status === "active");
+          if (!activeMacro) return null;
+          return (
+            <section className={components.card.base}>
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold">Daily Targets</h2>
+                <span className="text-xs text-neutral-500">
+                  Since {new Date(activeMacro.effectiveDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                </span>
+              </div>
+
+              <div className="mt-3 grid grid-cols-2 gap-4">
+                <div className="rounded-xl bg-neutral-100 p-3 text-center">
+                  <p className="text-2xl font-semibold">{activeMacro.calories.toLocaleString()}</p>
+                  <p className="text-xs text-neutral-500">Calories</p>
+                  {activeMacro.previousCalories && activeMacro.previousCalories !== activeMacro.calories && (
+                    <p className="text-xs text-neutral-400 mt-0.5">
+                      was {activeMacro.previousCalories.toLocaleString()}
+                    </p>
+                  )}
+                </div>
+                <div className="rounded-xl bg-neutral-100 p-3 text-center">
+                  <p className="text-2xl font-semibold">{activeMacro.protein}g</p>
+                  <p className="text-xs text-neutral-500">Protein</p>
+                  {activeMacro.previousProtein && activeMacro.previousProtein !== activeMacro.protein && (
+                    <p className="text-xs text-neutral-400 mt-0.5">
+                      was {activeMacro.previousProtein}g
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-3 grid grid-cols-2 gap-3">
+                {activeMacro.fatsMin && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-neutral-500">Fats (min)</span>
+                    <span className="font-medium">{activeMacro.fatsMin}g</span>
+                  </div>
+                )}
+                {activeMacro.carbs && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-neutral-500">Carbs</span>
+                    <span className="font-medium">{activeMacro.carbs}g</span>
+                  </div>
+                )}
+                {activeMacro.stepsTarget && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-neutral-500">Steps target</span>
+                    <span className="font-medium">{activeMacro.stepsTarget.toLocaleString()}</span>
+                  </div>
+                )}
+                {activeMacro.hydrationTarget && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-neutral-500">Hydration</span>
+                    <span className="font-medium">{activeMacro.hydrationTarget}</span>
+                  </div>
+                )}
+              </div>
+
+              {activeMacro.adjustmentReason && (
+                <div className="mt-3 rounded-lg bg-neutral-50 p-3">
+                  <p className="text-xs font-medium text-neutral-500 mb-1">Why this target</p>
+                  <p className="text-sm text-neutral-700">{activeMacro.adjustmentReason}</p>
+                </div>
+              )}
+            </section>
+          );
+        })()}
 
         {/* ── REVIEWS — coach feedback ── */}
         {member.status === "active" && reviews.length > 0 && (
