@@ -48,7 +48,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         <body style="font-family: system-ui, sans-serif; max-width: 480px; margin: 80px auto; text-align: center;">
           <h2>You've been unsubscribed</h2>
           <p>You won't receive any more coaching tips from us.</p>
-          <p style="color: #737373; font-size: 14px;">If this was a mistake, just take the quiz again and you'll be re-enrolled.</p>
+          <p style="color: #737373; font-size: 14px;">If this was a mistake, just apply again and you'll be re-enrolled.</p>
         </body>
       </html>`,
       {

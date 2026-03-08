@@ -77,16 +77,15 @@ describe("getNurtureEmail", () => {
     }
   );
 
-  // ── Result URL includes tier ──
-  it("includes result page link with tier query param", () => {
+  // ── Result URL links to pricing ──
+  it("includes pricing page link", () => {
     const result = getNurtureEmail(1, baseCtx);
-    expect(result!.html).toContain("/quiz/result?tier=coaching");
+    expect(result!.html).toContain("/#pricing");
   });
 
-  it("omits tier query param when tier is null", () => {
+  it("links to pricing when tier is null", () => {
     const result = getNurtureEmail(1, { ...baseCtx, recommendedTier: null });
-    expect(result!.html).toContain("/quiz/result");
-    expect(result!.html).not.toContain("?tier=null");
+    expect(result!.html).toContain("/#pricing");
   });
 
   // ── Step 4 is the final email ──

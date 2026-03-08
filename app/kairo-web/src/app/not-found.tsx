@@ -19,10 +19,10 @@ export default function NotFound() {
             Go home
           </Link>
           <Link
-            href="/quiz"
+            href="/apply"
             className="text-sm font-medium text-neutral-500 hover:text-black transition-colors"
           >
-            Take the quiz →
+            Apply now →
           </Link>
         </div>
       </div>
