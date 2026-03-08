@@ -83,11 +83,46 @@ model CheckIn {
   member    Member   @relation(fields: [memberId], references: [id])
   date      DateTime @db.Date // one check-in per day
 
+  // Quick daily logging (Phase 4 — preserved for backward compat)
   workout   Boolean  @default(false)
   meals     Int      @default(0) // 0-3 meals logged
   water     Boolean  @default(false)
   steps     Boolean  @default(false)
   note      String?  // optional "I missed because…"
+
+  // Enhanced weekly check-in fields (Milestone L)
+  // Body data
+  avgWeight      Float?   // average weight this week
+  waist          Float?   // waist measurement
+  photoSubmitted Boolean  @default(false)
+  frontPhotoUrl  String?  // link to front photo
+  sidePhotoUrl   String?  // link to side photo
+  backPhotoUrl   String?  // link to back photo
+
+  // Adherence
+  workoutsCompleted Int?   // how many workouts completed this week
+  stepsAverage      Int?   // average daily steps
+  calorieAdherence  Int?   // 1-10 scale
+  proteinAdherence  Int?   // 1-10 scale
+  sleepAverage      Float? // avg hours
+
+  // Recovery / subjective scores (1-10)
+  energyScore    Int?     // energy 1-10
+  hungerScore    Int?     // hunger 1-10
+  stressScore    Int?     // stress 1-10
+  digestionScore Int?     // digestion 1-10
+  recoveryScore  Int?     // overall recovery 1-10
+  painNotes      String?  // pain/injury/soreness notes
+
+  // Reflection
+  biggestWin     String?  // biggest win this week
+  biggestStruggle String? // biggest struggle this week
+  helpNeeded     String?  // what help needed next week
+
+  // Coach triage (set by coach or automation)
+  coachStatus    String?  // "green" | "yellow" | "red" — set by coach
+  coachResponse  String?  // coach's written response
+  responseAt     DateTime? // when coach responded
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

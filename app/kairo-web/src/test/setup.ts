@@ -37,7 +37,9 @@ export const mockPrisma = {
   checkIn: {
     create: vi.fn(),
     findFirst: vi.fn(),
+    findUnique: vi.fn(),
     findMany: vi.fn(),
+    update: vi.fn(),
     count: vi.fn(),
   },
   lead: {
@@ -95,6 +97,8 @@ export const mockSendNurtureEmail = vi.fn();
 export const mockSendApplicationReceived = vi.fn().mockResolvedValue(undefined);
 export const mockSendApplicationApproved = vi.fn().mockResolvedValue(undefined);
 export const mockNotifyAdminNewApplication = vi.fn().mockResolvedValue(undefined);
+export const mockSendReviewDelivered = vi.fn().mockResolvedValue(undefined);
+export const mockSendCheckInReminder = vi.fn().mockResolvedValue(undefined);
 
 vi.mock("@/services/email", () => ({
   notifyAdmin: mockNotifyAdmin,
@@ -105,6 +109,8 @@ vi.mock("@/services/email", () => ({
   sendApplicationReceived: mockSendApplicationReceived,
   sendApplicationApproved: mockSendApplicationApproved,
   notifyAdminNewApplication: mockNotifyAdminNewApplication,
+  sendReviewDelivered: mockSendReviewDelivered,
+  sendCheckInReminder: mockSendCheckInReminder,
 }));
 
 // ── Mock rate limiter (always allow — rate-limit.test.ts tests it directly) ──

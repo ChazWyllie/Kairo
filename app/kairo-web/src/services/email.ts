@@ -380,3 +380,101 @@ export async function notifyAdminNewApplication(
     `,
   });
 }
+
+// ── Review / Check-in Emails (Milestone L) ──
+
+interface ReviewDeliveredEmail {
+  email: string;
+  fullName: string;
+  reviewType: string;
+  summary: string;
+  loomLink?: string | null;
+}
+
+interface CheckInReminderEmail {
+  email: string;
+  fullName: string;
+}
+
+/**
+ * Send email when a coach completes a review.
+ * Follows Script 5/6/8 from backend.md.
+ */
+export async function sendReviewDelivered(
+  data: ReviewDeliveredEmail
+): Promise<void> {
+  const { email, fullName, reviewType, summary, loomLink } = data;
+  const firstName = fullName.split(" ")[0] || "there";
+
+  const typeLabels: Record<string, string> = {
+    monthly: "Monthly Review",
+    quarterly: "Quarterly Review",
+    form_review: "Form Review",
+    live_call: "Live Call Summary",
+  };
+  const label = typeLabels[reviewType] ?? "Review";
+
+  const loomSection = loomLink
+    ? `<p><a href="${loomLink}" style="display:inline-block;background:#000;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;">Watch your video review →</a></p>`
+    : "";
+
+  if (!env.RESEND_API_KEY) {
+    console.log("[email-stub] Review delivered:", {
+      to: email,
+      subject: label,
+      hasLoom: !!loomLink,
+    });
+    return;
+  }
+
+  const { Resend } = await import("resend");
+  const resend = new Resend(env.RESEND_API_KEY);
+
+  await resend.emails.send({
+    from: env.EMAIL_FROM,
+    to: email,
+    subject: `Your ${label} is ready 📋`,
+    html: `
+      <h2>Hey ${firstName},</h2>
+      <p>Your ${label.toLowerCase()} is ready.</p>
+      <div style="background:#f5f5f5;padding:16px;border-radius:12px;margin:16px 0;">
+        ${summary}
+      </div>
+      ${loomSection}
+      <p>Check your <a href="${env.APP_URL}/dashboard">dashboard</a> for the full details.</p>
+      <p>— Kairo Coaching</p>
+    `,
+  });
+}
+
+/**
+ * Send weekly check-in reminder (Script 4 from backend.md).
+ * Fire-and-forget.
+ */
+export async function sendCheckInReminder(
+  data: CheckInReminderEmail
+): Promise<void> {
+  const { email, fullName } = data;
+  const firstName = fullName.split(" ")[0] || "there";
+
+  if (!env.RESEND_API_KEY) {
+    console.log("[email-stub] Check-in reminder:", { to: email });
+    return;
+  }
+
+  const { Resend } = await import("resend");
+  const resend = new Resend(env.RESEND_API_KEY);
+
+  await resend.emails.send({
+    from: env.EMAIL_FROM,
+    to: email,
+    subject: "Time to check in 📝",
+    html: `
+      <h2>Hey ${firstName},</h2>
+      <p>Just a reminder to submit your weekly check-in so we can review your progress and make any needed adjustments.</p>
+      <p>The more consistent your check-ins are, the better we can coach you.</p>
+      <p><a href="${env.APP_URL}/dashboard" style="display:inline-block;background:#000;color:#fff;padding:12px 24px;border-radius:12px;text-decoration:none;font-weight:600;">Submit check-in →</a></p>
+      <p>— Kairo Coaching</p>
+    `,
+  });
+}

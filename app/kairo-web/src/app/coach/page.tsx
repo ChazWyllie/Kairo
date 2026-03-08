@@ -34,11 +34,26 @@ interface ClientHealth {
   adherence30d: number;
   currentStreak: number;
   recentCheckIns: {
+    id: string;
     date: string;
     workout: boolean;
     meals: number;
     water: boolean;
     steps: boolean;
+    avgWeight: number | null;
+    waist: number | null;
+    workoutsCompleted: number | null;
+    calorieAdherence: number | null;
+    proteinAdherence: number | null;
+    sleepAverage: number | null;
+    energyScore: number | null;
+    stressScore: number | null;
+    recoveryScore: number | null;
+    biggestWin: string | null;
+    biggestStruggle: string | null;
+    helpNeeded: string | null;
+    coachStatus: string | null;
+    coachResponse: string | null;
   }[];
 }
 
@@ -239,6 +254,8 @@ export default function CoachPage() {
                   onToggle={() =>
                     setExpandedClient(expandedClient === client.email ? null : client.email)
                   }
+                  coachSecret={secret}
+                  onRefresh={() => loadCoachData(secret)}
                 />
               ))}
               {needsAttentionClients.map((client) => (
@@ -249,6 +266,8 @@ export default function CoachPage() {
                   onToggle={() =>
                     setExpandedClient(expandedClient === client.email ? null : client.email)
                   }
+                  coachSecret={secret}
+                  onRefresh={() => loadCoachData(secret)}
                 />
               ))}
             </div>
@@ -287,6 +306,8 @@ export default function CoachPage() {
                   onToggle={() =>
                     setExpandedClient(expandedClient === client.email ? null : client.email)
                   }
+                  coachSecret={secret}
+                  onRefresh={() => loadCoachData(secret)}
                 />
               ))}
             </div>
@@ -310,12 +331,51 @@ function ClientCard({
   client,
   expanded,
   onToggle,
+  coachSecret,
+  onRefresh,
 }: {
   client: ClientHealth;
   expanded: boolean;
   onToggle: () => void;
+  coachSecret: string;
+  onRefresh: () => void;
 }) {
   const statusConfig = getStatusConfig(client.status);
+  const [triageLoading, setTriageLoading] = useState(false);
+  const [triageMessage, setTriageMessage] = useState<string | null>(null);
+  const [responseText, setResponseText] = useState("");
+  const [selectedCheckIn, setSelectedCheckIn] = useState<string | null>(null);
+
+  async function handleTriage(checkInId: string, coachStatus: "green" | "yellow" | "red") {
+    setTriageLoading(true);
+    setTriageMessage(null);
+
+    try {
+      const res = await fetch(`/api/checkin/respond?secret=${encodeURIComponent(coachSecret)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          checkInId,
+          coachStatus,
+          coachResponse: responseText.trim() || undefined,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error?.message ?? "Failed to triage");
+      }
+
+      setTriageMessage(`Triaged as ${coachStatus}`);
+      setResponseText("");
+      setSelectedCheckIn(null);
+      onRefresh();
+    } catch (err) {
+      setTriageMessage(err instanceof Error ? err.message : "Error");
+    } finally {
+      setTriageLoading(false);
+    }
+  }
 
   return (
     <div className={`${dashboard.coach.clientHealth} ${statusConfig.borderClass}`}>
@@ -389,22 +449,134 @@ function ClientCard({
             </p>
           )}
 
-          {/* Recent check-ins mini timeline */}
+          {/* Recent check-ins with triage */}
           {client.recentCheckIns.length > 0 && (
             <div>
-              <p className="text-xs text-neutral-500 mb-1">Recent check-ins:</p>
-              <div className="flex gap-1">
-                {client.recentCheckIns.map((ci, i) => (
+              <p className="text-xs text-neutral-500 mb-2 font-medium">Recent check-ins:</p>
+              <div className="space-y-2">
+                {client.recentCheckIns.map((ci) => (
                   <div
-                    key={i}
-                    className={`h-6 w-6 rounded text-[10px] flex items-center justify-center ${
-                      ci.workout
-                        ? "bg-green-100 text-green-800"
-                        : "bg-neutral-100 text-neutral-400"
+                    key={ci.id}
+                    className={`rounded-lg border p-3 text-sm ${
+                      ci.coachStatus === "green"
+                        ? "border-green-200 bg-green-50"
+                        : ci.coachStatus === "yellow"
+                          ? "border-amber-200 bg-amber-50"
+                          : ci.coachStatus === "red"
+                            ? "border-red-200 bg-red-50"
+                            : "border-neutral-200 bg-neutral-50"
                     }`}
-                    title={`${new Date(ci.date).toLocaleDateString()} — ${ci.workout ? "Workout ✓" : "No workout"}`}
                   >
-                    {ci.workout ? "✓" : "·"}
+                    {/* Check-in header */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-medium">
+                          {new Date(ci.date).toLocaleDateString("en-US", {
+                            weekday: "short",
+                            month: "short",
+                            day: "numeric",
+                          })}
+                        </span>
+                        <div className="flex gap-1 text-xs">
+                          {ci.workout && <span>💪</span>}
+                          {ci.meals > 0 && <span>🍽️{ci.meals}</span>}
+                          {ci.water && <span>💧</span>}
+                          {ci.steps && <span>🚶</span>}
+                        </div>
+                      </div>
+                      {ci.coachStatus ? (
+                        <span className={`text-xs font-medium ${
+                          ci.coachStatus === "green" ? "text-green-700"
+                            : ci.coachStatus === "yellow" ? "text-amber-700"
+                              : "text-red-700"
+                        }`}>
+                          {ci.coachStatus.toUpperCase()}
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => setSelectedCheckIn(selectedCheckIn === ci.id ? null : ci.id)}
+                          className="text-xs text-neutral-500 hover:text-black underline"
+                        >
+                          Triage
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Enhanced data row */}
+                    {(ci.avgWeight || ci.sleepAverage || ci.energyScore || ci.recoveryScore) && (
+                      <div className="mt-1 flex flex-wrap gap-3 text-xs text-neutral-500">
+                        {ci.avgWeight && <span>⚖️ {ci.avgWeight} lbs</span>}
+                        {ci.sleepAverage && <span>😴 {ci.sleepAverage}h</span>}
+                        {ci.energyScore && <span>⚡ Energy: {ci.energyScore}/10</span>}
+                        {ci.recoveryScore && <span>💤 Recovery: {ci.recoveryScore}/10</span>}
+                        {ci.stressScore && <span>🧠 Stress: {ci.stressScore}/10</span>}
+                        {ci.calorieAdherence && <span>🔥 Cal: {ci.calorieAdherence}/10</span>}
+                        {ci.proteinAdherence && <span>🥩 Pro: {ci.proteinAdherence}/10</span>}
+                      </div>
+                    )}
+
+                    {/* Reflection */}
+                    {(ci.biggestWin || ci.biggestStruggle || ci.helpNeeded) && (
+                      <div className="mt-1 space-y-0.5 text-xs">
+                        {ci.biggestWin && (
+                          <p className="text-green-700">🏆 {ci.biggestWin}</p>
+                        )}
+                        {ci.biggestStruggle && (
+                          <p className="text-amber-700">⚡ {ci.biggestStruggle}</p>
+                        )}
+                        {ci.helpNeeded && (
+                          <p className="text-neutral-700">❓ {ci.helpNeeded}</p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Coach response (if already triaged) */}
+                    {ci.coachResponse && (
+                      <div className="mt-2 rounded bg-white px-2 py-1 border border-neutral-200">
+                        <p className="text-xs text-neutral-500">Your response:</p>
+                        <p className="text-xs text-neutral-700">{ci.coachResponse}</p>
+                      </div>
+                    )}
+
+                    {/* Triage controls */}
+                    {selectedCheckIn === ci.id && !ci.coachStatus && (
+                      <div className="mt-2 space-y-2 pt-2 border-t border-neutral-200">
+                        <textarea
+                          className="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-xs outline-none focus:border-black"
+                          placeholder="Coach response (optional)…"
+                          rows={2}
+                          value={responseText}
+                          onChange={(e) => setResponseText(e.target.value)}
+                          maxLength={5000}
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleTriage(ci.id, "green")}
+                            disabled={triageLoading}
+                            className="flex-1 rounded-lg bg-green-600 px-3 py-1.5 text-xs text-white font-medium hover:bg-green-700 disabled:opacity-50"
+                          >
+                            ✅ Green
+                          </button>
+                          <button
+                            onClick={() => handleTriage(ci.id, "yellow")}
+                            disabled={triageLoading}
+                            className="flex-1 rounded-lg bg-amber-500 px-3 py-1.5 text-xs text-white font-medium hover:bg-amber-600 disabled:opacity-50"
+                          >
+                            ⚠️ Yellow
+                          </button>
+                          <button
+                            onClick={() => handleTriage(ci.id, "red")}
+                            disabled={triageLoading}
+                            className="flex-1 rounded-lg bg-red-600 px-3 py-1.5 text-xs text-white font-medium hover:bg-red-700 disabled:opacity-50"
+                          >
+                            🔴 Red
+                          </button>
+                        </div>
+                        {triageMessage && (
+                          <p className="text-xs text-neutral-500">{triageMessage}</p>
+                        )}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

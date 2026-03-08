@@ -36,11 +36,26 @@ interface ClientHealth {
   adherence30d: number;
   currentStreak: number;
   recentCheckIns: {
+    id: string;
     date: string;
     workout: boolean;
     meals: number;
     water: boolean;
     steps: boolean;
+    avgWeight: number | null;
+    waist: number | null;
+    workoutsCompleted: number | null;
+    calorieAdherence: number | null;
+    proteinAdherence: number | null;
+    sleepAverage: number | null;
+    energyScore: number | null;
+    stressScore: number | null;
+    recoveryScore: number | null;
+    biggestWin: string | null;
+    biggestStruggle: string | null;
+    helpNeeded: string | null;
+    coachStatus: string | null;
+    coachResponse: string | null;
   }[];
 }
 
@@ -144,11 +159,26 @@ export async function GET(request: NextRequest) {
         adherence30d,
         currentStreak,
         recentCheckIns: checkIns.slice(0, 7).map((ci) => ({
+          id: ci.id,
           date: new Date(ci.date).toISOString(),
           workout: ci.workout,
           meals: ci.meals,
           water: ci.water,
           steps: ci.steps,
+          avgWeight: ci.avgWeight,
+          waist: ci.waist,
+          workoutsCompleted: ci.workoutsCompleted,
+          calorieAdherence: ci.calorieAdherence,
+          proteinAdherence: ci.proteinAdherence,
+          sleepAverage: ci.sleepAverage,
+          energyScore: ci.energyScore,
+          stressScore: ci.stressScore,
+          recoveryScore: ci.recoveryScore,
+          biggestWin: ci.biggestWin,
+          biggestStruggle: ci.biggestStruggle,
+          helpNeeded: ci.helpNeeded,
+          coachStatus: ci.coachStatus,
+          coachResponse: ci.coachResponse,
         })),
       };
     });
