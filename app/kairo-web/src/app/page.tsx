@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { track } from "@/lib/analytics";
 import { PLANS, type PlanConfig } from "@/lib/stripe-prices";
@@ -12,6 +13,10 @@ import {
   type PricingSection,
   type TrustSection,
 } from "@/lib/landing-config";
+
+const LightPillar = dynamic(() => import("@/components/LightPillar"), {
+  ssr: false,
+});
 
 // ── Helpers to pull typed sections ──
 const hero = LANDING_SECTIONS.find((s) => s.id === "hero") as HeroSection;
@@ -35,43 +40,64 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen bg-white text-black">
-      {/* ─── Top Bar ─── */}
-      <nav className="mx-auto max-w-6xl px-6 pt-5 flex justify-end">
-        <Link
-          href="/login"
-          className="text-sm font-medium text-neutral-500 hover:text-black transition-colors"
-        >
-          Sign In
-        </Link>
-      </nav>
-
-      {/* ─── Hero ─── */}
-      <section className="mx-auto max-w-4xl px-6 pt-12 pb-16 text-center">
-        <h1 className="text-4xl sm:text-5xl font-bold tracking-tight leading-tight">
-          {hero.headline}
-        </h1>
-        <p className="mt-4 text-lg sm:text-xl text-neutral-600 max-w-2xl mx-auto">
-          {hero.subtitle}
-        </p>
-        <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Link
-            href="/apply"
-            onClick={() => track({ name: "cta_click", properties: { location: "hero" } })}
-            className="rounded-xl bg-black px-8 py-4 text-lg font-semibold text-white shadow-lg hover:opacity-90 transition-opacity"
-          >
-            {hero.cta} →
-          </Link>
-          <a
-            href="#pricing"
-            onClick={() => track({ name: "cta_click", properties: { location: "hero_pricing" } })}
-            className="rounded-xl border border-neutral-300 px-8 py-4 text-lg font-semibold text-black hover:border-neutral-500 transition-colors"
-          >
-            Compare Plans
-          </a>
+      {/* ─── Hero with Plasma ─── */}
+      <section className="relative bg-black overflow-hidden">
+        {/* Plasma background */}
+        <div className="absolute inset-0" aria-hidden="true">
+          <LightPillar
+            topColor="#ff2929"
+            bottomColor="#ff9e9e"
+            intensity={1}
+            rotationSpeed={0.3}
+            glowAmount={0.002}
+            pillarWidth={3}
+            pillarHeight={0.4}
+            noiseIntensity={0.5}
+            pillarRotation={25}
+            interactive={false}
+            mixBlendMode="screen"
+            quality="high"
+          />
         </div>
-        <p className="mt-3 text-sm text-neutral-500">
-          Not sure yet? <a href="#pricing" className="underline hover:text-black">Compare plans ↓</a>
-        </p>
+
+        {/* Top bar */}
+        <nav className="relative z-10 mx-auto max-w-6xl px-6 pt-5 flex justify-end">
+          <Link
+            href="/login"
+            className="text-sm font-medium text-white/60 hover:text-white transition-colors"
+          >
+            Sign In
+          </Link>
+        </nav>
+
+        {/* Hero content */}
+        <div className="relative z-10 mx-auto max-w-4xl px-6 pt-16 pb-24 text-center">
+          <h1 className="text-4xl sm:text-5xl font-bold tracking-tight leading-tight text-white">
+            {hero.headline}
+          </h1>
+          <p className="mt-4 text-lg sm:text-xl text-white/70 max-w-2xl mx-auto">
+            {hero.subtitle}
+          </p>
+          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link
+              href="/apply"
+              onClick={() => track({ name: "cta_click", properties: { location: "hero" } })}
+              className="rounded-xl bg-white px-8 py-4 text-lg font-semibold text-black shadow-lg hover:bg-neutral-100 transition-colors"
+            >
+              {hero.cta}
+            </Link>
+            <a
+              href="#pricing"
+              onClick={() => track({ name: "cta_click", properties: { location: "hero_pricing" } })}
+              className="rounded-xl border border-white/30 px-8 py-4 text-lg font-semibold text-white hover:border-white/60 transition-colors"
+            >
+              Compare Plans
+            </a>
+          </div>
+          <p className="mt-3 text-sm text-white/50">
+            Not sure yet? <a href="#pricing" className="underline hover:text-white">Compare plans</a>
+          </p>
+        </div>
       </section>
 
       {/* ─── Social Proof ─── */}
