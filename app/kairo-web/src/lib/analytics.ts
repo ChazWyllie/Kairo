@@ -19,7 +19,8 @@ export type AnalyticsEvent =
   | { name: "checkin_submitted"; properties: { workout: boolean } }
   | { name: "quiz_started"; properties: { source?: string } }
   | { name: "quiz_completed"; properties: { recommendedTier: string } }
-  | { name: "quiz_result_viewed"; properties: { tier: string } };
+  | { name: "quiz_result_viewed"; properties: { tier: string } }
+  | { name: "application_submitted"; properties: { goal: string; tier: string } };
 
 /**
  * Track an analytics event.

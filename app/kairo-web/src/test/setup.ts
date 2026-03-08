@@ -49,6 +49,20 @@ export const mockPrisma = {
     update: vi.fn(),
     updateMany: vi.fn(),
   },
+  application: {
+    create: vi.fn(),
+    findUnique: vi.fn(),
+    findMany: vi.fn(),
+    update: vi.fn(),
+    count: vi.fn(),
+  },
+  review: {
+    create: vi.fn(),
+    findUnique: vi.fn(),
+    findMany: vi.fn(),
+    update: vi.fn(),
+    count: vi.fn(),
+  },
 };
 
 vi.mock("@/lib/prisma", () => ({
@@ -78,6 +92,9 @@ export const mockNotifyAdminCancellation = vi.fn();
 export const mockSendWelcomeEmail = vi.fn();
 export const mockSendQuizWelcomeEmail = vi.fn();
 export const mockSendNurtureEmail = vi.fn();
+export const mockSendApplicationReceived = vi.fn().mockResolvedValue(undefined);
+export const mockSendApplicationApproved = vi.fn().mockResolvedValue(undefined);
+export const mockNotifyAdminNewApplication = vi.fn().mockResolvedValue(undefined);
 
 vi.mock("@/services/email", () => ({
   notifyAdmin: mockNotifyAdmin,
@@ -85,6 +102,9 @@ vi.mock("@/services/email", () => ({
   sendWelcomeEmail: mockSendWelcomeEmail,
   sendQuizWelcomeEmail: mockSendQuizWelcomeEmail,
   sendNurtureEmail: mockSendNurtureEmail,
+  sendApplicationReceived: mockSendApplicationReceived,
+  sendApplicationApproved: mockSendApplicationApproved,
+  notifyAdminNewApplication: mockNotifyAdminNewApplication,
 }));
 
 // ── Mock rate limiter (always allow — rate-limit.test.ts tests it directly) ──
