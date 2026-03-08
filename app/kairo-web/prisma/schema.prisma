@@ -18,17 +18,58 @@ model Member {
   planTier         String?  // "foundation" | "coaching" | "performance" | "vip"
   billingInterval  String?  // "monthly" | "annual"
 
-  // Onboarding (Phase 4) — all optional, filled post-checkout
+  // Onboarding — basic (Phase 4)
   goal             String?  // "fat_loss" | "muscle" | "maintenance"
   daysPerWeek      Int?     // 1-7
   minutesPerSession Int?    // 15 | 20 | 30 | 45 | 60
   injuries         String?  // free-text limitations
   onboardedAt      DateTime?
 
+  // Onboarding — extended intake (Milestone K)
+  fullName          String?
+  age               Int?
+  height            String?
+  currentWeight     String?
+  bodyFat           String?
+  timezone          String?
+  occupation        String?
+
+  // Training details
+  yearsTraining     Int?
+  currentSplit      String?
+  favoriteLifts     String?
+  weakBodyParts     String?
+  equipmentAccess   String?  // "none" | "hotel" | "dumbbells" | "full_gym"
+  sessionLength     Int?     // preferred session length in minutes
+
+  // Nutrition details
+  currentCalories   Int?
+  proteinIntake     Int?
+  mealsPerDay       Int?
+  foodsEnjoy        String?
+  foodsAvoid        String?
+  appetiteLevel     String?  // "low" | "normal" | "high"
+  weekendEating     String?
+  alcoholIntake     String?
+  supplements       String?
+
+  // Lifestyle / recovery
+  avgSleep          Float?
+  stressLevel       String?  // "low" | "moderate" | "high"
+  stepCount         Int?
+  jobActivityLevel  String?  // "sedentary" | "light" | "moderate" | "active"
+  travelFrequency   String?
+
+  // Commitment
+  fallOffCause      String?
+  supportNeeded     String?
+  success90Days     String?
+
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
   checkIns         CheckIn[]
+  reviews          Review[]
 }
 
 model StripeEvent {
@@ -70,4 +111,54 @@ model Lead {
   nurtureOptedOut Boolean  @default(false) // unsubscribe flag
 
   @@index([email])
+}
+
+model Application {
+  id                  String   @id @default(cuid())
+  email               String   @unique
+  fullName            String
+  phone               String?
+  age                 Int?
+  height              String?
+  currentWeight       String?
+  goal                String   // "fat_loss" | "muscle" | "maintenance"
+  whyNow              String?
+  trainingExperience  String?  // "beginner" | "intermediate" | "advanced"
+  trainingFrequency   String?
+  gymAccess           String?  // "none" | "hotel" | "dumbbells" | "full_gym"
+  injuryHistory       String?
+  nutritionStruggles  String?
+  biggestObstacle     String?
+  helpWithMost        String?
+  preferredTier       String?  // "foundation" | "coaching" | "performance" | "vip"
+  readyForStructure   Boolean  @default(false)
+  budgetComfort       String?
+
+  status              String   @default("pending") // "pending" | "approved" | "rejected"
+  approvedAt          DateTime?
+  paymentSent         Boolean  @default(false)
+  convertedToMember   Boolean  @default(false)
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([status])
+}
+
+model Review {
+  id             String    @id @default(cuid())
+  memberId       String
+  member         Member    @relation(fields: [memberId], references: [id])
+  type           String    // "monthly" | "quarterly" | "form_review" | "live_call"
+  dueDate        DateTime?
+  completedDate  DateTime?
+  summary        String?
+  actionItems    String?   // JSON array of action item strings
+  loomLink       String?
+  followUpNeeded Boolean   @default(false)
+
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([memberId])
 }

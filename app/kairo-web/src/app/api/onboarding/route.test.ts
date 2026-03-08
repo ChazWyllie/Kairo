@@ -256,6 +256,176 @@ describe("POST /api/onboarding", () => {
     });
   });
 
+  // ── Extended Fields (Milestone K) ──
+
+  describe("extended intake fields", () => {
+    beforeEach(() => {
+      mockPrisma.member.findUnique.mockResolvedValue({
+        email: "active@test.com",
+        status: "active",
+      });
+      mockPrisma.member.update.mockResolvedValue({});
+    });
+
+    it("saves all extended fields when provided", async () => {
+      const extendedPayload = {
+        email: "active@test.com",
+        goal: "muscle",
+        daysPerWeek: 5,
+        minutesPerSession: 45,
+        // Extended — personal
+        fullName: "John Doe",
+        age: 28,
+        height: "5'10\"",
+        currentWeight: "180 lbs",
+        timezone: "EST",
+        // Training
+        yearsTraining: 3,
+        currentSplit: "PPL",
+        favoriteLifts: "Squat, bench",
+        weakBodyParts: "Shoulders",
+        equipmentAccess: "full_gym",
+        // Nutrition
+        currentCalories: 2200,
+        proteinIntake: 160,
+        mealsPerDay: 3,
+        foodsEnjoy: "Chicken, rice",
+        foodsAvoid: "Dairy",
+        appetiteLevel: "normal",
+        weekendEating: "Eat out weekends",
+        alcoholIntake: "Social only",
+        supplements: "Creatine",
+        // Lifestyle
+        avgSleep: 7.5,
+        stressLevel: "moderate",
+        stepCount: 8000,
+        jobActivityLevel: "sedentary",
+        travelFrequency: "1x/month",
+        // Commitment
+        fallOffCause: "Travel",
+        supportNeeded: "Accountability",
+        success90Days: "Lose 15 lbs",
+      };
+
+      const response = await POST(makeOnboardingRequest(extendedPayload));
+      expect(response.status).toBe(200);
+
+      const updateCall = mockPrisma.member.update.mock.calls[0][0];
+      expect(updateCall.data.fullName).toBe("John Doe");
+      expect(updateCall.data.age).toBe(28);
+      expect(updateCall.data.height).toBe("5'10\"");
+      expect(updateCall.data.currentWeight).toBe("180 lbs");
+      expect(updateCall.data.yearsTraining).toBe(3);
+      expect(updateCall.data.currentSplit).toBe("PPL");
+      expect(updateCall.data.equipmentAccess).toBe("full_gym");
+      expect(updateCall.data.currentCalories).toBe(2200);
+      expect(updateCall.data.proteinIntake).toBe(160);
+      expect(updateCall.data.mealsPerDay).toBe(3);
+      expect(updateCall.data.appetiteLevel).toBe("normal");
+      expect(updateCall.data.avgSleep).toBe(7.5);
+      expect(updateCall.data.stressLevel).toBe("moderate");
+      expect(updateCall.data.stepCount).toBe(8000);
+      expect(updateCall.data.jobActivityLevel).toBe("sedentary");
+      expect(updateCall.data.fallOffCause).toBe("Travel");
+      expect(updateCall.data.supportNeeded).toBe("Accountability");
+      expect(updateCall.data.success90Days).toBe("Lose 15 lbs");
+    });
+
+    it("does not null out extended fields when omitted", async () => {
+      const response = await POST(
+        makeOnboardingRequest({ email: "active@test.com", goal: "fat_loss" })
+      );
+      expect(response.status).toBe(200);
+
+      const updateCall = mockPrisma.member.update.mock.calls[0][0];
+      // Basic fields get nulled when missing
+      expect(updateCall.data.injuries).toBeNull();
+      // Extended fields should NOT appear in update data when omitted
+      expect(updateCall.data).not.toHaveProperty("fullName");
+      expect(updateCall.data).not.toHaveProperty("age");
+      expect(updateCall.data).not.toHaveProperty("yearsTraining");
+      expect(updateCall.data).not.toHaveProperty("currentCalories");
+      expect(updateCall.data).not.toHaveProperty("avgSleep");
+      expect(updateCall.data).not.toHaveProperty("fallOffCause");
+    });
+
+    it("rejects invalid equipmentAccess enum", async () => {
+      const response = await POST(
+        makeOnboardingRequest({
+          email: "active@test.com",
+          equipmentAccess: "home_gym",
+        })
+      );
+      expect(response.status).toBe(400);
+    });
+
+    it("rejects invalid appetiteLevel enum", async () => {
+      const response = await POST(
+        makeOnboardingRequest({
+          email: "active@test.com",
+          appetiteLevel: "very_high",
+        })
+      );
+      expect(response.status).toBe(400);
+    });
+
+    it("rejects invalid stressLevel enum", async () => {
+      const response = await POST(
+        makeOnboardingRequest({
+          email: "active@test.com",
+          stressLevel: "extreme",
+        })
+      );
+      expect(response.status).toBe(400);
+    });
+
+    it("rejects invalid jobActivityLevel enum", async () => {
+      const response = await POST(
+        makeOnboardingRequest({
+          email: "active@test.com",
+          jobActivityLevel: "very_active",
+        })
+      );
+      expect(response.status).toBe(400);
+    });
+
+    it("rejects age below 13", async () => {
+      const response = await POST(
+        makeOnboardingRequest({ email: "active@test.com", age: 10 })
+      );
+      expect(response.status).toBe(400);
+    });
+
+    it("rejects fallOffCause exceeding 1000 characters", async () => {
+      const response = await POST(
+        makeOnboardingRequest({
+          email: "active@test.com",
+          fallOffCause: "x".repeat(1001),
+        })
+      );
+      expect(response.status).toBe(400);
+    });
+
+    it("allows partial extended fields", async () => {
+      const response = await POST(
+        makeOnboardingRequest({
+          email: "active@test.com",
+          fullName: "Jane",
+          avgSleep: 8,
+          stressLevel: "low",
+        })
+      );
+      expect(response.status).toBe(200);
+
+      const updateCall = mockPrisma.member.update.mock.calls[0][0];
+      expect(updateCall.data.fullName).toBe("Jane");
+      expect(updateCall.data.avgSleep).toBe(8);
+      expect(updateCall.data.stressLevel).toBe("low");
+      // Not provided → not in update data
+      expect(updateCall.data).not.toHaveProperty("currentCalories");
+    });
+  });
+
   // ── Error Handling ──
 
   describe("error handling", () => {

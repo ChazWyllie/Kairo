@@ -233,3 +233,150 @@ export async function sendNurtureEmail(
 
   return true;
 }
+
+// ── Application Emails (Milestone K) ──
+
+interface ApplicationReceivedEmail {
+  email: string;
+  fullName: string;
+}
+
+interface ApplicationApprovedEmail {
+  email: string;
+  fullName: string;
+  preferredTier?: string | null;
+}
+
+interface ApplicationAdminNotification {
+  applicantEmail: string;
+  fullName: string;
+  goal: string;
+  preferredTier?: string | null;
+}
+
+/**
+ * Send confirmation email when someone submits an application.
+ * Fire-and-forget — failures should not block the API response.
+ */
+export async function sendApplicationReceived(
+  data: ApplicationReceivedEmail
+): Promise<void> {
+  const { email, fullName } = data;
+  const firstName = fullName.split(" ")[0] || "there";
+
+  if (!env.RESEND_API_KEY) {
+    console.log("[email-stub] Application received:", {
+      to: email,
+      subject: "Application received",
+    });
+    return;
+  }
+
+  const { Resend } = await import("resend");
+  const resend = new Resend(env.RESEND_API_KEY);
+
+  await resend.emails.send({
+    from: env.EMAIL_FROM,
+    to: email,
+    subject: "We got your application 🎯",
+    html: `
+      <h2>Hey ${firstName},</h2>
+      <p>Thanks for applying to Kairo Coaching — we've received your application and will review it within 24–48 hours.</p>
+      <h3>What happens next:</h3>
+      <ol>
+        <li><strong>We review your info</strong> — to make sure we're the right fit for your goals.</li>
+        <li><strong>You get an email</strong> — with your approval and a link to get started.</li>
+        <li><strong>We build your plan</strong> — personalized training + nutrition within 48 hours of sign-up.</li>
+      </ol>
+      <p>Questions in the meantime? Just reply to this email.</p>
+      <p>— Kairo Coaching</p>
+    `,
+  });
+}
+
+/**
+ * Send approval email with a link to choose a plan and pay.
+ * Includes tier recommendation if applicant expressed a preference.
+ * Fire-and-forget — failures should not block the API response.
+ */
+export async function sendApplicationApproved(
+  data: ApplicationApprovedEmail
+): Promise<void> {
+  const { email, fullName, preferredTier } = data;
+  const firstName = fullName.split(" ")[0] || "there";
+
+  const tierNames: Record<string, string> = {
+    foundation: "Foundation",
+    coaching: "Coaching",
+    performance: "Performance",
+    vip: "VIP Elite",
+  };
+
+  const tierNote = preferredTier && tierNames[preferredTier]
+    ? `<p>Based on your application, we think the <strong>${tierNames[preferredTier]}</strong> plan is a great fit.</p>`
+    : "";
+
+  if (!env.RESEND_API_KEY) {
+    console.log("[email-stub] Application approved:", {
+      to: email,
+      subject: "You're approved!",
+      preferredTier,
+    });
+    return;
+  }
+
+  const { Resend } = await import("resend");
+  const resend = new Resend(env.RESEND_API_KEY);
+
+  await resend.emails.send({
+    from: env.EMAIL_FROM,
+    to: email,
+    subject: "You're in! Welcome to Kairo 🏋️",
+    html: `
+      <h2>Hey ${firstName},</h2>
+      <p>Great news — your application has been approved! We're excited to work with you.</p>
+      ${tierNote}
+      <p><a href="${env.APP_URL}/#pricing" style="display:inline-block;background:#000;color:#fff;padding:12px 24px;border-radius:12px;text-decoration:none;font-weight:600;">Choose your plan →</a></p>
+      <p>Once you sign up, you'll get a welcome email with next steps and your onboarding form.</p>
+      <p>Questions? Just reply to this email.</p>
+      <p>— Kairo Coaching</p>
+    `,
+  });
+}
+
+/**
+ * Notify coach/admin when a new application is submitted.
+ * Fire-and-forget — failures should not block the API response.
+ */
+export async function notifyAdminNewApplication(
+  data: ApplicationAdminNotification
+): Promise<void> {
+  const { applicantEmail, fullName, goal, preferredTier } = data;
+
+  if (!env.RESEND_API_KEY) {
+    console.log("[email-stub] Admin application notification:", {
+      to: env.ADMIN_NOTIFY_EMAIL,
+      subject: "New application",
+      applicantEmail,
+    });
+    return;
+  }
+
+  const { Resend } = await import("resend");
+  const resend = new Resend(env.RESEND_API_KEY);
+
+  await resend.emails.send({
+    from: env.EMAIL_FROM,
+    to: env.ADMIN_NOTIFY_EMAIL,
+    subject: "📋 New Kairo application",
+    html: `
+      <h2>New Application</h2>
+      <p><strong>Name:</strong> ${fullName}</p>
+      <p><strong>Email:</strong> ${applicantEmail}</p>
+      <p><strong>Goal:</strong> ${goal}</p>
+      <p><strong>Preferred tier:</strong> ${preferredTier || "Not specified"}</p>
+      <p><strong>Time:</strong> ${new Date().toISOString()}</p>
+      <p><a href="${env.APP_URL}/coach">Review in dashboard →</a></p>
+    `,
+  });
+}

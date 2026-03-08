@@ -51,13 +51,17 @@ export default function HomePage() {
           >
             {hero.cta} →
           </Link>
-          <a
-            href="#pricing"
-            className="text-sm font-medium text-neutral-500 hover:text-black transition-colors"
+          <Link
+            href="/apply"
+            onClick={() => track({ name: "cta_click", properties: { location: "hero_apply" } })}
+            className="rounded-xl border border-neutral-300 px-8 py-4 text-lg font-semibold text-black hover:border-neutral-500 transition-colors"
           >
-            Or compare plans ↓
-          </a>
+            Apply Now
+          </Link>
         </div>
+        <p className="mt-3 text-sm text-neutral-500">
+          Not sure yet? <a href="#pricing" className="underline hover:text-black">Compare plans ↓</a>
+        </p>
       </section>
 
       {/* ─── Social Proof ─── */}
