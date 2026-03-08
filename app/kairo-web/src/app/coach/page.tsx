@@ -73,6 +73,21 @@ interface ClientHealth {
   } | null;
 }
 
+interface ApplicationInfo {
+  id: string;
+  email: string;
+  fullName: string;
+  goal: string;
+  preferredTier: string | null;
+  trainingExperience: string | null;
+  gymAccess: string | null;
+  whyNow: string | null;
+  biggestObstacle: string | null;
+  status: string;
+  createdAt: string;
+  approvedAt: string | null;
+}
+
 interface PortfolioStats {
   activeClients: number;
   atRiskCount: number;
@@ -84,6 +99,7 @@ interface PortfolioStats {
 interface CoachData {
   portfolio: PortfolioStats;
   clients: ClientHealth[];
+  applications: ApplicationInfo[];
 }
 
 type CoachState =
@@ -203,10 +219,12 @@ export default function CoachPage() {
   }
 
   // ── Dashboard ──
-  const { portfolio, clients } = state.data;
+  const { portfolio, clients, applications } = state.data;
   const atRiskClients = clients.filter((c) => c.status === "at_risk");
   const needsAttentionClients = clients.filter((c) => c.status === "needs_attention");
   const onTrackClients = clients.filter((c) => c.status === "on_track");
+  const pendingApps = applications.filter((a) => a.status === "pending");
+  const processedApps = applications.filter((a) => a.status !== "pending");
 
   return (
     <main className="min-h-screen bg-neutral-50 text-black">
@@ -330,15 +348,23 @@ export default function CoachPage() {
           </section>
         )}
 
+        {/* ── APPLICATIONS — review & approve/reject ── */}
+        <ApplicationsSection
+          pendingApps={pendingApps}
+          processedApps={processedApps}
+          coachSecret={secret}
+          onRefresh={() => loadCoachData(secret)}
+        />
+
+        {/* ── TEMPLATES — quick-access coach scripts ── */}
+        <TemplatesSection coachSecret={secret} />
+
         {/* ── Navigation ── */}
         <nav className="flex gap-4 text-sm pb-8">
           <Link href="/" className={components.button.ghost}>
             ← Home
           </Link>
         </nav>
-
-        {/* ── TEMPLATES — quick-access coach scripts ── */}
-        <TemplatesSection coachSecret={secret} />
       </div>
     </main>
   );
@@ -708,6 +734,207 @@ function getAdherenceColor(adherence: number): string {
   if (adherence < 30) return "text-red-600";
   if (adherence < 60) return "text-amber-600";
   return "text-green-600";
+}
+
+// ── Applications Section ──
+
+function ApplicationsSection({
+  pendingApps,
+  processedApps,
+  coachSecret,
+  onRefresh,
+}: {
+  pendingApps: ApplicationInfo[];
+  processedApps: ApplicationInfo[];
+  coachSecret: string;
+  onRefresh: () => void;
+}) {
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [actionMessage, setActionMessage] = useState<string | null>(null);
+  const [expandedApp, setExpandedApp] = useState<string | null>(null);
+  const [showProcessed, setShowProcessed] = useState(false);
+
+  async function handleAction(email: string, status: "approved" | "rejected") {
+    setActionLoading(email);
+    setActionMessage(null);
+    try {
+      const res = await fetch(`/api/application?secret=${encodeURIComponent(coachSecret)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, status }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error?.message ?? "Failed to update application");
+      }
+      setActionMessage(`${status === "approved" ? "Approved" : "Rejected"} — ${email}`);
+      onRefresh();
+    } catch (err) {
+      setActionMessage(err instanceof Error ? err.message : "Error");
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
+  const goalLabels: Record<string, string> = {
+    fat_loss: "Fat Loss",
+    muscle: "Muscle Gain",
+    maintenance: "Maintenance",
+  };
+  const tierLabels: Record<string, string> = {
+    foundation: "Foundation ($49)",
+    coaching: "Coaching ($129)",
+    performance: "Performance ($229)",
+    vip: "VIP Elite ($349)",
+  };
+
+  return (
+    <section className="space-y-3">
+      <h2 className="text-lg font-semibold">
+        📋 Applications{pendingApps.length > 0 && (
+          <span className="ml-2 inline-flex items-center justify-center rounded-full bg-amber-100 text-amber-700 text-xs font-medium px-2 py-0.5">
+            {pendingApps.length} pending
+          </span>
+        )}
+      </h2>
+
+      {actionMessage && (
+        <p className="text-sm text-neutral-600 bg-neutral-100 rounded-lg px-3 py-2">
+          {actionMessage}
+        </p>
+      )}
+
+      {pendingApps.length === 0 && processedApps.length === 0 && (
+        <div className={components.card.base}>
+          <p className="text-center text-neutral-500 text-sm">
+            No applications yet. Share your /apply page to start receiving leads.
+          </p>
+        </div>
+      )}
+
+      {/* Pending applications */}
+      {pendingApps.map((app) => (
+        <div
+          key={app.id}
+          className="rounded-2xl border-2 border-amber-200 bg-white p-4"
+        >
+          <button
+            onClick={() => setExpandedApp(expandedApp === app.id ? null : app.id)}
+            className="w-full flex items-center justify-between text-left"
+          >
+            <div className="flex items-center gap-3">
+              <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
+              <div>
+                <p className="text-sm font-medium">{app.fullName}</p>
+                <p className="text-xs text-neutral-500">
+                  {app.email} · {goalLabels[app.goal] ?? app.goal}
+                  {app.preferredTier ? ` · ${tierLabels[app.preferredTier] ?? app.preferredTier}` : ""}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-neutral-400">
+                {new Date(app.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+              </span>
+              <span className="text-neutral-400 text-xs">{expandedApp === app.id ? "▲" : "▼"}</span>
+            </div>
+          </button>
+
+          {expandedApp === app.id && (
+            <div className="mt-3 pt-3 border-t border-neutral-200 space-y-3">
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                {app.trainingExperience && (
+                  <div>
+                    <p className="text-xs text-neutral-500">Experience</p>
+                    <p className="capitalize">{app.trainingExperience}</p>
+                  </div>
+                )}
+                {app.gymAccess && (
+                  <div>
+                    <p className="text-xs text-neutral-500">Gym access</p>
+                    <p className="capitalize">{app.gymAccess.replace("_", " ")}</p>
+                  </div>
+                )}
+              </div>
+              {app.whyNow && (
+                <div>
+                  <p className="text-xs text-neutral-500">Why now?</p>
+                  <p className="text-sm">{app.whyNow}</p>
+                </div>
+              )}
+              {app.biggestObstacle && (
+                <div>
+                  <p className="text-xs text-neutral-500">Biggest obstacle</p>
+                  <p className="text-sm">{app.biggestObstacle}</p>
+                </div>
+              )}
+
+              {/* Approve / Reject buttons */}
+              <div className="flex gap-2 pt-2">
+                <button
+                  onClick={() => handleAction(app.email, "approved")}
+                  disabled={actionLoading === app.email}
+                  className="flex-1 rounded-lg bg-green-600 px-4 py-2 text-sm text-white font-medium hover:bg-green-700 disabled:opacity-50"
+                >
+                  {actionLoading === app.email ? "…" : "✅ Approve"}
+                </button>
+                <button
+                  onClick={() => handleAction(app.email, "rejected")}
+                  disabled={actionLoading === app.email}
+                  className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm text-white font-medium hover:bg-red-700 disabled:opacity-50"
+                >
+                  {actionLoading === app.email ? "…" : "❌ Reject"}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      ))}
+
+      {/* Processed applications (collapsible) */}
+      {processedApps.length > 0 && (
+        <div>
+          <button
+            onClick={() => setShowProcessed(!showProcessed)}
+            className="text-xs text-neutral-500 hover:text-black underline"
+          >
+            {showProcessed ? "Hide" : "Show"} {processedApps.length} processed application{processedApps.length !== 1 ? "s" : ""}
+          </button>
+          {showProcessed && (
+            <div className="mt-2 space-y-2">
+              {processedApps.map((app) => (
+                <div
+                  key={app.id}
+                  className={`rounded-xl border p-3 ${
+                    app.status === "approved"
+                      ? "border-green-200 bg-green-50"
+                      : "border-red-200 bg-red-50"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium">{app.fullName}</p>
+                      <p className="text-xs text-neutral-500">{app.email}</p>
+                    </div>
+                    <span className={`text-xs font-medium ${
+                      app.status === "approved" ? "text-green-700" : "text-red-700"
+                    }`}>
+                      {app.status === "approved" ? "✅ Approved" : "❌ Rejected"}
+                      {app.approvedAt && (
+                        <span className="text-neutral-400 ml-1">
+                          {new Date(app.approvedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </section>
+  );
 }
 
 // ── Templates Section ──

@@ -128,6 +128,26 @@ export async function GET(request: NextRequest) {
 
     const totalLeads = await prisma.lead.count();
 
+    // ── Fetch applications (pending first, then recent) ──
+    const applications = await prisma.application.findMany({
+      orderBy: [{ status: "asc" }, { createdAt: "desc" }],
+      take: 50,
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        goal: true,
+        preferredTier: true,
+        trainingExperience: true,
+        gymAccess: true,
+        whyNow: true,
+        biggestObstacle: true,
+        status: true,
+        createdAt: true,
+        approvedAt: true,
+      },
+    });
+
     // ── Build per-client health ──
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -249,7 +269,24 @@ export async function GET(request: NextRequest) {
       totalLeads: totalLeads,
     };
 
-    return NextResponse.json({ portfolio, clients });
+    return NextResponse.json({
+      portfolio,
+      clients,
+      applications: applications.map((a) => ({
+        id: a.id,
+        email: a.email,
+        fullName: a.fullName,
+        goal: a.goal,
+        preferredTier: a.preferredTier,
+        trainingExperience: a.trainingExperience,
+        gymAccess: a.gymAccess,
+        whyNow: a.whyNow,
+        biggestObstacle: a.biggestObstacle,
+        status: a.status,
+        createdAt: a.createdAt.toISOString(),
+        approvedAt: a.approvedAt?.toISOString() ?? null,
+      })),
+    });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown coach error";
     console.error("[coach] Error:", message);
