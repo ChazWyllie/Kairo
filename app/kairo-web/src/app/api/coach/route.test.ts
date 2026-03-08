@@ -72,6 +72,8 @@ describe("GET /api/coach", () => {
           { date: now, workout: true, meals: 3, water: true, steps: true },
           { date: yesterday, workout: true, meals: 2, water: true, steps: false },
         ],
+        programBlocks: [],
+        macroTargets: [],
       },
     ]);
 
@@ -110,6 +112,8 @@ describe("GET /api/coach", () => {
         checkIns: [
           { date: threeDaysAgo, workout: true, meals: 3, water: true, steps: true },
         ],
+        programBlocks: [],
+        macroTargets: [],
       },
     ]);
     mockPrisma.member.count.mockResolvedValue(1);
@@ -134,6 +138,8 @@ describe("GET /api/coach", () => {
         onboardedAt: null,
         createdAt: new Date(),
         checkIns: [],
+        programBlocks: [],
+        macroTargets: [],
       },
     ]);
     mockPrisma.member.count.mockResolvedValue(1);
@@ -163,6 +169,8 @@ describe("GET /api/coach", () => {
         onboardedAt: new Date(),
         createdAt: new Date(),
         checkIns: [],
+        programBlocks: [],
+        macroTargets: [],
       },
     ]);
     mockPrisma.member.count.mockResolvedValue(1);

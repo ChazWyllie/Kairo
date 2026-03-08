@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { env } from "@/lib/env";
+import { sendProgramUpdated } from "@/services/email";
 
 /**
  * Program API — manage training program blocks for members.
@@ -286,6 +287,26 @@ export async function PATCH(request: NextRequest) {
       updateData.nextUpdateDate = new Date(fields.nextUpdateDate);
 
     await prisma.programBlock.update({ where: { id: programId }, data: updateData });
+
+    // Send program update email when adjustments are made
+    if (fields.adjustmentsMade) {
+      const member = await prisma.member.findUnique({
+        where: { id: existing.memberId },
+        select: { email: true, fullName: true },
+      });
+
+      if (member) {
+        sendProgramUpdated({
+          email: member.email,
+          fullName: member.fullName ?? "there",
+          programName: existing.name,
+          adjustmentsMade: fields.adjustmentsMade,
+        }).catch((err: unknown) => {
+          const msg = err instanceof Error ? err.message : "Unknown email error";
+          console.error("[program] Email send error:", msg);
+        });
+      }
+    }
 
     console.log("[program] Updated:", { id: programId });
 

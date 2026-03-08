@@ -114,6 +114,7 @@ export const mockSendApplicationApproved = vi.fn().mockResolvedValue(undefined);
 export const mockNotifyAdminNewApplication = vi.fn().mockResolvedValue(undefined);
 export const mockSendReviewDelivered = vi.fn().mockResolvedValue(undefined);
 export const mockSendCheckInReminder = vi.fn().mockResolvedValue(undefined);
+export const mockSendProgramUpdated = vi.fn().mockResolvedValue(undefined);
 
 vi.mock("@/services/email", () => ({
   notifyAdmin: mockNotifyAdmin,
@@ -126,6 +127,7 @@ vi.mock("@/services/email", () => ({
   notifyAdminNewApplication: mockNotifyAdminNewApplication,
   sendReviewDelivered: mockSendReviewDelivered,
   sendCheckInReminder: mockSendCheckInReminder,
+  sendProgramUpdated: mockSendProgramUpdated,
 }));
 
 // ── Mock rate limiter (always allow — rate-limit.test.ts tests it directly) ──
