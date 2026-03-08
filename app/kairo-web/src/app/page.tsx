@@ -9,7 +9,6 @@ import {
   LANDING_SECTIONS,
   type HeroSection,
   type SocialProofSection,
-  type HowItWorksSection,
   type PricingSection,
   type TrustSection,
 } from "@/lib/landing-config";
@@ -23,7 +22,6 @@ const NAV_ITEMS = [
     textColor: "#fff",
     links: [
       { label: "Apply Now", href: "/apply", ariaLabel: "Apply for coaching" },
-      { label: "How It Works", href: "#how-it-works", ariaLabel: "How Kairo works" },
     ],
   },
   {
@@ -49,7 +47,6 @@ const NAV_ITEMS = [
 // ── Helpers to pull typed sections ──
 const hero = LANDING_SECTIONS.find((s) => s.id === "hero") as HeroSection;
 const socialProof = LANDING_SECTIONS.find((s) => s.id === "social-proof") as SocialProofSection;
-const howItWorks = LANDING_SECTIONS.find((s) => s.id === "how-it-works") as HowItWorksSection;
 const pricingSection = LANDING_SECTIONS.find((s) => s.id === "pricing") as PricingSection;
 const trust = LANDING_SECTIONS.find((s) => s.id === "trust") as TrustSection;
 
@@ -57,7 +54,7 @@ const trust = LANDING_SECTIONS.find((s) => s.id === "trust") as TrustSection;
  * Public landing page — Instagram bio link destination.
  *
  * Section order follows apply-first funnel:
- * hero (apply CTA) → social-proof → how-it-works → pricing → trust
+ * hero (apply CTA) → social-proof → pricing → trust
  */
 export default function HomePage() {
   const [billingInterval, setBillingInterval] = useState<"monthly" | "annual">("monthly");
@@ -130,37 +127,6 @@ export default function HomePage() {
                 </footer>
               </blockquote>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ─── How It Works ─── */}
-      <section id="how-it-works" className="py-16">
-        <div className="mx-auto max-w-4xl px-6 text-center">
-          <h2 className="text-2xl font-semibold mb-12">
-            How Kairo works
-          </h2>
-          <div className="grid gap-8 sm:grid-cols-3">
-            {howItWorks.steps.map((step, i) => (
-              <div key={step.title} className="flex flex-col items-center">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-black text-white text-lg font-bold mb-4">
-                  {i + 1}
-                </div>
-                <h3 className="text-lg font-semibold">{step.title}</h3>
-                <p className="mt-2 text-sm text-neutral-600 max-w-xs">
-                  {step.description}
-                </p>
-              </div>
-            ))}
-          </div>
-          <div className="mt-10">
-            <Link
-              href="/apply"
-              onClick={() => track({ name: "cta_click", properties: { location: "how-it-works" } })}
-              className="inline-block rounded-xl bg-black px-6 py-3 text-white font-medium hover:opacity-90 transition-opacity"
-            >
-              Apply Now →
-            </Link>
           </div>
         </div>
       </section>
