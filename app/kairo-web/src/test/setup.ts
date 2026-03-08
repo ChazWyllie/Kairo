@@ -65,6 +65,21 @@ export const mockPrisma = {
     update: vi.fn(),
     count: vi.fn(),
   },
+  programBlock: {
+    create: vi.fn(),
+    findUnique: vi.fn(),
+    findMany: vi.fn(),
+    update: vi.fn(),
+    count: vi.fn(),
+  },
+  macroTarget: {
+    create: vi.fn(),
+    findUnique: vi.fn(),
+    findMany: vi.fn(),
+    update: vi.fn(),
+    updateMany: vi.fn(),
+    count: vi.fn(),
+  },
 };
 
 vi.mock("@/lib/prisma", () => ({
