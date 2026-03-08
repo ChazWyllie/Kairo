@@ -23,8 +23,8 @@ const trust = LANDING_SECTIONS.find((s) => s.id === "trust") as TrustSection;
 /**
  * Public landing page — Instagram bio link destination.
  *
- * Section order follows quiz-first funnel research:
- * hero (quiz CTA) → social-proof → how-it-works → pricing → trust
+ * Section order follows apply-first funnel:
+ * hero (apply CTA) → social-proof → how-it-works → pricing → trust
  */
 export default function HomePage() {
   const [billingInterval, setBillingInterval] = useState<"monthly" | "annual">("monthly");
@@ -45,19 +45,19 @@ export default function HomePage() {
         </p>
         <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link
-            href="/quiz"
+            href="/apply"
             onClick={() => track({ name: "cta_click", properties: { location: "hero" } })}
             className="rounded-xl bg-black px-8 py-4 text-lg font-semibold text-white shadow-lg hover:opacity-90 transition-opacity"
           >
             {hero.cta} →
           </Link>
-          <Link
-            href="/apply"
-            onClick={() => track({ name: "cta_click", properties: { location: "hero_apply" } })}
+          <a
+            href="#pricing"
+            onClick={() => track({ name: "cta_click", properties: { location: "hero_pricing" } })}
             className="rounded-xl border border-neutral-300 px-8 py-4 text-lg font-semibold text-black hover:border-neutral-500 transition-colors"
           >
-            Apply Now
-          </Link>
+            Compare Plans
+          </a>
         </div>
         <p className="mt-3 text-sm text-neutral-500">
           Not sure yet? <a href="#pricing" className="underline hover:text-black">Compare plans ↓</a>
@@ -112,11 +112,11 @@ export default function HomePage() {
           </div>
           <div className="mt-10">
             <Link
-              href="/quiz"
+              href="/apply"
               onClick={() => track({ name: "cta_click", properties: { location: "how-it-works" } })}
               className="inline-block rounded-xl bg-black px-6 py-3 text-white font-medium hover:opacity-90 transition-opacity"
             >
-              Find your plan →
+              Apply Now →
             </Link>
           </div>
         </div>

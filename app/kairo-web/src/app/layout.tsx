@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Kairo Coaching — Simple, Structured Fitness Coaching",
   description:
-    "Personalized training plans, nutrition coaching, and expert accountability. Take the quiz to find your plan.",
+    "Personalized training plans, nutrition coaching, and expert accountability. Apply now to get started.",
   metadataBase: new URL(
     process.env.APP_URL ?? "https://kairo-delta-sand.vercel.app"
   ),

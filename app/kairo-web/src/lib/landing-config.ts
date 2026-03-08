@@ -63,7 +63,7 @@ export const LANDING_SECTIONS: LandingSection[] = [
     headline: "Your plan adapts. You stay consistent.",
     subtitle:
       "Expert fitness coaching that fits your real life — not a rigid 12-week program that breaks when you miss a day.",
-    cta: "Take the Quiz",
+    cta: "Apply Now",
   },
   {
     id: "social-proof",

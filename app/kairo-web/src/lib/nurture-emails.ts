@@ -19,7 +19,7 @@
 export interface NurtureContext {
   email: string;
   recommendedTier: string | null;
-  goal: string | null; // from quiz answers
+  goal: string | null; // from application
   appUrl: string;
 }
 
@@ -63,7 +63,7 @@ function goalContent(goal: string | null): { tip: string; angle: string } {
  * Generate the nurture email for a given step.
  *
  * Returns null for invalid steps or steps beyond the sequence.
- * Step 0 is handled by sendQuizWelcomeEmail — this covers steps 1-4.
+ * Step 0 is handled by sendApplicationReceived — this covers steps 1-4.
  */
 export function getNurtureEmail(
   step: number,
@@ -71,7 +71,7 @@ export function getNurtureEmail(
 ): NurtureEmail | null {
   const { angle } = goalContent(ctx.goal);
   const tier = tierName(ctx.recommendedTier);
-  const resultUrl = `${ctx.appUrl}/quiz/result${ctx.recommendedTier ? `?tier=${ctx.recommendedTier}` : ""}`;
+  const resultUrl = `${ctx.appUrl}/#pricing`;
   const unsubUrl = `${ctx.appUrl}/api/nurture/unsubscribe?email=${encodeURIComponent(ctx.email)}`;
 
   switch (step) {
@@ -81,7 +81,7 @@ export function getNurtureEmail(
         subject: `One thing to ${angle.split(" ").slice(0, 3).join(" ")} this week`,
         html: `
           <h2>Here's your quick win 💡</h2>
-          <p>Hi — based on your quiz, your goal is to <strong>${angle}</strong>. Here's one evidence-backed tip you can start today:</p>
+          <p>Hi — based on your application, your goal is to <strong>${angle}</strong>. Here's one evidence-backed tip you can start today:</p>
           <blockquote style="border-left: 3px solid #000; padding-left: 16px; margin: 16px 0; font-style: italic;">
             ${goalContent(ctx.goal).tip}
           </blockquote>
@@ -123,13 +123,13 @@ export function getNurtureEmail(
         subject: "The 3 things holding you back (and how to fix them)",
         html: `
           <h2>Let's be honest about what's in the way</h2>
-          <p>Most people who take our quiz already know what they should be doing. The problem isn't knowledge — it's execution. Here are the 3 most common blockers:</p>
+          <p>Most people who apply already know what they should be doing. The problem isn't knowledge — it's execution. Here are the 3 most common blockers:</p>
           <ol>
             <li><strong>"I don't have time."</strong> → Our plans start at 20 minutes. If you have time to scroll, you have time to train.</li>
             <li><strong>"I've tried coaching before."</strong> → Kairo isn't a PDF plan. It's adaptive coaching that changes when your life changes.</li>
             <li><strong>"Is it worth the investment?"</strong> → The ${tier} plan costs less than one personal training session, and you get support every single day.</li>
           </ol>
-          <p>Your quiz results showed <strong>${tier}</strong> is the best fit. Here's everything you get:</p>
+          <p>Based on your application, <strong>${tier}</strong> is the best fit. Here's everything you get:</p>
           <p><a href="${resultUrl}" style="color: #000; font-weight: bold;">Review your recommendation →</a></p>
           <p style="color: #737373; font-size: 12px; margin-top: 32px;">
             <a href="${unsubUrl}" style="color: #737373;">Unsubscribe</a>
@@ -144,7 +144,7 @@ export function getNurtureEmail(
         subject: "Last call: your plan is waiting",
         html: `
           <h2>Your personalized plan is still here</h2>
-          <p>A week ago, you took the Kairo quiz and we recommended the <strong>${tier}</strong> plan based on your goals.</p>
+          <p>A week ago, you applied to Kairo and we recommended the <strong>${tier}</strong> plan based on your goals.</p>
           <p>Since then, 7 days have passed. That's 7 days of workouts, meals, and progress that could have been tracked, optimized, and guided by a coach who adapts to you.</p>
           <p>Here's what happens when you start:</p>
           <ul>
