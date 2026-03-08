@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { env } from "@/lib/env";
 import {
   createSessionToken,
   getSessionCookieConfig,
@@ -10,11 +11,13 @@ import {
  * POST /api/auth/login
  *
  * Authenticate a member with email + password.
- * Returns a session cookie on success.
+ * Also silently handles coach auth — if password matches COACH_SECRET,
+ * returns role: "coach" (no visible UI difference, no separate endpoint).
  *
  * Security:
- * - bcrypt verify (constant-time comparison)
- * - Generic error message (don't reveal if email exists)
+ * - bcrypt verify for members (constant-time comparison)
+ * - Constant-time comparison for coach secret
+ * - Generic error message (don't reveal if email exists or if coach path exists)
  * - Never log passwords
  */
 
@@ -43,6 +46,31 @@ export async function POST(request: NextRequest) {
 
     const { email, password } = parsed.data;
 
+    // ── Coach auth (hidden path) ──
+    // If password matches COACH_SECRET, authenticate as coach.
+    // Uses constant-time comparison to prevent timing attacks.
+    const coachSecret = env.COACH_SECRET;
+    if (coachSecret && password.length === coachSecret.length) {
+      const encoder = new TextEncoder();
+      const a = encoder.encode(password);
+      const b = encoder.encode(coachSecret);
+      let mismatch = 0;
+      for (let i = 0; i < a.length; i++) {
+        mismatch |= a[i] ^ b[i];
+      }
+      if (mismatch === 0) {
+        const token = await createSessionToken(email);
+        console.log("[auth/login] Coach authenticated");
+        const response = NextResponse.json({
+          status: "ok",
+          role: "coach",
+        });
+        response.headers.set("Set-Cookie", getSessionCookieConfig(token));
+        return response;
+      }
+    }
+
+    // ── Member auth ──
     const member = await prisma.member.findUnique({
       where: { email },
       select: { passwordHash: true, status: true },
@@ -82,6 +110,7 @@ export async function POST(request: NextRequest) {
 
     const response = NextResponse.json({
       status: "ok",
+      role: "member",
       memberStatus: member.status,
     });
     response.headers.set("Set-Cookie", getSessionCookieConfig(token));

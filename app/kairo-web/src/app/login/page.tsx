@@ -42,13 +42,20 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password }),
       });
 
+      const data = await res.json().catch(() => null);
+
       if (!res.ok) {
-        const data = await res.json().catch(() => null);
         throw new Error(data?.error?.message ?? "Invalid email or password");
       }
 
-      track({ name: "member_login", properties: {} });
-      router.push("/dashboard");
+      const role = data?.role;
+      if (role === "coach") {
+        track({ name: "coach_login", properties: {} });
+        router.push("/coach?secret=" + encodeURIComponent(password));
+      } else {
+        track({ name: "member_login", properties: {} });
+        router.push("/dashboard");
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
