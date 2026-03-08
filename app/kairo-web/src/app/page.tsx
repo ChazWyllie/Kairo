@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { track } from "@/lib/analytics";
 import { PLANS, type PlanConfig } from "@/lib/stripe-prices";
@@ -12,6 +13,38 @@ import {
   type PricingSection,
   type TrustSection,
 } from "@/lib/landing-config";
+
+const CardNav = dynamic(() => import("@/components/CardNav"), { ssr: false });
+
+const NAV_ITEMS = [
+  {
+    label: "Programs",
+    bgColor: "#0D0716",
+    textColor: "#fff",
+    links: [
+      { label: "Apply Now", href: "/apply", ariaLabel: "Apply for coaching" },
+      { label: "How It Works", href: "#how-it-works", ariaLabel: "How Kairo works" },
+    ],
+  },
+  {
+    label: "Pricing",
+    bgColor: "#170D27",
+    textColor: "#fff",
+    links: [
+      { label: "Compare Plans", href: "#pricing", ariaLabel: "Compare pricing plans" },
+      { label: "What's Included", href: "#pricing", ariaLabel: "See what's included" },
+    ],
+  },
+  {
+    label: "About",
+    bgColor: "#271E37",
+    textColor: "#fff",
+    links: [
+      { label: "Why Kairo", href: "#trust", ariaLabel: "Why choose Kairo" },
+      { label: "Results", href: "#social-proof", ariaLabel: "Client results" },
+    ],
+  },
+];
 
 // ── Helpers to pull typed sections ──
 const hero = LANDING_SECTIONS.find((s) => s.id === "hero") as HeroSection;
@@ -34,19 +67,22 @@ export default function HomePage() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-white text-black">
-      {/* ─── Top Bar ─── */}
-      <nav className="mx-auto max-w-6xl px-6 pt-5 flex justify-end">
-        <Link
-          href="/login"
-          className="text-sm font-medium text-neutral-500 hover:text-black transition-colors"
-        >
-          Sign In
-        </Link>
-      </nav>
+    <main className="relative min-h-screen bg-white text-black">
+      {/* ─── Card Nav ─── */}
+      <CardNav
+        logoText="Kairo"
+        items={NAV_ITEMS}
+        baseColor="#fff"
+        menuColor="#000"
+        buttonBgColor="#111"
+        buttonTextColor="#fff"
+        ctaHref="/login"
+        ctaLabel="Get Started"
+        ease="power3.out"
+      />
 
       {/* ─── Hero ─── */}
-      <section className="mx-auto max-w-4xl px-6 pt-12 pb-16 text-center">
+      <section className="mx-auto max-w-4xl px-6 pt-28 pb-16 text-center">
         <h1 className="text-4xl sm:text-5xl font-bold tracking-tight leading-tight">
           {hero.headline}
         </h1>
@@ -69,13 +105,10 @@ export default function HomePage() {
             Compare Plans
           </a>
         </div>
-        <p className="mt-3 text-sm text-neutral-500">
-          Not sure yet? <a href="#pricing" className="underline hover:text-black">Compare plans</a>
-        </p>
       </section>
 
       {/* ─── Social Proof ─── */}
-      <section className="bg-neutral-50 py-16">
+      <section id="social-proof" className="bg-neutral-50 py-16">
         <div className="mx-auto max-w-5xl px-6">
           <h2 className="text-center text-2xl font-semibold mb-10">
             Real results from real people
@@ -102,7 +135,7 @@ export default function HomePage() {
       </section>
 
       {/* ─── How It Works ─── */}
-      <section className="py-16">
+      <section id="how-it-works" className="py-16">
         <div className="mx-auto max-w-4xl px-6 text-center">
           <h2 className="text-2xl font-semibold mb-12">
             How Kairo works
@@ -190,7 +223,7 @@ export default function HomePage() {
       </section>
 
       {/* ─── Trust ─── */}
-      <section className="py-12">
+      <section id="trust" className="py-12">
         <div className="mx-auto max-w-3xl px-6">
           <div className="grid gap-4 sm:grid-cols-2">
             {trust.items.map((item) => (
