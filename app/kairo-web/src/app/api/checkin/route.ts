@@ -24,11 +24,35 @@ import { prisma } from "@/lib/prisma";
 
 const CheckInSchema = z.object({
   email: z.string().email("A valid email is required"),
+
+  // Quick daily fields (Phase 4)
   workout: z.boolean().default(false),
   meals: z.number().int().min(0).max(3).default(0),
   water: z.boolean().default(false),
   steps: z.boolean().default(false),
   note: z.string().max(500).optional(),
+
+  // Enhanced weekly fields (Milestone L)
+  avgWeight: z.number().min(50).max(1000).optional(),
+  waist: z.number().min(10).max(100).optional(),
+  photoSubmitted: z.boolean().optional(),
+  frontPhotoUrl: z.string().url().max(2000).optional(),
+  sidePhotoUrl: z.string().url().max(2000).optional(),
+  backPhotoUrl: z.string().url().max(2000).optional(),
+  workoutsCompleted: z.number().int().min(0).max(14).optional(),
+  stepsAverage: z.number().int().min(0).max(100000).optional(),
+  calorieAdherence: z.number().int().min(1).max(10).optional(),
+  proteinAdherence: z.number().int().min(1).max(10).optional(),
+  sleepAverage: z.number().min(0).max(24).optional(),
+  energyScore: z.number().int().min(1).max(10).optional(),
+  hungerScore: z.number().int().min(1).max(10).optional(),
+  stressScore: z.number().int().min(1).max(10).optional(),
+  digestionScore: z.number().int().min(1).max(10).optional(),
+  recoveryScore: z.number().int().min(1).max(10).optional(),
+  painNotes: z.string().max(1000).optional(),
+  biggestWin: z.string().max(1000).optional(),
+  biggestStruggle: z.string().max(1000).optional(),
+  helpNeeded: z.string().max(1000).optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -91,18 +115,35 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create the check-in
-    const checkIn = await prisma.checkIn.create({
-      data: {
-        memberId: member.id,
-        date: today,
-        workout,
-        meals,
-        water,
-        steps,
-        note: note ?? null,
-      },
-    });
+    // Build create data — basic fields always set, enhanced only if provided
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const createData: any = {
+      memberId: member.id,
+      date: today,
+      workout,
+      meals,
+      water,
+      steps,
+      note: note ?? null,
+    };
+
+    // Enhanced fields — only set if provided
+    const enhancedFields = [
+      "avgWeight", "waist", "photoSubmitted", "frontPhotoUrl",
+      "sidePhotoUrl", "backPhotoUrl", "workoutsCompleted", "stepsAverage",
+      "calorieAdherence", "proteinAdherence", "sleepAverage",
+      "energyScore", "hungerScore", "stressScore", "digestionScore",
+      "recoveryScore", "painNotes", "biggestWin", "biggestStruggle",
+      "helpNeeded",
+    ] as const;
+
+    for (const field of enhancedFields) {
+      if (parsed.data[field] !== undefined) {
+        createData[field] = parsed.data[field];
+      }
+    }
+
+    const checkIn = await prisma.checkIn.create({ data: createData });
 
     return NextResponse.json(
       {
@@ -114,6 +155,25 @@ export async function POST(request: NextRequest) {
           water: checkIn.water,
           steps: checkIn.steps,
           note: checkIn.note,
+          avgWeight: checkIn.avgWeight,
+          waist: checkIn.waist,
+          photoSubmitted: checkIn.photoSubmitted,
+          workoutsCompleted: checkIn.workoutsCompleted,
+          stepsAverage: checkIn.stepsAverage,
+          calorieAdherence: checkIn.calorieAdherence,
+          proteinAdherence: checkIn.proteinAdherence,
+          sleepAverage: checkIn.sleepAverage,
+          energyScore: checkIn.energyScore,
+          hungerScore: checkIn.hungerScore,
+          stressScore: checkIn.stressScore,
+          digestionScore: checkIn.digestionScore,
+          recoveryScore: checkIn.recoveryScore,
+          painNotes: checkIn.painNotes,
+          biggestWin: checkIn.biggestWin,
+          biggestStruggle: checkIn.biggestStruggle,
+          helpNeeded: checkIn.helpNeeded,
+          coachStatus: checkIn.coachStatus,
+          coachResponse: checkIn.coachResponse,
         },
       },
       { status: 201 }
@@ -208,6 +268,25 @@ export async function GET(request: NextRequest) {
         water: ci.water,
         steps: ci.steps,
         note: ci.note,
+        avgWeight: ci.avgWeight,
+        waist: ci.waist,
+        photoSubmitted: ci.photoSubmitted,
+        workoutsCompleted: ci.workoutsCompleted,
+        stepsAverage: ci.stepsAverage,
+        calorieAdherence: ci.calorieAdherence,
+        proteinAdherence: ci.proteinAdherence,
+        sleepAverage: ci.sleepAverage,
+        energyScore: ci.energyScore,
+        hungerScore: ci.hungerScore,
+        stressScore: ci.stressScore,
+        digestionScore: ci.digestionScore,
+        recoveryScore: ci.recoveryScore,
+        painNotes: ci.painNotes,
+        biggestWin: ci.biggestWin,
+        biggestStruggle: ci.biggestStruggle,
+        helpNeeded: ci.helpNeeded,
+        coachStatus: ci.coachStatus,
+        coachResponse: ci.coachResponse,
         createdAt: ci.createdAt,
       })),
       stats: {
