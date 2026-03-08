@@ -14,7 +14,7 @@ import {
   type TrustSection,
 } from "@/lib/landing-config";
 
-const LightPillar = dynamic(() => import("@/components/LightPillar"), {
+const ColorBends = dynamic(() => import("@/components/ColorBends"), {
   ssr: false,
 });
 
@@ -39,29 +39,28 @@ export default function HomePage() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-white text-black">
-      {/* ─── Hero with Plasma ─── */}
-      <section className="relative bg-black overflow-hidden">
-        {/* Plasma background */}
-        <div className="absolute inset-0" aria-hidden="true">
-          <LightPillar
-            topColor="#ff2929"
-            bottomColor="#ff9e9e"
-            intensity={1}
-            rotationSpeed={0.3}
-            glowAmount={0.002}
-            pillarWidth={3}
-            pillarHeight={0.4}
-            noiseIntensity={0.5}
-            pillarRotation={25}
-            interactive={false}
-            mixBlendMode="screen"
-            quality="high"
-          />
-        </div>
+    <main className="relative min-h-screen bg-black text-black">
+      {/* ─── Full-page ColorBends background ─── */}
+      <div className="fixed inset-0 z-0" aria-hidden="true">
+        <ColorBends
+          colors={["#ff5c7a", "#8a5cff", "#00ffd1"]}
+          rotation={0}
+          speed={0.2}
+          scale={1}
+          frequency={1}
+          warpStrength={1}
+          mouseInfluence={0.5}
+          parallax={0.3}
+          noise={0.08}
+          transparent={false}
+          autoRotate={0}
+        />
+      </div>
 
+      {/* ─── Hero ─── */}
+      <section className="relative z-10">
         {/* Top bar */}
-        <nav className="relative z-10 mx-auto max-w-6xl px-6 pt-5 flex justify-end">
+        <nav className="mx-auto max-w-6xl px-6 pt-5 flex justify-end">
           <Link
             href="/login"
             className="text-sm font-medium text-white/60 hover:text-white transition-colors"
@@ -71,7 +70,7 @@ export default function HomePage() {
         </nav>
 
         {/* Hero content */}
-        <div className="relative z-10 mx-auto max-w-4xl px-6 pt-16 pb-24 text-center">
+        <div className="mx-auto max-w-4xl px-6 pt-16 pb-24 text-center">
           <h1 className="text-4xl sm:text-5xl font-bold tracking-tight leading-tight text-white">
             {hero.headline}
           </h1>
@@ -101,7 +100,7 @@ export default function HomePage() {
       </section>
 
       {/* ─── Social Proof ─── */}
-      <section className="bg-neutral-50 py-16">
+      <section className="relative z-10 bg-white/95 backdrop-blur-sm py-16">
         <div className="mx-auto max-w-5xl px-6">
           <h2 className="text-center text-2xl font-semibold mb-10">
             Real results from real people
@@ -128,7 +127,7 @@ export default function HomePage() {
       </section>
 
       {/* ─── How It Works ─── */}
-      <section className="py-16">
+      <section className="relative z-10 bg-white/95 backdrop-blur-sm py-16">
         <div className="mx-auto max-w-4xl px-6 text-center">
           <h2 className="text-2xl font-semibold mb-12">
             How Kairo works
@@ -159,7 +158,7 @@ export default function HomePage() {
       </section>
 
       {/* ─── Pricing ─── */}
-      <section id="pricing" className="bg-neutral-50 py-16">
+      <section id="pricing" className="relative z-10 bg-neutral-50/95 backdrop-blur-sm py-16">
         <div className="mx-auto max-w-6xl px-6">
           <div className="text-center space-y-2 mb-10">
             <h2 className="text-2xl font-semibold">{pricingSection.headline}</h2>
@@ -216,7 +215,7 @@ export default function HomePage() {
       </section>
 
       {/* ─── Trust ─── */}
-      <section className="py-12">
+      <section className="relative z-10 bg-white/95 backdrop-blur-sm py-12">
         <div className="mx-auto max-w-3xl px-6">
           <div className="grid gap-4 sm:grid-cols-2">
             {trust.items.map((item) => (
@@ -230,7 +229,7 @@ export default function HomePage() {
       </section>
 
       {/* ─── Disclaimer + Footer ─── */}
-      <div className="mx-auto max-w-6xl px-6 pb-12">
+      <div className="relative z-10 bg-white/95 backdrop-blur-sm mx-auto max-w-6xl px-6 pb-12">
         <div className="rounded-xl bg-neutral-50 p-4 text-sm text-neutral-600 text-center">
           <p className="font-medium">Note:</p>
           <p>This is fitness coaching and general nutrition guidance, not medical advice.</p>
