@@ -18,6 +18,8 @@ import {
   makeCheckoutCompletedEvent,
   makeUnknownEvent,
   makeSubscriptionDeletedEvent,
+  makeInvoicePaymentFailedEvent,
+  makeInvoicePaymentSucceededEvent,
 } from "@/test/fixtures";
 import { POST } from "@/app/api/webhook/route";
 
@@ -442,6 +444,162 @@ describe("POST /api/webhook", () => {
       expect(data).toHaveProperty("error");
       expect(data.error).toHaveProperty("code");
       expect(data.error).toHaveProperty("message");
+    });
+  });
+
+  // ── invoice.payment_failed — mark member past_due ──
+
+  describe("invoice.payment_failed", () => {
+    it("marks member as past_due when payment fails", async () => {
+      const event = makeInvoicePaymentFailedEvent({
+        subscriptionId: "sub_past_due_1",
+      });
+      mockStripeConstructEvent.mockReturnValue(event);
+      mockPrisma.stripeEvent.findUnique.mockResolvedValue(null);
+      mockPrisma.stripeEvent.create.mockResolvedValue({ id: event.id });
+      mockPrisma.member.updateMany.mockResolvedValue({ count: 1 });
+
+      const response = await POST(makeRequest());
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.status).toBe("processed");
+      expect(mockPrisma.member.updateMany).toHaveBeenCalledWith({
+        where: { stripeSubId: "sub_past_due_1" },
+        data: { status: "past_due" },
+      });
+    });
+
+    it("stores event ID for idempotency before updating member", async () => {
+      const callOrder: string[] = [];
+      const event = makeInvoicePaymentFailedEvent({
+        eventId: "evt_fail_order",
+        subscriptionId: "sub_order_test",
+      });
+      mockStripeConstructEvent.mockReturnValue(event);
+      mockPrisma.stripeEvent.findUnique.mockResolvedValue(null);
+      mockPrisma.stripeEvent.create.mockImplementation(async () => {
+        callOrder.push("createEvent");
+        return { id: event.id };
+      });
+      mockPrisma.member.updateMany.mockImplementation(async () => {
+        callOrder.push("updateMember");
+        return { count: 1 };
+      });
+
+      await POST(makeRequest());
+
+      expect(callOrder).toEqual(["createEvent", "updateMember"]);
+    });
+
+    it("returns 200 without updating when invoice has no subscription", async () => {
+      const event = makeInvoicePaymentFailedEvent({ subscriptionId: null });
+      mockStripeConstructEvent.mockReturnValue(event);
+      mockPrisma.stripeEvent.findUnique.mockResolvedValue(null);
+
+      const response = await POST(makeRequest());
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.status).toBe("processed");
+      expect(mockPrisma.member.updateMany).not.toHaveBeenCalled();
+    });
+
+    it("skips already-processed invoice.payment_failed events", async () => {
+      const event = makeInvoicePaymentFailedEvent({
+        eventId: "evt_fail_dup",
+        subscriptionId: "sub_dup",
+      });
+      mockStripeConstructEvent.mockReturnValue(event);
+      mockPrisma.stripeEvent.findUnique.mockResolvedValue({
+        id: "evt_fail_dup",
+        createdAt: new Date(),
+      });
+
+      const response = await POST(makeRequest());
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.status).toBe("already_processed");
+      expect(mockPrisma.member.updateMany).not.toHaveBeenCalled();
+    });
+  });
+
+  // ── invoice.payment_succeeded — restore active status ──
+
+  describe("invoice.payment_succeeded", () => {
+    it("restores member to active when payment recovers", async () => {
+      const event = makeInvoicePaymentSucceededEvent({
+        subscriptionId: "sub_recovered_1",
+      });
+      mockStripeConstructEvent.mockReturnValue(event);
+      mockPrisma.stripeEvent.findUnique.mockResolvedValue(null);
+      mockPrisma.stripeEvent.create.mockResolvedValue({ id: event.id });
+      mockPrisma.member.updateMany.mockResolvedValue({ count: 1 });
+
+      const response = await POST(makeRequest());
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.status).toBe("processed");
+      expect(mockPrisma.member.updateMany).toHaveBeenCalledWith({
+        where: { stripeSubId: "sub_recovered_1", status: "past_due" },
+        data: { status: "active" },
+      });
+    });
+
+    it("stores event ID for idempotency before updating member", async () => {
+      const callOrder: string[] = [];
+      const event = makeInvoicePaymentSucceededEvent({
+        eventId: "evt_paid_order",
+        subscriptionId: "sub_paid_order",
+      });
+      mockStripeConstructEvent.mockReturnValue(event);
+      mockPrisma.stripeEvent.findUnique.mockResolvedValue(null);
+      mockPrisma.stripeEvent.create.mockImplementation(async () => {
+        callOrder.push("createEvent");
+        return { id: event.id };
+      });
+      mockPrisma.member.updateMany.mockImplementation(async () => {
+        callOrder.push("updateMember");
+        return { count: 1 };
+      });
+
+      await POST(makeRequest());
+
+      expect(callOrder).toEqual(["createEvent", "updateMember"]);
+    });
+
+    it("returns 200 without updating when invoice has no subscription", async () => {
+      const event = makeInvoicePaymentSucceededEvent({ subscriptionId: null });
+      mockStripeConstructEvent.mockReturnValue(event);
+      mockPrisma.stripeEvent.findUnique.mockResolvedValue(null);
+
+      const response = await POST(makeRequest());
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.status).toBe("processed");
+      expect(mockPrisma.member.updateMany).not.toHaveBeenCalled();
+    });
+
+    it("skips already-processed invoice.payment_succeeded events", async () => {
+      const event = makeInvoicePaymentSucceededEvent({
+        eventId: "evt_paid_dup",
+        subscriptionId: "sub_dup_paid",
+      });
+      mockStripeConstructEvent.mockReturnValue(event);
+      mockPrisma.stripeEvent.findUnique.mockResolvedValue({
+        id: "evt_paid_dup",
+        createdAt: new Date(),
+      });
+
+      const response = await POST(makeRequest());
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.status).toBe("already_processed");
+      expect(mockPrisma.member.updateMany).not.toHaveBeenCalled();
     });
   });
 });

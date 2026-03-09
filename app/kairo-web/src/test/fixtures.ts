@@ -111,6 +111,78 @@ export function makeSubscriptionDeletedEvent(
   } as unknown as Stripe.Event;
 }
 
+export function makeInvoicePaymentFailedEvent(
+  overrides: {
+    eventId?: string;
+    subscriptionId?: string | null;
+  } = {}
+): Stripe.Event {
+  const {
+    eventId = "evt_inv_fail_123",
+    subscriptionId = "sub_past_due_xyz",
+  } = overrides;
+
+  return {
+    id: eventId,
+    object: "event",
+    type: "invoice.payment_failed",
+    api_version: "2025-12-18.acacia",
+    created: Math.floor(Date.now() / 1000),
+    livemode: false,
+    pending_webhooks: 0,
+    request: null,
+    data: {
+      object: {
+        id: "in_test_123",
+        object: "invoice",
+        parent: subscriptionId
+          ? {
+              subscription_details: {
+                subscription: subscriptionId,
+              },
+            }
+          : null,
+      } as unknown as Stripe.Invoice,
+    },
+  } as unknown as Stripe.Event;
+}
+
+export function makeInvoicePaymentSucceededEvent(
+  overrides: {
+    eventId?: string;
+    subscriptionId?: string | null;
+  } = {}
+): Stripe.Event {
+  const {
+    eventId = "evt_inv_paid_123",
+    subscriptionId = "sub_recovered_xyz",
+  } = overrides;
+
+  return {
+    id: eventId,
+    object: "event",
+    type: "invoice.payment_succeeded",
+    api_version: "2025-12-18.acacia",
+    created: Math.floor(Date.now() / 1000),
+    livemode: false,
+    pending_webhooks: 0,
+    request: null,
+    data: {
+      object: {
+        id: "in_test_456",
+        object: "invoice",
+        parent: subscriptionId
+          ? {
+              subscription_details: {
+                subscription: subscriptionId,
+              },
+            }
+          : null,
+      } as unknown as Stripe.Invoice,
+    },
+  } as unknown as Stripe.Event;
+}
+
 // ── Request helpers ──
 
 export function makeWebhookRequest(
