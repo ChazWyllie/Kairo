@@ -73,5 +73,19 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  return NextResponse.json({ member });
+  // Explicitly build safe response — never leak Stripe IDs, passwordHash, or
+  // any field not in the select above (defense in depth against future schema changes).
+  return NextResponse.json({
+    member: {
+      email: member.email,
+      status: member.status,
+      planTier: member.planTier,
+      billingInterval: member.billingInterval,
+      goal: member.goal,
+      daysPerWeek: member.daysPerWeek,
+      fullName: member.fullName,
+      onboardedAt: member.onboardedAt,
+      createdAt: member.createdAt,
+    },
+  });
 }

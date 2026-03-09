@@ -199,6 +199,19 @@ describe("GET /api/application", () => {
     });
     const res = await GET(req);
     expect(res.status).toBe(400);
+    const data = await res.json();
+    expect(data.error.code).toBe("VALIDATION_ERROR");
+  });
+
+  it("returns 400 when email query param is invalid", async () => {
+    const req = new NextRequest(
+      "http://localhost:3000/api/application?email=notanemail",
+      { method: "GET" }
+    );
+    const res = await GET(req);
+    expect(res.status).toBe(400);
+    const data = await res.json();
+    expect(data.error.code).toBe("VALIDATION_ERROR");
   });
 
   it("returns 404 when no application found", async () => {
