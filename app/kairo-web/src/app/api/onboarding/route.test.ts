@@ -10,10 +10,16 @@ import { NextRequest } from "next/server";
 import { mockPrisma } from "@/test/setup";
 import { POST } from "@/app/api/onboarding/route";
 
-function makeOnboardingRequest(body: Record<string, unknown>): NextRequest {
+const COACH_SECRET = "test-coach-secret-1234567890";
+
+function makeOnboardingRequest(body: Record<string, unknown>, secret?: string): NextRequest {
+  const headers: Record<string, string> = { "content-type": "application/json" };
+  if (secret !== "") {
+    headers["authorization"] = `Bearer ${secret ?? COACH_SECRET}`;
+  }
   return new NextRequest("http://localhost:3000/api/onboarding", {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers,
     body: JSON.stringify(body),
   });
 }
@@ -22,6 +28,17 @@ describe("POST /api/onboarding", () => {
   beforeEach(() => {
     mockPrisma.member.findUnique.mockReset();
     mockPrisma.member.update.mockReset();
+  });
+
+  // ── Auth ──
+
+  it("returns 401 without authentication", async () => {
+    const response = await POST(
+      makeOnboardingRequest({ email: "test@test.com" }, "")
+    );
+    expect(response.status).toBe(401);
+    const data = await response.json();
+    expect(data.error.code).toBe("UNAUTHORIZED");
   });
 
   // ── Validation ──

@@ -10,8 +10,14 @@ import { mockPrisma } from "@/test/setup";
 
 const { GET } = await import("./route");
 
-function makeRequest(url: string) {
-  return new Request(url, { method: "GET" });
+const COACH_SECRET = "test-coach-secret-1234567890";
+
+function makeRequest(url: string, secret?: string) {
+  const headers: Record<string, string> = {};
+  if (secret !== "") {
+    headers["authorization"] = `Bearer ${secret ?? COACH_SECRET}`;
+  }
+  return new Request(url, { method: "GET", headers });
 }
 
 describe("GET /api/checkin", () => {

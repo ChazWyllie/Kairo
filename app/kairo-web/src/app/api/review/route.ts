@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { requireCoachAuth } from "@/lib/auth";
+import { requireCoachAuth, requireMemberOrCoachAuth } from "@/lib/auth";
 import { sendReviewDelivered } from "@/services/email";
 
 /**
@@ -136,7 +136,14 @@ export async function GET(request: NextRequest) {
       { status: 400 }
     );
   }
-
+  // ── Auth: require session cookie (email match) or coach Bearer token ──
+  const auth = await requireMemberOrCoachAuth(request, email);
+  if (!auth.authorized) {
+    return NextResponse.json(
+      { error: { code: "UNAUTHORIZED", message: "Authentication required" } },
+      { status: 401 }
+    );
+  }
   try {
     const member = await prisma.member.findUnique({ where: { email } });
     if (!member) {

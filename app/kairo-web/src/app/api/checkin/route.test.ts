@@ -8,12 +8,20 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { mockPrisma } from "@/test/setup";
 
-const { POST } = await import("./route");
+import { NextRequest } from "next/server";
 
-function makeRequest(body: unknown) {
+const { POST, GET } = await import("./route");
+
+const COACH_SECRET = "test-coach-secret-1234567890";
+
+function makeRequest(body: unknown, secret?: string) {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (secret !== "") {
+    headers["authorization"] = `Bearer ${secret ?? COACH_SECRET}`;
+  }
   return new Request("http://localhost:3000/api/checkin", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify(body),
   });
 }
@@ -23,6 +31,15 @@ describe("POST /api/checkin", () => {
     mockPrisma.member.findUnique.mockReset();
     mockPrisma.checkIn.create.mockReset();
     mockPrisma.checkIn.findFirst.mockReset();
+  });
+
+  // ── Auth ──
+
+  it("returns 401 without authentication", async () => {
+    const res = await POST(makeRequest({ email: "a@b.com" }, "") as never);
+    expect(res.status).toBe(401);
+    const body = await res.json();
+    expect(body.error.code).toBe("UNAUTHORIZED");
   });
 
   // ── Validation ──
@@ -369,5 +386,72 @@ describe("POST /api/checkin", () => {
     );
     const body = await res.json();
     expect(body.checkIn.memberId).toBeUndefined();
+  });
+});
+
+// ── GET ──
+
+function makeGetRequest(email: string, secret?: string): NextRequest {
+  const headers: Record<string, string> = {};
+  if (secret !== "") {
+    headers["authorization"] = `Bearer ${secret ?? COACH_SECRET}`;
+  }
+  return new NextRequest(
+    `http://localhost:3000/api/checkin?email=${encodeURIComponent(email)}`,
+    { method: "GET", headers }
+  );
+}
+
+describe("GET /api/checkin", () => {
+  beforeEach(() => {
+    mockPrisma.member.findUnique.mockReset();
+    mockPrisma.checkIn.findMany.mockReset();
+  });
+
+  it("returns 401 without authentication", async () => {
+    const res = await GET(makeGetRequest("a@b.com", ""));
+    expect(res.status).toBe(401);
+    const body = await res.json();
+    expect(body.error.code).toBe("UNAUTHORIZED");
+  });
+
+  it("returns 400 without email param", async () => {
+    const res = await GET(
+      new NextRequest("http://localhost:3000/api/checkin", {
+        method: "GET",
+        headers: { authorization: `Bearer ${COACH_SECRET}` },
+      })
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 404 when member not found", async () => {
+    mockPrisma.member.findUnique.mockResolvedValue(null);
+    const res = await GET(makeGetRequest("nobody@test.com"));
+    expect(res.status).toBe(404);
+  });
+
+  it("returns check-ins for active member", async () => {
+    mockPrisma.member.findUnique.mockResolvedValue({
+      id: "m1",
+      email: "a@b.com",
+      status: "active",
+    });
+    mockPrisma.checkIn.findMany.mockResolvedValue([
+      {
+        id: "ci1",
+        memberId: "m1",
+        date: new Date("2026-03-09"),
+        workout: true,
+        meals: 3,
+        water: true,
+        steps: true,
+        note: null,
+      },
+    ]);
+    const res = await GET(makeGetRequest("a@b.com"));
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.checkIns).toHaveLength(1);
   });
 });
