@@ -168,6 +168,17 @@ describe("getSessionCookieConfig", () => {
     expect(config).toContain("Secure");
     process.env.NODE_ENV = original;
   });
+
+  it("includes Secure when APP_URL is https even in non-production", () => {
+    const origEnv = process.env.NODE_ENV;
+    const origUrl = process.env.APP_URL;
+    process.env.NODE_ENV = "test";
+    process.env.APP_URL = "https://staging.kairo.fitness";
+    const config = getSessionCookieConfig("token");
+    expect(config).toContain("Secure");
+    process.env.NODE_ENV = origEnv;
+    process.env.APP_URL = origUrl;
+  });
 });
 
 // ── getClearSessionCookie ──

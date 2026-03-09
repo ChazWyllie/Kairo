@@ -17,6 +17,14 @@ vi.mock("@/lib/env", () => ({
     AUTH_SECRET: "test-auth-secret-must-be-at-least-32-chars-long!!",
     COACH_SECRET: "test-coach-secret-1234567890",
     CRON_SECRET: "test-cron-secret-1234567890",
+    STRIPE_PRICE_FOUNDATION_MONTHLY: "price_test_foundation_m",
+    STRIPE_PRICE_FOUNDATION_ANNUAL: "price_test_foundation_a",
+    STRIPE_PRICE_COACHING_MONTHLY: "price_test_coaching_m",
+    STRIPE_PRICE_COACHING_ANNUAL: "price_test_coaching_a",
+    STRIPE_PRICE_PERFORMANCE_MONTHLY: "price_test_performance_m",
+    STRIPE_PRICE_PERFORMANCE_ANNUAL: "price_test_performance_a",
+    STRIPE_PRICE_VIP_MONTHLY: "price_test_vip_m",
+    STRIPE_PRICE_VIP_ANNUAL: "price_test_vip_a",
   },
 }));
 

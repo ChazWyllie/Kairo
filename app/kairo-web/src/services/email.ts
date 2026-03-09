@@ -5,6 +5,19 @@ import {
 } from "@/lib/nurture-emails";
 import { escapeHtml } from "@/lib/sanitize";
 
+/**
+ * Lazy singleton for Resend client. Avoids creating a new instance per email.
+ * Dynamic import keeps Resend out of bundles where email isn't used.
+ */
+let _resend: import("resend").Resend | null = null;
+async function getResend(): Promise<import("resend").Resend> {
+  if (!_resend) {
+    const { Resend } = await import("resend");
+    _resend = new Resend(env.RESEND_API_KEY);
+  }
+  return _resend;
+}
+
 interface AdminNotification {
   memberEmail: string;
   stripeCustomerId: string;
@@ -38,9 +51,7 @@ export async function notifyAdmin(data: AdminNotification): Promise<void> {
     return;
   }
 
-  // Dynamic import to avoid loading Resend when not needed
-  const { Resend } = await import("resend");
-  const resend = new Resend(env.RESEND_API_KEY);
+  const resend = await getResend();
 
   await resend.emails.send({
     from: env.EMAIL_FROM,
@@ -74,8 +85,7 @@ export async function notifyAdminCancellation(
     return;
   }
 
-  const { Resend } = await import("resend");
-  const resend = new Resend(env.RESEND_API_KEY);
+  const resend = await getResend();
 
   await resend.emails.send({
     from: env.EMAIL_FROM,
@@ -104,8 +114,7 @@ export async function sendWelcomeEmail(data: WelcomeEmail): Promise<void> {
     return;
   }
 
-  const { Resend } = await import("resend");
-  const resend = new Resend(env.RESEND_API_KEY);
+  const resend = await getResend();
 
   await resend.emails.send({
     from: env.EMAIL_FROM,
@@ -153,8 +162,7 @@ export async function sendQuizWelcomeEmail(
     return;
   }
 
-  const { Resend } = await import("resend");
-  const resend = new Resend(env.RESEND_API_KEY);
+  const resend = await getResend();
 
   const tierNames: Record<string, string> = {
     foundation: "Foundation",
@@ -222,8 +230,7 @@ export async function sendNurtureEmail(
     return true;
   }
 
-  const { Resend } = await import("resend");
-  const resend = new Resend(env.RESEND_API_KEY);
+  const resend = await getResend();
 
   await resend.emails.send({
     from: env.EMAIL_FROM,
@@ -287,8 +294,7 @@ export async function sendApplicationReceived(
     return;
   }
 
-  const { Resend } = await import("resend");
-  const resend = new Resend(env.RESEND_API_KEY);
+  const resend = await getResend();
 
   await resend.emails.send({
     from: env.EMAIL_FROM,
@@ -340,8 +346,7 @@ export async function sendApplicationApproved(
     return;
   }
 
-  const { Resend } = await import("resend");
-  const resend = new Resend(env.RESEND_API_KEY);
+  const resend = await getResend();
 
   await resend.emails.send({
     from: env.EMAIL_FROM,
@@ -377,8 +382,7 @@ export async function notifyAdminNewApplication(
     return;
   }
 
-  const { Resend } = await import("resend");
-  const resend = new Resend(env.RESEND_API_KEY);
+  const resend = await getResend();
 
   const goalLabels: Record<string, string> = { fat_loss: "Fat Loss", muscle: "Muscle Gain", maintenance: "Maintenance" };
   const tierLabels: Record<string, string> = { foundation: "Foundation ($49)", coaching: "Coaching ($129)", performance: "Performance ($229)", vip: "VIP Elite ($349)" };
@@ -493,8 +497,7 @@ export async function sendReviewDelivered(
     return;
   }
 
-  const { Resend } = await import("resend");
-  const resend = new Resend(env.RESEND_API_KEY);
+  const resend = await getResend();
 
   await resend.emails.send({
     from: env.EMAIL_FROM,
@@ -532,8 +535,7 @@ export async function sendProgramUpdated(
     return;
   }
 
-  const { Resend } = await import("resend");
-  const resend = new Resend(env.RESEND_API_KEY);
+  const resend = await getResend();
 
   await resend.emails.send({
     from: env.EMAIL_FROM,
@@ -564,8 +566,7 @@ export async function sendCheckInReminder(
     return;
   }
 
-  const { Resend } = await import("resend");
-  const resend = new Resend(env.RESEND_API_KEY);
+  const resend = await getResend();
 
   await resend.emails.send({
     from: env.EMAIL_FROM,

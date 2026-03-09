@@ -128,7 +128,7 @@ export function getSessionCookieConfig(token: string): string {
     `SameSite=Strict`,
     `Max-Age=${SESSION_EXPIRY_SECONDS}`,
   ];
-  if (isProduction) {
+  if (isProduction || (process.env.APP_URL ?? "").startsWith("https://")) {
     parts.push("Secure");
   }
   return parts.join("; ");
