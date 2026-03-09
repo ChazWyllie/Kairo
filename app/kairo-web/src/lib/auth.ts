@@ -99,7 +99,8 @@ export async function verifySessionToken(
     const [header, body, signature] = parts;
     const expectedSig = await hmacSign(`${header}.${body}`);
 
-    if (signature !== expectedSig) return null;
+    // Constant-time comparison to prevent timing attacks on JWT signatures
+    if (!timingSafeCompare(signature, expectedSig)) return null;
 
     const payload: SessionPayload = JSON.parse(
       Buffer.from(body, "base64").toString()
@@ -171,8 +172,14 @@ function extractBearer(request: NextRequest): string | null {
 function timingSafeCompare(a: string, b: string): boolean {
   const bufA = Buffer.from(a, "utf-8");
   const bufB = Buffer.from(b, "utf-8");
-  if (bufA.length !== bufB.length) return false;
-  return timingSafeEqual(bufA, bufB);
+  // Always perform constant-time comparison even when lengths differ.
+  // Pad the shorter buffer to avoid leaking length information.
+  const maxLen = Math.max(bufA.length, bufB.length);
+  const paddedA = Buffer.alloc(maxLen);
+  const paddedB = Buffer.alloc(maxLen);
+  bufA.copy(paddedA);
+  bufB.copy(paddedB);
+  return timingSafeEqual(paddedA, paddedB) && bufA.length === bufB.length;
 }
 
 /**

@@ -142,12 +142,28 @@ export const mockQuizRateLimitCheck = vi.fn().mockReturnValue({
   retryAfter: 0,
 });
 
+export const mockLoginRateLimitCheck = vi.fn().mockReturnValue({
+  allowed: true,
+  retryAfter: 0,
+});
+
+export const mockRegisterRateLimitCheck = vi.fn().mockReturnValue({
+  allowed: true,
+  retryAfter: 0,
+});
+
 vi.mock("@/lib/rate-limit", () => ({
   checkoutLimiter: {
     check: (...args: unknown[]) => mockRateLimitCheck(...args),
   },
   quizLimiter: {
     check: (...args: unknown[]) => mockQuizRateLimitCheck(...args),
+  },
+  loginLimiter: {
+    check: (...args: unknown[]) => mockLoginRateLimitCheck(...args),
+  },
+  registerLimiter: {
+    check: (...args: unknown[]) => mockRegisterRateLimitCheck(...args),
   },
   createRateLimiter: vi.fn(),
 }));

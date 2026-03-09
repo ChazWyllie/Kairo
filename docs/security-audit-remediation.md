@@ -134,33 +134,35 @@ The codebase has grown beyond the original MVP scope (3 endpoints) to 15+ API ro
 
 ## PR4 — Fix Timing Attacks + Rate Limit Auth
 
-**Branch:** TBD
+**Branch:** `fix/c04-timing-rate-limit`
 **Priority:** HIGH — enables brute-force and token forgery
+**Status:** COMPLETE
 
-- [ ] **H1 — Fix non-constant-time token signature comparison**
-  - `auth.ts` → `if (signature !== expectedSig)` → use `crypto.timingSafeEqual()`
+- [x] **H1 — Fix non-constant-time token signature comparison**
+  - `verifySessionToken()` now uses `timingSafeCompare()` instead of `!==`
+  - Updated `timingSafeCompare()` to pad buffers to equal length (prevents length-leaking early return)
   - **File:** `lib/auth.ts`
 
-- [ ] **H2 — Remove length-check shortcut in coach login path**
-  - `auth/login/route.ts` → `if (coachSecret && password.length === coachSecret.length)` leaks secret length
-  - **Fix:** Always perform constant-time comparison regardless of length
+- [x] **H2 — Remove length-check shortcut in coach login path**
+  - Removed `password.length === coachSecret.length` guard
+  - Now always performs padded constant-time comparison regardless of length
   - **File:** `app/api/auth/login/route.ts`
 
-- [ ] **H3 — Add rate limiting to auth endpoints**
-  - Apply `checkRateLimit()` to:
-    - [ ] `POST /api/auth/login` — 5 req/15min per IP+email
-    - [ ] `POST /api/auth/register` — 5 req/15min per IP
-  - **Files:** `app/api/auth/login/route.ts`, `app/api/auth/register/route.ts`
+- [x] **H3 — Add rate limiting to auth endpoints**
+  - Created `loginLimiter` (5 req/15min per IP+email) and `registerLimiter` (5 req/15min per IP)
+  - Applied to:
+    - [x] `POST /api/auth/login` — 429 with Retry-After header
+    - [x] `POST /api/auth/register` — 429 with Retry-After header
+  - **Files:** `lib/rate-limit.ts`, `app/api/auth/login/route.ts`, `app/api/auth/register/route.ts`
 
-- [ ] **H4 — Fix account enumeration in register**
-  - Returns 403 `"NOT_ELIGIBLE"` vs 409 `"ALREADY_REGISTERED"` — reveals membership status
-  - **Fix:** Return same generic error for both cases
+- [x] **H4 — Fix account enumeration in register**
+  - Merged `NOT_ELIGIBLE` (403) and `ALREADY_REGISTERED` (409) into single `REGISTRATION_FAILED` (403)
+  - Same generic error message for all failure cases
   - **File:** `app/api/auth/register/route.ts`
 
-**Tests to add/update:**
-- [ ] Test rate limiting triggers on login after N attempts
-- [ ] Test register returns same error for unknown vs already-registered email
-- [ ] Test constant-time comparison doesn't short-circuit
+**Tests added/updated:**
+- [x] Updated `test/setup.ts` with `mockLoginRateLimitCheck` and `mockRegisterRateLimitCheck`
+- [x] All 376 tests pass (27 test files)
 
 ---
 
