@@ -31,12 +31,13 @@ function makePatchRequest(
   body: Record<string, unknown>,
   secret?: string
 ): NextRequest {
-  const url = secret
-    ? `http://localhost:3000/api/application?secret=${encodeURIComponent(secret)}`
-    : "http://localhost:3000/api/application";
-  return new NextRequest(url, {
+  const headers: Record<string, string> = { "content-type": "application/json" };
+  if (secret) {
+    headers["authorization"] = `Bearer ${secret}`;
+  }
+  return new NextRequest("http://localhost:3000/api/application", {
     method: "PATCH",
-    headers: { "content-type": "application/json" },
+    headers,
     body: JSON.stringify(body),
   });
 }

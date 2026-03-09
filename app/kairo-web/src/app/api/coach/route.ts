@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { env } from "@/lib/env";
+import { requireCoachAuth } from "@/lib/auth";
 import { stripe } from "@/services/stripe";
 
 /**
- * GET /api/coach?secret=...
+ * GET /api/coach (Authorization: Bearer COACH_SECRET)
  *
  * Coach dashboard API — exception-first data for the coach portal.
  * Returns portfolio stats + per-client health with triage flags.
@@ -87,11 +87,8 @@ interface PortfolioStats {
 
 export async function GET(request: NextRequest) {
   try {
-    // ── Auth: shared secret ──
-    const secret = new URL(request.url).searchParams.get("secret");
-    const coachSecret = env.COACH_SECRET;
-
-    if (!coachSecret || !secret || secret !== coachSecret) {
+    // ── Auth: Authorization header with constant-time comparison ──
+    if (!requireCoachAuth(request)) {
       return NextResponse.json(
         {
           error: {

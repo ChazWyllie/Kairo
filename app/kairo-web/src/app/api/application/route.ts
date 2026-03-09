@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { env } from "@/lib/env";
+import { requireCoachAuth } from "@/lib/auth";
 import {
   sendApplicationReceived,
   sendApplicationApproved,
@@ -13,7 +13,7 @@ import {
  *
  * POST  /api/application          — submit an application (public)
  * GET   /api/application?email=   — check application status (public)
- * PATCH /api/application?secret=  — approve/reject (coach secret)
+ * PATCH /api/application  — approve/reject (Authorization: Bearer COACH_SECRET)
  *
  * Security:
  * - Zod validation on all inputs
@@ -212,9 +212,8 @@ export async function GET(request: NextRequest) {
 // ── PATCH — Approve or reject application (coach only) ──
 
 export async function PATCH(request: NextRequest) {
-  const secret = request.nextUrl.searchParams.get("secret");
-
-  if (!secret || secret !== env.COACH_SECRET) {
+  // ── Auth: Authorization header with constant-time comparison ──
+  if (!requireCoachAuth(request)) {
     return NextResponse.json(
       {
         error: {
