@@ -9,9 +9,10 @@ import { env } from "@/lib/env";
  * Session cookie: httpOnly, secure, sameSite=strict, 7-day expiry.
  *
  * Security:
- * - AUTH_SECRET derived from COACH_SECRET (MVP — dedicated secret post-MVP)
+ * - Dedicated AUTH_SECRET for signing (independent of COACH_SECRET)
  * - Never log tokens or passwords
  * - Short-lived tokens (7 days)
+ * - Constant-time signature comparison
  */
 
 const SESSION_COOKIE_NAME = "kairo_session";
@@ -24,12 +25,12 @@ interface SessionPayload {
 }
 
 /**
- * Get the signing secret. Uses COACH_SECRET as the base and derives
- * a separate key for auth tokens.
+ * Get the dedicated signing secret for session JWTs.
+ * Uses AUTH_SECRET — fully independent of COACH_SECRET.
+ * Fails loudly if missing (env.ts enforces this at startup).
  */
 function getSecret(): string {
-  const base = env.COACH_SECRET ?? "dev-fallback-secret-not-for-production";
-  return `auth:${base}`;
+  return env.AUTH_SECRET;
 }
 
 /**
