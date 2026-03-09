@@ -3,6 +3,7 @@ import {
   getNurtureEmail,
   type NurtureContext,
 } from "@/lib/nurture-emails";
+import { escapeHtml } from "@/lib/sanitize";
 
 interface AdminNotification {
   memberEmail: string;
@@ -47,9 +48,9 @@ export async function notifyAdmin(data: AdminNotification): Promise<void> {
     subject: "🎉 New Kairo member activated",
     html: `
       <h2>New Member Activated</h2>
-      <p><strong>Email:</strong> ${memberEmail}</p>
-      <p><strong>Customer:</strong> ${stripeCustomerId}</p>
-      <p><strong>Subscription:</strong> ${stripeSubId}</p>
+      <p><strong>Email:</strong> ${escapeHtml(memberEmail)}</p>
+      <p><strong>Customer:</strong> ${escapeHtml(stripeCustomerId)}</p>
+      <p><strong>Subscription:</strong> ${escapeHtml(stripeSubId)}</p>
       <p>Time: ${new Date().toISOString()}</p>
     `,
   });
@@ -82,7 +83,7 @@ export async function notifyAdminCancellation(
     subject: "⚠️ Kairo member canceled",
     html: `
       <h2>Member Canceled</h2>
-      <p><strong>Subscription:</strong> ${stripeSubId}</p>
+      <p><strong>Subscription:</strong> ${escapeHtml(stripeSubId)}</p>
       <p>Time: ${new Date().toISOString()}</p>
     `,
   });
@@ -170,7 +171,7 @@ export async function sendQuizWelcomeEmail(
     subject: "Your Kairo recommendation is ready 🎯",
     html: `
       <h2>Your personalized plan is ready</h2>
-      <p>Based on your quiz answers, we recommend the <strong>${tierName}</strong> plan.</p>
+      <p>Based on your quiz answers, we recommend the <strong>${escapeHtml(tierName)}</strong> plan.</p>
       <p>This plan is tailored to match your goals, experience level, and training schedule.</p>
       <p><a href="${env.APP_URL}/quiz/result?tier=${recommendedTier}">View your recommendation →</a></p>
       <p>Questions? Just reply to this email.</p>
@@ -294,7 +295,7 @@ export async function sendApplicationReceived(
     to: email,
     subject: "We got your application 🎯",
     html: `
-      <h2>Hey ${firstName},</h2>
+      <h2>Hey ${escapeHtml(firstName)},</h2>
       <p>Thanks for applying to Kairo Coaching — we've received your application and will review it within 24–48 hours.</p>
       <h3>What happens next:</h3>
       <ol>
@@ -347,7 +348,7 @@ export async function sendApplicationApproved(
     to: email,
     subject: "You're in! Welcome to Kairo 🏋️",
     html: `
-      <h2>Hey ${firstName},</h2>
+      <h2>Hey ${escapeHtml(firstName)},</h2>
       <p>Great news — your application has been approved! We're excited to work with you.</p>
       ${tierNote}
       <p><a href="${env.APP_URL}/#pricing" style="display:inline-block;background:#000;color:#fff;padding:12px 24px;border-radius:12px;text-decoration:none;font-weight:600;">Choose your plan →</a></p>
@@ -386,7 +387,7 @@ export async function notifyAdminNewApplication(
 
   function row(label: string, value: string | number | boolean | null | undefined): string {
     if (value == null || value === "") return "";
-    const display = typeof value === "boolean" ? (value ? "Yes ✓" : "No") : String(value);
+    const display = typeof value === "boolean" ? (value ? "Yes ✓" : "No") : escapeHtml(String(value));
     return `<tr><td style="padding:6px 12px 6px 0;color:#737373;white-space:nowrap;vertical-align:top;font-size:14px">${label}</td><td style="padding:6px 0;font-size:14px">${display}</td></tr>`;
   }
 
@@ -480,7 +481,7 @@ export async function sendReviewDelivered(
   const label = typeLabels[reviewType] ?? "Review";
 
   const loomSection = loomLink
-    ? `<p><a href="${loomLink}" style="display:inline-block;background:#000;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;">Watch your video review →</a></p>`
+    ? `<p><a href="${escapeHtml(loomLink)}" style="display:inline-block;background:#000;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;">Watch your video review →</a></p>`
     : "";
 
   if (!env.RESEND_API_KEY) {
@@ -500,10 +501,10 @@ export async function sendReviewDelivered(
     to: email,
     subject: `Your ${label} is ready 📋`,
     html: `
-      <h2>Hey ${firstName},</h2>
-      <p>Your ${label.toLowerCase()} is ready.</p>
+      <h2>Hey ${escapeHtml(firstName)},</h2>
+      <p>Your ${escapeHtml(label.toLowerCase())} is ready.</p>
       <div style="background:#f5f5f5;padding:16px;border-radius:12px;margin:16px 0;">
-        ${summary}
+        ${escapeHtml(summary)}
       </div>
       ${loomSection}
       <p>Check your <a href="${env.APP_URL}/dashboard">dashboard</a> for the full details.</p>
@@ -539,9 +540,9 @@ export async function sendProgramUpdated(
     to: email,
     subject: `Your program has been updated 🔄`,
     html: `
-      <h2>Hey ${firstName},</h2>
-      <p>Your training program <strong>${programName}</strong> has been updated.</p>
-      ${adjustmentsMade ? `<div style="background:#f5f5f5;padding:16px;border-radius:12px;margin:16px 0;"><p style="margin:0;"><strong>What changed:</strong></p><p style="margin:8px 0 0;">${adjustmentsMade}</p></div>` : ""}
+      <h2>Hey ${escapeHtml(firstName)},</h2>
+      <p>Your training program <strong>${escapeHtml(programName)}</strong> has been updated.</p>
+      ${adjustmentsMade ? `<div style="background:#f5f5f5;padding:16px;border-radius:12px;margin:16px 0;"><p style="margin:0;"><strong>What changed:</strong></p><p style="margin:8px 0 0;">${escapeHtml(adjustmentsMade)}</p></div>` : ""}
       <p>Check your <a href="${env.APP_URL}/dashboard">dashboard</a> for the full details.</p>
       <p>— Kairo Coaching</p>
     `,
@@ -571,7 +572,7 @@ export async function sendCheckInReminder(
     to: email,
     subject: "Time to check in 📝",
     html: `
-      <h2>Hey ${firstName},</h2>
+      <h2>Hey ${escapeHtml(firstName)},</h2>
       <p>Just a reminder to submit your weekly check-in so we can review your progress and make any needed adjustments.</p>
       <p>The more consistent your check-ins are, the better we can coach you.</p>
       <p><a href="${env.APP_URL}/dashboard" style="display:inline-block;background:#000;color:#fff;padding:12px 24px;border-radius:12px;text-decoration:none;font-weight:600;">Submit check-in →</a></p>
