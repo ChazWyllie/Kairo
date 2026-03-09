@@ -14,6 +14,7 @@ vi.mock("@/lib/env", () => ({
     ADMIN_NOTIFY_EMAIL: "admin@test.com",
     RESEND_API_KEY: undefined,
     EMAIL_FROM: "Test <test@test.com>",
+    AUTH_SECRET: "test-auth-secret-must-be-at-least-32-chars-long!!",
     COACH_SECRET: "test-coach-secret-1234567890",
     CRON_SECRET: "test-cron-secret-1234567890",
   },
