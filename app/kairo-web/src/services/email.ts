@@ -250,8 +250,22 @@ interface ApplicationApprovedEmail {
 interface ApplicationAdminNotification {
   applicantEmail: string;
   fullName: string;
+  phone?: string | null;
+  age?: number | null;
+  height?: string | null;
+  currentWeight?: string | null;
   goal: string;
+  whyNow?: string | null;
+  trainingExperience?: string | null;
+  trainingFrequency?: string | null;
+  gymAccess?: string | null;
+  injuryHistory?: string | null;
+  nutritionStruggles?: string | null;
+  biggestObstacle?: string | null;
+  helpWithMost?: string | null;
   preferredTier?: string | null;
+  readyForStructure?: boolean;
+  budgetComfort?: string | null;
 }
 
 /**
@@ -351,7 +365,7 @@ export async function sendApplicationApproved(
 export async function notifyAdminNewApplication(
   data: ApplicationAdminNotification
 ): Promise<void> {
-  const { applicantEmail, fullName, goal, preferredTier } = data;
+  const { applicantEmail, fullName, goal } = data;
 
   if (!env.RESEND_API_KEY) {
     console.log("[email-stub] Admin application notification:", {
@@ -365,18 +379,62 @@ export async function notifyAdminNewApplication(
   const { Resend } = await import("resend");
   const resend = new Resend(env.RESEND_API_KEY);
 
+  const goalLabels: Record<string, string> = { fat_loss: "Fat Loss", muscle: "Muscle Gain", maintenance: "Maintenance" };
+  const tierLabels: Record<string, string> = { foundation: "Foundation ($49)", coaching: "Coaching ($129)", performance: "Performance ($229)", vip: "VIP Elite ($349)" };
+  const gymLabels: Record<string, string> = { none: "No equipment", hotel: "Hotel gym", dumbbells: "Dumbbells at home", full_gym: "Full gym" };
+  const expLabels: Record<string, string> = { beginner: "Beginner (0-1 yrs)", intermediate: "Intermediate (1-3 yrs)", advanced: "Advanced (3+ yrs)" };
+
+  function row(label: string, value: string | number | boolean | null | undefined): string {
+    if (value == null || value === "") return "";
+    const display = typeof value === "boolean" ? (value ? "Yes ✓" : "No") : String(value);
+    return `<tr><td style="padding:6px 12px 6px 0;color:#737373;white-space:nowrap;vertical-align:top;font-size:14px">${label}</td><td style="padding:6px 0;font-size:14px">${display}</td></tr>`;
+  }
+
   await resend.emails.send({
     from: env.EMAIL_FROM,
     to: env.ADMIN_NOTIFY_EMAIL,
     subject: "📋 New Kairo application",
     html: `
-      <h2>New Application</h2>
-      <p><strong>Name:</strong> ${fullName}</p>
-      <p><strong>Email:</strong> ${applicantEmail}</p>
-      <p><strong>Goal:</strong> ${goal}</p>
-      <p><strong>Preferred tier:</strong> ${preferredTier || "Not specified"}</p>
-      <p><strong>Time:</strong> ${new Date().toISOString()}</p>
-      <p><a href="${env.APP_URL}/coach">Review in dashboard →</a></p>
+      <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:560px">
+        <h2 style="margin:0 0 4px">New Application</h2>
+        <p style="color:#737373;margin:0 0 16px;font-size:14px">${new Date().toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}</p>
+
+        <h3 style="font-size:13px;text-transform:uppercase;letter-spacing:0.5px;color:#a3a3a3;margin:16px 0 6px;border-bottom:1px solid #e5e5e5;padding-bottom:4px">Personal</h3>
+        <table style="border-collapse:collapse">
+          ${row("Name", fullName)}
+          ${row("Email", data.applicantEmail)}
+          ${row("Phone", data.phone)}
+          ${row("Age", data.age)}
+          ${row("Height", data.height)}
+          ${row("Weight", data.currentWeight)}
+        </table>
+
+        <h3 style="font-size:13px;text-transform:uppercase;letter-spacing:0.5px;color:#a3a3a3;margin:16px 0 6px;border-bottom:1px solid #e5e5e5;padding-bottom:4px">Training</h3>
+        <table style="border-collapse:collapse">
+          ${row("Experience", data.trainingExperience ? (expLabels[data.trainingExperience] ?? data.trainingExperience) : null)}
+          ${row("Frequency", data.trainingFrequency)}
+          ${row("Gym access", data.gymAccess ? (gymLabels[data.gymAccess] ?? data.gymAccess) : null)}
+          ${row("Injuries", data.injuryHistory)}
+        </table>
+
+        <h3 style="font-size:13px;text-transform:uppercase;letter-spacing:0.5px;color:#a3a3a3;margin:16px 0 6px;border-bottom:1px solid #e5e5e5;padding-bottom:4px">Goals &amp; Mindset</h3>
+        <table style="border-collapse:collapse">
+          ${row("Goal", goalLabels[goal] ?? goal)}
+          ${row("Why now", data.whyNow)}
+          ${row("Nutrition struggles", data.nutritionStruggles)}
+          ${row("Biggest obstacle", data.biggestObstacle)}
+          ${row("Wants help with", data.helpWithMost)}
+        </table>
+
+        <h3 style="font-size:13px;text-transform:uppercase;letter-spacing:0.5px;color:#a3a3a3;margin:16px 0 6px;border-bottom:1px solid #e5e5e5;padding-bottom:4px">Plan Preference</h3>
+        <table style="border-collapse:collapse">
+          ${row("Preferred tier", data.preferredTier ? (tierLabels[data.preferredTier] ?? data.preferredTier) : null)}
+          ${row("Budget comfort", data.budgetComfort)}
+          ${row("Ready for structure", data.readyForStructure)}
+        </table>
+
+        <p style="margin:20px 0 0"><a href="${env.APP_URL}/coach" style="display:inline-block;background:#000;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:500">Review in Dashboard →</a></p>
+      </div>
     `,
   });
 }

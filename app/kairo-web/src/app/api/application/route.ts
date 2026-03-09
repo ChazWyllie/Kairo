@@ -124,8 +124,22 @@ export async function POST(request: NextRequest) {
     notifyAdminNewApplication({
       applicantEmail: email,
       fullName: fields.fullName,
+      phone: fields.phone,
+      age: fields.age,
+      height: fields.height,
+      currentWeight: fields.currentWeight,
       goal: fields.goal,
+      whyNow: fields.whyNow,
+      trainingExperience: fields.trainingExperience,
+      trainingFrequency: fields.trainingFrequency,
+      gymAccess: fields.gymAccess,
+      injuryHistory: fields.injuryHistory,
+      nutritionStruggles: fields.nutritionStruggles,
+      biggestObstacle: fields.biggestObstacle,
+      helpWithMost: fields.helpWithMost,
       preferredTier: fields.preferredTier,
+      readyForStructure: fields.readyForStructure,
+      budgetComfort: fields.budgetComfort,
     }).catch((err) =>
       console.error("[application] Failed to notify admin:", err)
     );
