@@ -122,9 +122,9 @@ export default function LoginPage() {
 
         <div className="mt-6 text-center space-y-2">
           <p className="text-sm text-neutral-500">
-            New member?{" "}
+            Forgot your password?{" "}
             <Link href="/register" className="text-black underline">
-              Set up your password
+              Reset password
             </Link>
           </p>
           <Link href="/" className={components.button.ghost}>

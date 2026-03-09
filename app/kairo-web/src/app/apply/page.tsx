@@ -46,6 +46,7 @@ export default function ApplyPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   // Form fields
   const [email, setEmail] = useState("");
@@ -72,12 +73,29 @@ export default function ApplyPage() {
   const currentIdx = steps.indexOf(step);
   const progress = ((currentIdx + 1) / steps.length) * 100;
 
+  function validateStep(s: FormStep): Record<string, string> {
+    const errors: Record<string, string> = {};
+    if (s === "info") {
+      if (!fullName.trim()) errors.fullName = "Full name is required.";
+      if (!email.trim()) errors.email = "Email is required.";
+      else if (!/\S+@\S+\.\S+/.test(email)) errors.email = "Please enter a valid email.";
+    }
+    if (s === "goals") {
+      if (!goal) errors.goal = "Please select a goal.";
+    }
+    return errors;
+  }
+
   function goNext() {
+    const errors = validateStep(step);
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) return;
     const nextIdx = currentIdx + 1;
     if (nextIdx < steps.length) setStep(steps[nextIdx]);
   }
 
   function goBack() {
+    setFieldErrors({});
     const prevIdx = currentIdx - 1;
     if (prevIdx >= 0) setStep(steps[prevIdx]);
   }
@@ -200,33 +218,47 @@ export default function ApplyPage() {
               <h2 className="text-lg font-semibold">Basic Information</h2>
 
               <div className="space-y-1">
-                <label htmlFor="apply-name" className="block text-sm font-medium">
+                <label htmlFor="apply-name" className={`block text-sm font-medium ${fieldErrors.fullName ? "text-red-600" : ""}`}>
                   Full name <span className="text-red-500">*</span>
                 </label>
                 <input
                   id="apply-name"
                   type="text"
-                  className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-900"
+                  className={`w-full rounded-xl border px-4 py-3 outline-none ${
+                    fieldErrors.fullName
+                      ? "border-red-500 bg-red-50 focus:border-red-600"
+                      : "border-neutral-300 focus:border-neutral-900"
+                  }`}
                   placeholder="Your full name"
                   value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
+                  onChange={(e) => { setFullName(e.target.value); setFieldErrors((prev) => { const { fullName: _, ...rest } = prev; return rest; }); }}
                   required
                 />
+                {fieldErrors.fullName && (
+                  <p className="text-xs text-red-600 mt-1">{fieldErrors.fullName}</p>
+                )}
               </div>
 
               <div className="space-y-1">
-                <label htmlFor="apply-email" className="block text-sm font-medium">
+                <label htmlFor="apply-email" className={`block text-sm font-medium ${fieldErrors.email ? "text-red-600" : ""}`}>
                   Email <span className="text-red-500">*</span>
                 </label>
                 <input
                   id="apply-email"
                   type="email"
-                  className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-900"
+                  className={`w-full rounded-xl border px-4 py-3 outline-none ${
+                    fieldErrors.email
+                      ? "border-red-500 bg-red-50 focus:border-red-600"
+                      : "border-neutral-300 focus:border-neutral-900"
+                  }`}
                   placeholder="you@example.com"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => { setEmail(e.target.value); setFieldErrors((prev) => { const { email: _, ...rest } = prev; return rest; }); }}
                   required
                 />
+                {fieldErrors.email && (
+                  <p className="text-xs text-red-600 mt-1">{fieldErrors.email}</p>
+                )}
               </div>
 
               <div className="space-y-1">
@@ -367,8 +399,8 @@ export default function ApplyPage() {
             <div className="space-y-5 animate-fade-in">
               <h2 className="text-lg font-semibold">Goals & Motivation</h2>
 
-              <fieldset className="space-y-2">
-                <legend className="text-sm font-medium">
+              <fieldset className={`space-y-2 ${fieldErrors.goal ? "rounded-xl border-2 border-red-400 p-3" : ""}`}>
+                <legend className={`text-sm font-medium ${fieldErrors.goal ? "text-red-600" : ""}`}>
                   Primary goal <span className="text-red-500">*</span>
                 </legend>
                 <div className="flex flex-wrap gap-2">
@@ -376,7 +408,7 @@ export default function ApplyPage() {
                     <button
                       key={g.value}
                       type="button"
-                      onClick={() => setGoal(g.value)}
+                      onClick={() => { setGoal(g.value); setFieldErrors((prev) => { const { goal: _, ...rest } = prev; return rest; }); }}
                       className={`rounded-xl border px-4 py-2 text-sm font-medium transition-colors ${
                         goal === g.value
                           ? "border-black bg-black text-white"
@@ -387,6 +419,9 @@ export default function ApplyPage() {
                     </button>
                   ))}
                 </div>
+                {fieldErrors.goal && (
+                  <p className="text-xs text-red-600">{fieldErrors.goal}</p>
+                )}
               </fieldset>
 
               <div className="space-y-1">
