@@ -90,6 +90,7 @@ vi.mock("@/lib/prisma", () => ({
 // ── Mock Stripe ──
 export const mockStripeCheckoutCreate = vi.fn();
 export const mockStripeConstructEvent = vi.fn();
+export const mockStripeSubscriptionsUpdate = vi.fn().mockResolvedValue({});
 
 vi.mock("@/services/stripe", () => ({
   getStripe: () => ({
@@ -102,7 +103,7 @@ vi.mock("@/services/stripe", () => ({
       constructEvent: mockStripeConstructEvent,
     },
     subscriptions: {
-      update: vi.fn().mockResolvedValue({}),
+      update: mockStripeSubscriptionsUpdate,
     },
   }),
 }));
