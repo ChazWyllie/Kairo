@@ -170,33 +170,40 @@ The codebase has grown beyond the original MVP scope (3 endpoints) to 15+ API ro
 
 **Branch:** TBD
 **Priority:** HIGH — entire auth system has zero test coverage
+**Status:** COMPLETE
 
-- [ ] **T1 — Write auth route tests**
-  - `auth/login` — valid login, invalid password, missing fields, coach hidden path, rate limit
-  - `auth/register` — valid registration, not eligible, already registered, missing fields
-  - `auth/logout` — clears cookie
-  - `auth/me` — returns profile, expired token, no token
-  - **Target:** ~20-25 tests
+- [x] **T1 — Write auth route tests**
+  - `auth/login` — validation, rate limiting, coach auth, member auth, errors (18 tests)
+  - `auth/register` — validation, rate limiting, not eligible, happy path, errors (17 tests)
+  - `auth/logout` — clears cookie, correct flags (3 tests)
+  - `auth/me` — no cookie, invalid/tampered token, not found, happy path (7 tests)
+  - **Files:** `app/api/auth/login/route.test.ts`, `app/api/auth/register/route.test.ts`, `app/api/auth/logout/route.test.ts`, `app/api/auth/me/route.test.ts`
 
-- [ ] **T4 — Write `auth.ts` library tests**
-  - `createSessionToken()` — produces valid token
-  - `verifySessionToken()` — valid, expired, tampered signature, wrong secret, malformed
-  - `getSessionFromRequest()` — with cookie, without cookie
-  - `getSessionCookieConfig()` — production vs development flags
-  - `getClearSessionCookie()` — expires in past
-  - **Target:** ~15 tests
+- [x] **T4 — Write `auth.ts` library tests**
+  - `createSessionToken()` — 3-part JWT, email in payload, iat/exp, base64url-safe (5 tests)
+  - `verifySessionToken()` — valid, expired, tampered sig/payload, malformed, invalid base64 (6 tests)
+  - `getSessionCookieConfig()` — token value, HttpOnly, SameSite, Path, Max-Age, Secure prod/dev (7 tests)
+  - `getClearSessionCookie()` — Max-Age=0, empty value, flags (3 tests)
+  - `getSessionFromRequest()` — null, missing, single, multiple cookies, JWT-like value (5 tests)
+  - `requireCoachAuth()` — valid, wrong, missing, non-Bearer (4 tests)
+  - `requireCronAuth()` — valid, wrong, missing (3 tests)
+  - `requireMemberOrCoachAuth()` — coach any email, member match, mismatch, case-insensitive, no auth, invalid token, coach priority (7 tests)
+  - **File:** `lib/auth.test.ts` (40 tests)
 
-- [ ] **T2 — Write `member/cancel` tests**
-  - Self-cancel with valid session, no session (401), inactive member, Stripe cancel, DB-only cancel
-  - **Target:** ~8 tests
+- [x] **T2 — Write `member/cancel` tests**
+  - Self-cancel with valid session, no session (401), already canceled (409), Stripe cancel, DB-only cancel, errors (8 tests)
+  - **File:** `app/api/member/cancel/route.test.ts`
 
-- [ ] **T3 — Write `coach/cancel-member` tests**
-  - Valid coach secret, invalid secret, missing email, active member, already canceled
-  - **Target:** ~8 tests
+- [x] **T3 — Write `coach/cancel-member` tests**
+  - Valid coach secret, invalid secret, missing/invalid email, not found, already canceled, Stripe cancel, DB-only, errors (11 tests)
+  - **File:** `app/api/coach/cancel-member/route.test.ts`
+
+**Changes to test infrastructure:**
+- [x] Extracted `mockStripeSubscriptionsUpdate` as named export in `test/setup.ts`
 
 **Verification:**
-- [ ] `npx vitest run` — all pass
-- [ ] Coverage report shows auth routes ≥ 80%
+- [x] `npx vitest run` — 480 tests pass (34 files)
+- [x] All auth routes fully covered (login, register, logout, me, member/cancel, coach/cancel-member, auth.ts library)
 
 ---
 
