@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireCoachAuth } from "@/lib/auth";
-import { stripe } from "@/services/stripe";
+import { getStripe } from "@/services/stripe";
 
 /**
  * POST /api/coach/cancel-member (Authorization: Bearer COACH_SECRET)
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Cancel at period end (member keeps access until billing period ends)
-    await stripe.subscriptions.update(member.stripeSubId, {
+    await getStripe().subscriptions.update(member.stripeSubId, {
       cancel_at_period_end: true,
     });
 

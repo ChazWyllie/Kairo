@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireCoachAuth } from "@/lib/auth";
-import { stripe } from "@/services/stripe";
+import { getStripe } from "@/services/stripe";
 
 /**
  * GET /api/coach (Authorization: Bearer COACH_SECRET)

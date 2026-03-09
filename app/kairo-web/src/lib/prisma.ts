@@ -15,8 +15,21 @@ function createPrismaClient(): PrismaClient {
   return new PrismaClient({ adapter });
 }
 
-export const prisma = globalForPrisma.prisma ?? createPrismaClient();
-
-if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = prisma;
+/**
+ * Lazy Prisma client — only instantiated on first access.
+ * Prevents build-time errors when DATABASE_URL isn't available
+ * (e.g., Vercel build phase with SKIP_ENV_VALIDATION).
+ */
+export function getPrisma(): PrismaClient {
+  if (!globalForPrisma.prisma) {
+    globalForPrisma.prisma = createPrismaClient();
+  }
+  return globalForPrisma.prisma;
 }
+
+// Keep backward-compatible named export via getter
+export const prisma = new Proxy({} as PrismaClient, {
+  get(_, prop) {
+    return (getPrisma() as unknown as Record<string | symbol, unknown>)[prop];
+  },
+});
