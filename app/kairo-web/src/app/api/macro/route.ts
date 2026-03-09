@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { requireCoachAuth } from "@/lib/auth";
+import { requireCoachAuth, requireMemberOrCoachAuth } from "@/lib/auth";
 
 /**
  * Macro API — manage nutrition/macro targets for members.
@@ -145,6 +145,15 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       { error: { code: "VALIDATION_ERROR", message: "Email query parameter is required" } },
       { status: 400 }
+    );
+  }
+
+  // ── Auth: require session cookie (email match) or coach Bearer token ──
+  const auth = await requireMemberOrCoachAuth(request, email);
+  if (!auth.authorized) {
+    return NextResponse.json(
+      { error: { code: "UNAUTHORIZED", message: "Authentication required" } },
+      { status: 401 }
     );
   }
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { requireMemberOrCoachAuth } from "@/lib/auth";
 
 /**
  * POST /api/checkin
@@ -74,6 +75,15 @@ export async function POST(request: NextRequest) {
     }
 
     const { email, workout, meals, water, steps, note } = parsed.data;
+
+    // ── Auth: require session cookie (email match) or coach Bearer token ──
+    const auth = await requireMemberOrCoachAuth(request, email);
+    if (!auth.authorized) {
+      return NextResponse.json(
+        { error: { code: "UNAUTHORIZED", message: "Authentication required" } },
+        { status: 401 }
+      );
+    }
 
     // Only allow check-ins for active members
     const member = await prisma.member.findUnique({
@@ -215,6 +225,15 @@ export async function GET(request: NextRequest) {
     }
 
     const limit = limitParam ? Math.min(Math.max(parseInt(limitParam, 10) || 30, 1), 90) : 30;
+
+    // ── Auth: require session cookie (email match) or coach Bearer token ──
+    const auth = await requireMemberOrCoachAuth(request, email);
+    if (!auth.authorized) {
+      return NextResponse.json(
+        { error: { code: "UNAUTHORIZED", message: "Authentication required" } },
+        { status: 401 }
+      );
+    }
 
     // Only allow history for active members
     const member = await prisma.member.findUnique({
