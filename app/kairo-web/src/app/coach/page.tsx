@@ -78,12 +78,22 @@ interface ApplicationInfo {
   id: string;
   email: string;
   fullName: string;
+  phone: string | null;
+  age: number | null;
+  height: string | null;
+  currentWeight: string | null;
   goal: string;
-  preferredTier: string | null;
-  trainingExperience: string | null;
-  gymAccess: string | null;
   whyNow: string | null;
+  trainingExperience: string | null;
+  trainingFrequency: string | null;
+  gymAccess: string | null;
+  injuryHistory: string | null;
+  nutritionStruggles: string | null;
   biggestObstacle: string | null;
+  helpWithMost: string | null;
+  preferredTier: string | null;
+  readyForStructure: boolean;
+  budgetComfort: string | null;
   status: string;
   convertedToMember: boolean;
   createdAt: string;
@@ -788,6 +798,30 @@ function getAdherenceColor(adherence: number): string {
   return "text-green-600";
 }
 
+// ── Detail Field — reusable row for structured application display ──
+
+function DetailField({
+  label,
+  value,
+  capitalize,
+  full,
+  className,
+}: {
+  label: string;
+  value: string | null | undefined;
+  capitalize?: boolean;
+  full?: boolean;
+  className?: string;
+}) {
+  if (!value) return null;
+  return (
+    <div className={`${full ? "col-span-2" : ""} ${className ?? ""} text-sm`}>
+      <p className="text-xs text-neutral-500">{label}</p>
+      <p className={capitalize ? "capitalize" : ""}>{value}</p>
+    </div>
+  );
+}
+
 // ── Applications Section ──
 
 function ApplicationsSection({
@@ -893,33 +927,49 @@ function ApplicationsSection({
           </button>
 
           {expandedApp === app.id && (
-            <div className="mt-3 pt-3 border-t border-neutral-200 space-y-3">
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                {app.trainingExperience && (
-                  <div>
-                    <p className="text-xs text-neutral-500">Experience</p>
-                    <p className="capitalize">{app.trainingExperience}</p>
-                  </div>
-                )}
-                {app.gymAccess && (
-                  <div>
-                    <p className="text-xs text-neutral-500">Gym access</p>
-                    <p className="capitalize">{app.gymAccess.replace("_", " ")}</p>
-                  </div>
-                )}
+            <div className="mt-3 pt-3 border-t border-neutral-200 space-y-4">
+              {/* ── Personal Info ── */}
+              <div>
+                <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wide mb-2">Personal</p>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                  <DetailField label="Email" value={app.email} />
+                  <DetailField label="Phone" value={app.phone} />
+                  <DetailField label="Age" value={app.age != null ? String(app.age) : null} />
+                  <DetailField label="Height" value={app.height} />
+                  <DetailField label="Weight" value={app.currentWeight} />
+                </div>
               </div>
-              {app.whyNow && (
-                <div>
-                  <p className="text-xs text-neutral-500">Why now?</p>
-                  <p className="text-sm">{app.whyNow}</p>
+
+              {/* ── Training ── */}
+              <div>
+                <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wide mb-2">Training</p>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                  <DetailField label="Experience" value={app.trainingExperience} capitalize />
+                  <DetailField label="Frequency" value={app.trainingFrequency} />
+                  <DetailField label="Gym access" value={app.gymAccess?.replace(/_/g, " ")} capitalize />
                 </div>
-              )}
-              {app.biggestObstacle && (
-                <div>
-                  <p className="text-xs text-neutral-500">Biggest obstacle</p>
-                  <p className="text-sm">{app.biggestObstacle}</p>
+                <DetailField label="Injury history" value={app.injuryHistory} full className="mt-2" />
+              </div>
+
+              {/* ── Goals & Mindset ── */}
+              <div>
+                <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wide mb-2">Goals &amp; Mindset</p>
+                <DetailField label="Primary goal" value={goalLabels[app.goal] ?? app.goal} full />
+                <DetailField label="Why now" value={app.whyNow} full className="mt-2" />
+                <DetailField label="Nutrition struggles" value={app.nutritionStruggles} full className="mt-2" />
+                <DetailField label="Biggest obstacle" value={app.biggestObstacle} full className="mt-2" />
+                <DetailField label="Wants help with" value={app.helpWithMost} full className="mt-2" />
+              </div>
+
+              {/* ── Plan Preference ── */}
+              <div>
+                <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wide mb-2">Plan Preference</p>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                  <DetailField label="Preferred tier" value={app.preferredTier ? (tierLabels[app.preferredTier] ?? app.preferredTier) : null} />
+                  <DetailField label="Budget comfort" value={app.budgetComfort} />
+                  <DetailField label="Ready for structure" value={app.readyForStructure ? "Yes ✓" : "Not confirmed"} />
                 </div>
-              )}
+              </div>
 
               {/* Approve / Reject buttons */}
               <div className="flex gap-2 pt-2">
