@@ -6,13 +6,57 @@ datasource db {
   provider = "postgresql"
 }
 
+// ── Enums ──
+
+enum MemberStatus {
+  pending
+  active
+  canceled
+  past_due
+}
+
+enum ApplicationStatus {
+  pending
+  approved
+  rejected
+}
+
+enum ProgramBlockStatus {
+  active
+  completed
+  upcoming
+}
+
+enum PrimaryGoal {
+  hypertrophy
+  strength
+  fat_loss
+  maintenance
+}
+
+enum MacroTargetStatus {
+  active
+  previous
+}
+
+enum CoachStatus {
+  green
+  yellow
+  red
+}
+
+enum LeadSource {
+  quiz
+  waitlist
+}
+
 model Member {
   id               String   @id @default(cuid())
   email            String   @unique
   phone            String?
   stripeCustomerId String?  @unique
   stripeSubId      String?  @unique
-  status           String   @default("pending") // pending | active | canceled
+  status           MemberStatus @default(pending)
 
   // Auth (Milestone O3)
   passwordHash     String?  // bcrypt hash, null until member sets password
@@ -125,7 +169,7 @@ model CheckIn {
   helpNeeded     String?  // what help needed next week
 
   // Coach triage (set by coach or automation)
-  coachStatus    String?  // "green" | "yellow" | "red" — set by coach
+  coachStatus    CoachStatus?
   coachResponse  String?  // coach's written response
   responseAt     DateTime? // when coach responded
 
@@ -141,7 +185,7 @@ model Lead {
   email           String   @unique
   quizAnswers     Json?    // stored quiz answers
   recommendedTier String?  // tier recommended by quiz engine
-  source          String   @default("quiz") // "quiz" | "waitlist" | etc.
+  source          LeadSource @default(quiz)
   capturedAt      DateTime @default(now())
   convertedAt     DateTime? // set when lead becomes a paying member
 
@@ -174,7 +218,7 @@ model Application {
   readyForStructure   Boolean  @default(false)
   budgetComfort       String?
 
-  status              String   @default("pending") // "pending" | "approved" | "rejected"
+  status              ApplicationStatus @default(pending)
   approvedAt          DateTime?
   paymentSent         Boolean  @default(false)
   convertedToMember   Boolean  @default(false)
@@ -211,13 +255,13 @@ model ProgramBlock {
   member          Member    @relation(fields: [memberId], references: [id])
 
   name            String    // e.g. "Hypertrophy Block 1", "Cut Phase A"
-  status          String    @default("active") // "active" | "completed" | "upcoming"
+  status          ProgramBlockStatus @default(active)
 
   startDate       DateTime
   endDate         DateTime?
 
   // Programming details
-  primaryGoal     String?   // "hypertrophy" | "strength" | "fat_loss" | "maintenance"
+  primaryGoal     PrimaryGoal?
   split           String?   // "upper_lower" | "ppl" | "full_body" | "bro_split" | custom
   daysPerWeek     Int?      // 2-6
   progressionModel String?  // e.g. "double progression", "linear", "wave"
@@ -249,7 +293,7 @@ model MacroTarget {
   memberId        String
   member          Member    @relation(fields: [memberId], references: [id])
 
-  status          String    @default("active") // "active" | "previous"
+  status          MacroTargetStatus @default(active)
   effectiveDate   DateTime  // when these targets take effect
 
   // Targets

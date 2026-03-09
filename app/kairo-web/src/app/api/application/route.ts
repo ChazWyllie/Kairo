@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { prisma } from "@/lib/prisma";
 import { requireCoachAuth } from "@/lib/auth";
 import {
-  sendApplicationReceived,
-  sendApplicationApproved,
-  notifyAdminNewApplication,
-} from "@/services/email";
+  submitApplication,
+  getApplicationByEmail,
+  updateApplicationStatus,
+} from "@/services/application";
 
 /**
  * Application API — lead qualification before payment.
@@ -71,14 +70,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { email, ...fields } = parsed.data;
+    const result = await submitApplication(parsed.data);
 
-    // Check for duplicate application
-    const existing = await prisma.application.findUnique({
-      where: { email },
-    });
-
-    if (existing) {
+    if (!result.ok) {
       return NextResponse.json(
         {
           error: {
@@ -90,62 +84,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const application = await prisma.application.create({
-      data: {
-        email,
-        fullName: fields.fullName,
-        phone: fields.phone ?? null,
-        age: fields.age ?? null,
-        height: fields.height ?? null,
-        currentWeight: fields.currentWeight ?? null,
-        goal: fields.goal,
-        whyNow: fields.whyNow ?? null,
-        trainingExperience: fields.trainingExperience ?? null,
-        trainingFrequency: fields.trainingFrequency ?? null,
-        gymAccess: fields.gymAccess ?? null,
-        injuryHistory: fields.injuryHistory ?? null,
-        nutritionStruggles: fields.nutritionStruggles ?? null,
-        biggestObstacle: fields.biggestObstacle ?? null,
-        helpWithMost: fields.helpWithMost ?? null,
-        preferredTier: fields.preferredTier ?? null,
-        readyForStructure: fields.readyForStructure ?? false,
-        budgetComfort: fields.budgetComfort ?? null,
-      },
-    });
-
-    console.log("[application] New application submitted:", {
-      id: application.id,
-    });
-
-    // Fire-and-forget email notifications
-    sendApplicationReceived({ email, fullName: fields.fullName }).catch(
-      (err) => console.error("[application] Failed to send confirmation email:", err)
-    );
-    notifyAdminNewApplication({
-      applicantEmail: email,
-      fullName: fields.fullName,
-      phone: fields.phone,
-      age: fields.age,
-      height: fields.height,
-      currentWeight: fields.currentWeight,
-      goal: fields.goal,
-      whyNow: fields.whyNow,
-      trainingExperience: fields.trainingExperience,
-      trainingFrequency: fields.trainingFrequency,
-      gymAccess: fields.gymAccess,
-      injuryHistory: fields.injuryHistory,
-      nutritionStruggles: fields.nutritionStruggles,
-      biggestObstacle: fields.biggestObstacle,
-      helpWithMost: fields.helpWithMost,
-      preferredTier: fields.preferredTier,
-      readyForStructure: fields.readyForStructure,
-      budgetComfort: fields.budgetComfort,
-    }).catch((err) =>
-      console.error("[application] Failed to notify admin:", err)
-    );
-
     return NextResponse.json(
-      { status: "ok", applicationId: application.id },
+      { status: "ok", applicationId: result.applicationId },
       { status: 201 }
     );
   } catch (err) {
@@ -182,17 +122,7 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const application = await prisma.application.findUnique({
-    where: { email },
-    select: {
-      id: true,
-      fullName: true,
-      status: true,
-      preferredTier: true,
-      createdAt: true,
-      approvedAt: true,
-    },
-  });
+  const application = await getApplicationByEmail(email);
 
   if (!application) {
     return NextResponse.json(
@@ -243,12 +173,9 @@ export async function PATCH(request: NextRequest) {
     }
 
     const { email, status } = parsed.data;
+    const result = await updateApplicationStatus(email, status);
 
-    const existing = await prisma.application.findUnique({
-      where: { email },
-    });
-
-    if (!existing) {
+    if (!result.ok) {
       return NextResponse.json(
         {
           error: {
@@ -257,29 +184,6 @@ export async function PATCH(request: NextRequest) {
           },
         },
         { status: 404 }
-      );
-    }
-
-    await prisma.application.update({
-      where: { email },
-      data: {
-        status,
-        approvedAt: status === "approved" ? new Date() : null,
-      },
-    });
-
-    console.log("[application] Status updated:", {
-      status,
-    });
-
-    // Send approval email with payment link
-    if (status === "approved") {
-      sendApplicationApproved({
-        email,
-        fullName: existing.fullName,
-        preferredTier: existing.preferredTier,
-      }).catch((err) =>
-        console.error("[application] Failed to send approval email:", err)
       );
     }
 

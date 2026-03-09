@@ -283,47 +283,48 @@ The codebase has grown beyond the original MVP scope (3 endpoints) to 15+ API ro
 
 ## PR8 — Code Quality Cleanup
 
-**Branch:** TBD
+**Branch:** `refactor/pr8-code-quality-cleanup`
 **Priority:** MEDIUM — maintainability and defense-in-depth
 
-- [ ] **Q1 — Extract duplicated `calculateStreak()`**
+- [x] **Q1 — Extract duplicated `calculateStreak()`**
   - Identical logic in `checkin/route.ts` and `coach/route.ts`
   - **Fix:** Create `lib/streak.ts`, import from both
-  - [ ] Add unit tests for `calculateStreak()`
+  - [x] Add unit tests for `calculateStreak()` — 9 tests in `lib/streak.test.ts`
 
-- [ ] **Q3 — Email service singleton**
+- [x] **Q3 — Email service singleton**
   - `services/email.ts` creates new `Resend` instance per call
-  - **Fix:** Lazy singleton initialization
+  - **Fix:** `getResend()` lazy singleton — 1 `new Resend`, 11 call sites updated
 
-- [ ] **Q4/Q5 — Extract business logic from large route files**
-  - [ ] `coach/route.ts` (368 lines) → `services/coach.ts`
-  - [ ] `checkin/route.ts` (352 lines) → `services/checkin.ts`
-  - [ ] `application/route.ts` (305 lines) → `services/application.ts`
+- [x] **Q4/Q5 — Extract business logic from large route files**
+  - [x] `coach/route.ts` (368→50 lines) → `services/coach.ts` (297 lines)
+  - [x] `checkin/route.ts` (370→195 lines) → `services/checkin.ts` (124 lines)
+  - [x] `application/route.ts` (302→175 lines) → `services/application.ts` (158 lines)
 
-- [ ] **M2 — Remove `'unsafe-inline'` from CSP**
-  - **File:** `proxy.ts` (or `middleware.ts` after PR1)
-  - **Fix:** Use nonce-based or hash-based script loading
+- [x] **M2 — Remove `'unsafe-inline'` from CSP**
+  - **File:** `proxy.ts`
+  - **Fix:** Per-request nonce via `crypto.randomUUID()`, `'nonce-${nonce}' 'strict-dynamic'` in script-src; 4 new proxy tests
 
-- [ ] **M6 — Remove `as any` type assertions**
-  - **File:** `checkin/route.ts` — define proper Prisma create input type
+- [x] **M6 — Remove `as any` type assertions**
+  - **Fix:** `services/checkin.ts` uses `Prisma.CheckInUncheckedCreateInput` (one guarded `as any` remains for dynamic field assignment with eslint-disable)
 
-- [ ] **M8 — Convert Prisma string status fields to enums**
-  - Fields: `Member.status`, `Application.status`, `ProgramBlock.status`, etc.
-  - **File:** `prisma/schema.prisma`
-  - ⚠️ Requires migration — test thoroughly
+- [x] **M8 — Convert Prisma string status fields to enums**
+  - 7 enums defined: MemberStatus, ApplicationStatus, ProgramBlockStatus, PrimaryGoal, MacroTargetStatus, CoachStatus, LeadSource
+  - 7 model fields converted from String to enum
+  - **File:** `prisma/schema.prisma` — `npx prisma generate` ✓
+  - ⚠️ Migration pending — requires `npx prisma migrate dev` against live DB
 
-- [ ] **M5 — Fix `Secure` cookie flag logic**
-  - Set `Secure` whenever HTTPS, not just when `NODE_ENV=production`
-  - **File:** `lib/auth.ts`
+- [x] **M5 — Fix `Secure` cookie flag logic**
+  - Set `Secure` whenever HTTPS (checks `APP_URL.startsWith("https://")`), not just production
+  - **File:** `lib/auth.ts` + test in `lib/auth.test.ts`
 
-- [ ] **CF3 — Make `RESEND_API_KEY` required for production**
+- [x] **CF3 — Make `RESEND_API_KEY` required for production**
   - Silent stub in production means no emails sent with no alerts
-  - **Fix:** Only allow stub when `NODE_ENV === 'development'`
+  - **Fix:** Conditionally required — `z.string().min(1)` in production, `.optional()` otherwise
   - **File:** `lib/env.ts`
 
-- [ ] **CF4 — Move Stripe Price IDs to environment variables**
-  - Currently hardcoded in `lib/stripe-prices.ts`
-  - **Fix:** Load from env, with validation
+- [x] **CF4 — Move Stripe Price IDs to environment variables**
+  - 8 price IDs moved to `STRIPE_PRICE_*` env vars with `z.string().startsWith("price_")` validation
+  - **Files:** `lib/env.ts`, `lib/stripe-prices.ts`, `test/setup.ts`
 
 ---
 

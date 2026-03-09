@@ -14,8 +14,18 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 
-export function proxy(_request: NextRequest): NextResponse {
-  const response = NextResponse.next();
+export function proxy(request: NextRequest): NextResponse {
+  // Generate a unique nonce per request for CSP script-src.
+  const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
+
+  // Forward nonce to the app via request header so Server Components
+  // can read it with headers().get("x-nonce") and inject into <Script nonce=...>.
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-nonce", nonce);
+
+  const response = NextResponse.next({
+    request: { headers: requestHeaders },
+  });
 
   // Prevent MIME type sniffing
   response.headers.set("x-content-type-options", "nosniff");
@@ -32,14 +42,14 @@ export function proxy(_request: NextRequest): NextResponse {
     "camera=(), microphone=(), geolocation=(), interest-cohort=()"
   );
 
-  // Content Security Policy — allows Stripe JS, inline styles (Tailwind),
-  // and inline scripts (Next.js hydration/Turbopack injects inline <script> tags).
-  // TODO: Migrate to nonce-based CSP for stricter script-src control.
+  // Content Security Policy — nonce-based script-src, 'strict-dynamic' propagates
+  // trust to scripts loaded by nonced scripts. 'unsafe-inline' retained for
+  // style-src only (Tailwind/Next.js inject inline styles that can't use nonces).
   response.headers.set(
     "content-security-policy",
     [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' https://js.stripe.com",
+      `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://js.stripe.com`,
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: https:",
       "font-src 'self'",

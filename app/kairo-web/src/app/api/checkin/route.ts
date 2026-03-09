@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { prisma } from "@/lib/prisma";
 import { requireMemberOrCoachAuth } from "@/lib/auth";
+import { createCheckIn, getCheckInHistory } from "@/services/checkin";
 
 /**
  * POST /api/checkin
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { email, workout, meals, water, steps, note } = parsed.data;
+    const { email, workout, meals, water, steps, note, ...enhancedData } = parsed.data;
 
     // ── Auth: require session cookie (email match) or coach Bearer token ──
     const auth = await requireMemberOrCoachAuth(request, email);
@@ -85,35 +85,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Only allow check-ins for active members
-    const member = await prisma.member.findUnique({
-      where: { email },
-    });
+    const result = await createCheckIn(
+      email,
+      { workout, meals, water, steps, note },
+      enhancedData
+    );
 
-    if (!member || member.status !== "active") {
-      return NextResponse.json(
-        {
-          error: {
-            code: "NOT_FOUND",
-            message: "No active membership found for this email",
+    if (!result.ok) {
+      if (result.code === "NOT_FOUND") {
+        return NextResponse.json(
+          {
+            error: {
+              code: "NOT_FOUND",
+              message: "No active membership found for this email",
+            },
           },
-        },
-        { status: 404 }
-      );
-    }
-
-    // Check for existing check-in today (one per day)
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const existing = await prisma.checkIn.findFirst({
-      where: {
-        memberId: member.id,
-        date: today,
-      },
-    });
-
-    if (existing) {
+          { status: 404 }
+        );
+      }
       return NextResponse.json(
         {
           error: {
@@ -125,65 +114,36 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Build create data — basic fields always set, enhanced only if provided
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const createData: any = {
-      memberId: member.id,
-      date: today,
-      workout,
-      meals,
-      water,
-      steps,
-      note: note ?? null,
-    };
-
-    // Enhanced fields — only set if provided
-    const enhancedFields = [
-      "avgWeight", "waist", "photoSubmitted", "frontPhotoUrl",
-      "sidePhotoUrl", "backPhotoUrl", "workoutsCompleted", "stepsAverage",
-      "calorieAdherence", "proteinAdherence", "sleepAverage",
-      "energyScore", "hungerScore", "stressScore", "digestionScore",
-      "recoveryScore", "painNotes", "biggestWin", "biggestStruggle",
-      "helpNeeded",
-    ] as const;
-
-    for (const field of enhancedFields) {
-      if (parsed.data[field] !== undefined) {
-        createData[field] = parsed.data[field];
-      }
-    }
-
-    const checkIn = await prisma.checkIn.create({ data: createData });
-
+    const ci = result.checkIn;
     return NextResponse.json(
       {
         checkIn: {
-          id: checkIn.id,
-          date: checkIn.date,
-          workout: checkIn.workout,
-          meals: checkIn.meals,
-          water: checkIn.water,
-          steps: checkIn.steps,
-          note: checkIn.note,
-          avgWeight: checkIn.avgWeight,
-          waist: checkIn.waist,
-          photoSubmitted: checkIn.photoSubmitted,
-          workoutsCompleted: checkIn.workoutsCompleted,
-          stepsAverage: checkIn.stepsAverage,
-          calorieAdherence: checkIn.calorieAdherence,
-          proteinAdherence: checkIn.proteinAdherence,
-          sleepAverage: checkIn.sleepAverage,
-          energyScore: checkIn.energyScore,
-          hungerScore: checkIn.hungerScore,
-          stressScore: checkIn.stressScore,
-          digestionScore: checkIn.digestionScore,
-          recoveryScore: checkIn.recoveryScore,
-          painNotes: checkIn.painNotes,
-          biggestWin: checkIn.biggestWin,
-          biggestStruggle: checkIn.biggestStruggle,
-          helpNeeded: checkIn.helpNeeded,
-          coachStatus: checkIn.coachStatus,
-          coachResponse: checkIn.coachResponse,
+          id: ci.id,
+          date: ci.date,
+          workout: ci.workout,
+          meals: ci.meals,
+          water: ci.water,
+          steps: ci.steps,
+          note: ci.note,
+          avgWeight: ci.avgWeight,
+          waist: ci.waist,
+          photoSubmitted: ci.photoSubmitted,
+          workoutsCompleted: ci.workoutsCompleted,
+          stepsAverage: ci.stepsAverage,
+          calorieAdherence: ci.calorieAdherence,
+          proteinAdherence: ci.proteinAdherence,
+          sleepAverage: ci.sleepAverage,
+          energyScore: ci.energyScore,
+          hungerScore: ci.hungerScore,
+          stressScore: ci.stressScore,
+          digestionScore: ci.digestionScore,
+          recoveryScore: ci.recoveryScore,
+          painNotes: ci.painNotes,
+          biggestWin: ci.biggestWin,
+          biggestStruggle: ci.biggestStruggle,
+          helpNeeded: ci.helpNeeded,
+          coachStatus: ci.coachStatus,
+          coachResponse: ci.coachResponse,
         },
       },
       { status: 201 }
@@ -235,12 +195,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Only allow history for active members
-    const member = await prisma.member.findUnique({
-      where: { email },
-    });
+    const history = await getCheckInHistory(email, limit);
 
-    if (!member || member.status !== "active") {
+    if (!history) {
       return NextResponse.json(
         {
           error: {
@@ -252,34 +209,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Fetch recent check-ins
-    const checkIns = await prisma.checkIn.findMany({
-      where: { memberId: member.id },
-      orderBy: { date: "desc" },
-      take: limit,
-    });
-
-    // Calculate stats
-    const currentStreak = calculateStreak(checkIns.map((ci) => ci.date));
-    const now = new Date();
-    const weekStart = new Date(now);
-    weekStart.setDate(now.getDate() - now.getDay()); // Sunday
-    weekStart.setHours(0, 0, 0, 0);
-
-    const thisWeek = checkIns.filter((ci) => new Date(ci.date) >= weekStart);
-    const weeklyWorkouts = thisWeek.filter((ci) => ci.workout).length;
-
-    // Weekly adherence: days checked in / days elapsed this week (max 7)
-    const daysElapsed = Math.min(
-      Math.floor((now.getTime() - weekStart.getTime()) / (24 * 60 * 60 * 1000)) + 1,
-      7
-    );
-    const weeklyAdherence = daysElapsed > 0
-      ? Math.round((thisWeek.length / daysElapsed) * 100)
-      : 0;
-
     return NextResponse.json({
-      checkIns: checkIns.map((ci) => ({
+      checkIns: history.checkIns.map((ci) => ({
         id: ci.id,
         date: ci.date,
         workout: ci.workout,
@@ -308,11 +239,7 @@ export async function GET(request: NextRequest) {
         coachResponse: ci.coachResponse,
         createdAt: ci.createdAt,
       })),
-      stats: {
-        currentStreak,
-        weeklyWorkouts,
-        weeklyAdherence,
-      },
+      stats: history.stats,
     });
   } catch (err) {
     const message =
@@ -329,42 +256,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
-
-/**
- * Calculate current streak — consecutive days with a check-in,
- * starting from today (or yesterday if no check-in today yet).
- */
-function calculateStreak(dates: Date[]): number {
-  if (dates.length === 0) return 0;
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const normalized = dates.map((d) => {
-    const nd = new Date(d);
-    nd.setHours(0, 0, 0, 0);
-    return nd.getTime();
-  });
-
-  const unique = [...new Set(normalized)].sort((a, b) => b - a);
-  const oneDay = 24 * 60 * 60 * 1000;
-  let streak = 0;
-
-  let cursor = today.getTime();
-  if (unique[0] !== cursor) {
-    cursor = cursor - oneDay;
-    if (unique[0] !== cursor) return 0;
-  }
-
-  for (const dateMs of unique) {
-    if (dateMs === cursor) {
-      streak++;
-      cursor -= oneDay;
-    } else if (dateMs < cursor) {
-      break;
-    }
-  }
-
-  return streak;
 }

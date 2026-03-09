@@ -27,7 +27,10 @@ export const env = createEnv({
       .startsWith("whsec_", "STRIPE_WEBHOOK_SECRET must start with whsec_"),
     APP_URL: z.string().url("APP_URL must be a valid URL"),
     ADMIN_NOTIFY_EMAIL: z.string().email("ADMIN_NOTIFY_EMAIL must be valid"),
-    RESEND_API_KEY: z.string().min(1, "RESEND_API_KEY is required").optional(),
+    RESEND_API_KEY:
+      process.env.NODE_ENV === "production"
+        ? z.string().min(1, "RESEND_API_KEY is required in production")
+        : z.string().min(1).optional(),
     EMAIL_FROM: z.string().min(1, "EMAIL_FROM is required"),
     AUTH_SECRET: z
       .string()
@@ -39,6 +42,14 @@ export const env = createEnv({
     CRON_SECRET: z
       .string()
       .min(16, "CRON_SECRET must be at least 16 characters"),
+    STRIPE_PRICE_FOUNDATION_MONTHLY: z.string().startsWith("price_"),
+    STRIPE_PRICE_FOUNDATION_ANNUAL: z.string().startsWith("price_"),
+    STRIPE_PRICE_COACHING_MONTHLY: z.string().startsWith("price_"),
+    STRIPE_PRICE_COACHING_ANNUAL: z.string().startsWith("price_"),
+    STRIPE_PRICE_PERFORMANCE_MONTHLY: z.string().startsWith("price_"),
+    STRIPE_PRICE_PERFORMANCE_ANNUAL: z.string().startsWith("price_"),
+    STRIPE_PRICE_VIP_MONTHLY: z.string().startsWith("price_"),
+    STRIPE_PRICE_VIP_ANNUAL: z.string().startsWith("price_"),
   },
   // No client-side env vars — Stripe keys stay server-side
   client: {},
@@ -53,6 +64,14 @@ export const env = createEnv({
     AUTH_SECRET: process.env.AUTH_SECRET,
     COACH_SECRET: process.env.COACH_SECRET,
     CRON_SECRET: process.env.CRON_SECRET,
+    STRIPE_PRICE_FOUNDATION_MONTHLY: process.env.STRIPE_PRICE_FOUNDATION_MONTHLY,
+    STRIPE_PRICE_FOUNDATION_ANNUAL: process.env.STRIPE_PRICE_FOUNDATION_ANNUAL,
+    STRIPE_PRICE_COACHING_MONTHLY: process.env.STRIPE_PRICE_COACHING_MONTHLY,
+    STRIPE_PRICE_COACHING_ANNUAL: process.env.STRIPE_PRICE_COACHING_ANNUAL,
+    STRIPE_PRICE_PERFORMANCE_MONTHLY: process.env.STRIPE_PRICE_PERFORMANCE_MONTHLY,
+    STRIPE_PRICE_PERFORMANCE_ANNUAL: process.env.STRIPE_PRICE_PERFORMANCE_ANNUAL,
+    STRIPE_PRICE_VIP_MONTHLY: process.env.STRIPE_PRICE_VIP_MONTHLY,
+    STRIPE_PRICE_VIP_ANNUAL: process.env.STRIPE_PRICE_VIP_ANNUAL,
   },
   // Skip validation during CI builds only (never in production — guarded above)
   skipValidation: !!process.env.SKIP_ENV_VALIDATION,
