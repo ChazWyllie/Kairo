@@ -254,30 +254,30 @@ The codebase has grown beyond the original MVP scope (3 endpoints) to 15+ API ro
 **Branch:** TBD
 **Priority:** HIGH — docs are fundamentally inaccurate
 
-- [ ] **Rewrite `docs/03-threat-model.md`**
-  - [ ] Add all 15+ entry points (auth, coach, check-in, program, macro, review, templates, application, cron, nurture, quiz, onboarding, member, member/cancel, coach/cancel-member)
-  - [ ] Add auth system threats (brute-force, session forgery, credential stuffing)
-  - [ ] Add IDOR threat for member-facing endpoints
-  - [ ] Add timing attack threat
-  - [ ] Update risk matrix with new threat scores
+- [x] **Rewrite `docs/03-threat-model.md`**
+  - [x] Add all 15+ entry points (auth, coach, check-in, program, macro, review, templates, application, cron, nurture, quiz, onboarding, member, member/cancel, coach/cancel-member)
+  - [x] Add auth system threats (brute-force, session forgery, credential stuffing)
+  - [x] Add IDOR threat for member-facing endpoints
+  - [x] Add timing attack threat
+  - [x] Update risk matrix with new threat scores
 
-- [ ] **Rewrite `docs/07-security-controls.md`**
-  - [ ] Update §2 Authentication — document auth system (login, register, JWT sessions, bcrypt)
-  - [ ] Fix §6 Security headers — accurately reflect middleware wiring status
-  - [ ] Fix §4 "No PII in logs" — note known violations and fixes applied
-  - [ ] Add controls for coach auth (Authorization header, constant-time comparison)
-  - [ ] Add controls for member session auth on data endpoints
-  - [ ] Update §9 Test Coverage with new auth test counts
+- [x] **Rewrite `docs/07-security-controls.md`**
+  - [x] Update §2 Authentication — document auth system (login, register, JWT sessions, bcrypt)
+  - [x] Fix §6 Security headers — accurately reflect middleware wiring status
+  - [x] Fix §4 "No PII in logs" — note known violations and fixes applied
+  - [x] Add controls for coach auth (Authorization header, constant-time comparison)
+  - [x] Add controls for member session auth on data endpoints
+  - [x] Update §9 Test Coverage with new auth test counts
 
-- [ ] **Update `docs/04-api-spec.md`**
-  - [ ] Add specs for all new endpoints (auth routes, application, program, macro, review, templates, cron, nurture, member/cancel, coach/cancel-member, checkin/respond)
-  - [ ] Document auth requirements per endpoint (none, session cookie, coach secret, cron secret)
+- [x] **Update `docs/04-api-spec.md`**
+  - [x] Add specs for all new endpoints (auth routes, application, program, macro, review, templates, cron, nurture, member/cancel, coach/cancel-member, checkin/respond)
+  - [x] Document auth requirements per endpoint (none, session cookie, coach secret, cron secret)
 
-- [ ] **Add secret rotation runbook**
-  - [ ] Document how to rotate `AUTH_SECRET` (invalidates all sessions)
-  - [ ] Document how to rotate `COACH_SECRET` (update all API clients)
-  - [ ] Document how to rotate `STRIPE_WEBHOOK_SECRET` (update in Stripe dashboard first)
-  - [ ] **File:** `docs/09-deployment-runbook.md` (append) or new `docs/secret-rotation.md`
+- [x] **Add secret rotation runbook**
+  - [x] Document how to rotate `AUTH_SECRET` (invalidates all sessions)
+  - [x] Document how to rotate `COACH_SECRET` (update all API clients)
+  - [x] Document how to rotate `STRIPE_WEBHOOK_SECRET` (update in Stripe dashboard first)
+  - [x] **File:** `docs/09-deployment-runbook.md` §6 Secret Rotation
 
 ---
 
