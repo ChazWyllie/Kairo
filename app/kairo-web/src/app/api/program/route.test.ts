@@ -18,12 +18,13 @@ function makePostRequest(
   body: Record<string, unknown>,
   secret?: string
 ): NextRequest {
-  const url = secret
-    ? `http://localhost:3000/api/program?secret=${secret}`
-    : "http://localhost:3000/api/program";
-  return new NextRequest(url, {
+  const headers: Record<string, string> = { "content-type": "application/json" };
+  if (secret) {
+    headers["authorization"] = `Bearer ${secret}`;
+  }
+  return new NextRequest("http://localhost:3000/api/program", {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers,
     body: JSON.stringify(body),
   });
 }
@@ -39,12 +40,13 @@ function makePatchRequest(
   body: Record<string, unknown>,
   secret?: string
 ): NextRequest {
-  const url = secret
-    ? `http://localhost:3000/api/program?secret=${secret}`
-    : "http://localhost:3000/api/program";
-  return new NextRequest(url, {
+  const headers: Record<string, string> = { "content-type": "application/json" };
+  if (secret) {
+    headers["authorization"] = `Bearer ${secret}`;
+  }
+  return new NextRequest("http://localhost:3000/api/program", {
     method: "PATCH",
-    headers: { "content-type": "application/json" },
+    headers,
     body: JSON.stringify(body),
   });
 }

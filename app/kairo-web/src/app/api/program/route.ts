@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { env } from "@/lib/env";
+import { requireCoachAuth } from "@/lib/auth";
 import { sendProgramUpdated } from "@/services/email";
 
 /**
  * Program API — manage training program blocks for members.
  *
- * POST   /api/program?secret=  — create a program block (coach only)
+ * POST   /api/program  — create a program block (Authorization: Bearer COACH_SECRET)
  * GET    /api/program?email=   — get program blocks for a member
- * PATCH  /api/program?secret=  — update a program block (coach only)
+ * PATCH  /api/program  — update a program block (Authorization: Bearer COACH_SECRET)
  *
  * Security:
  * - POST/PATCH require COACH_SECRET
@@ -67,8 +67,7 @@ const PatchProgramSchema = z.object({
 
 // ── Auth helper ──
 function checkCoachAuth(request: NextRequest): boolean {
-  const secret = request.nextUrl.searchParams.get("secret");
-  return !!secret && secret === env.COACH_SECRET;
+  return requireCoachAuth(request);
 }
 
 // ── POST — Create a program block ──

@@ -13,13 +13,16 @@ const COACH_SECRET = "test-coach-secret-1234567890";
 
 function makeRequest(secret?: string, category?: string): NextRequest {
   const params = new URLSearchParams();
-  if (secret) params.set("secret", secret);
   if (category) params.set("category", category);
   const query = params.toString();
   const url = query
     ? `http://localhost:3000/api/templates?${query}`
     : "http://localhost:3000/api/templates";
-  return new NextRequest(url, { method: "GET" });
+  const headers: Record<string, string> = {};
+  if (secret) {
+    headers["authorization"] = `Bearer ${secret}`;
+  }
+  return new NextRequest(url, { method: "GET", headers });
 }
 
 describe("GET /api/templates", () => {

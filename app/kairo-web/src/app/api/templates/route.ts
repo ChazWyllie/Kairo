@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { env } from "@/lib/env";
+import { requireCoachAuth } from "@/lib/auth";
 
 /**
- * GET /api/templates?secret=COACH_SECRET
+ * GET /api/templates (Authorization: Bearer COACH_SECRET)
  *
  * Returns pre-built coach message templates from backend.md Section 12.
  * These are the exact scripts a coach uses for common interactions.
@@ -97,9 +97,8 @@ const TEMPLATES: MessageTemplate[] = [
 ];
 
 export async function GET(request: NextRequest) {
-  const secret = request.nextUrl.searchParams.get("secret");
-
-  if (!secret || secret !== env.COACH_SECRET) {
+  // ── Auth: Authorization header with constant-time comparison ──
+  if (!requireCoachAuth(request)) {
     return NextResponse.json(
       { error: { code: "UNAUTHORIZED", message: "Invalid coach secret" } },
       { status: 401 }
