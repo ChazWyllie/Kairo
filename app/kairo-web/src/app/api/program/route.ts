@@ -129,7 +129,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    console.log("[program] Created:", { id: program.id, name: program.name });
+    console.log("[program] Created:", { id: program.id });
 
     return NextResponse.json(
       {

@@ -269,7 +269,6 @@ export async function PATCH(request: NextRequest) {
     });
 
     console.log("[application] Status updated:", {
-      email,
       status,
     });
 
