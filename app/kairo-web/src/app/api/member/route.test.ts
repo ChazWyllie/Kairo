@@ -11,8 +11,14 @@ import { mockPrisma } from "@/test/setup";
 // Import after mocks are set up
 const { GET } = await import("./route");
 
-function makeRequest(url: string) {
-  return new Request(url, { method: "GET" });
+const COACH_SECRET = "test-coach-secret-1234567890";
+
+function makeRequest(url: string, secret?: string) {
+  const headers: Record<string, string> = {};
+  if (secret !== "") {
+    headers["authorization"] = `Bearer ${secret ?? COACH_SECRET}`;
+  }
+  return new Request(url, { method: "GET", headers });
 }
 
 describe("GET /api/member", () => {
@@ -20,6 +26,16 @@ describe("GET /api/member", () => {
     mockPrisma.member.findUnique.mockReset();
     mockPrisma.checkIn.count.mockReset();
     mockPrisma.checkIn.findMany.mockReset();
+  });
+
+  // ── Auth ──
+
+  it("returns 401 without authentication", async () => {
+    const req = makeRequest("http://localhost:3000/api/member?email=user@test.com", "");
+    const res = await GET(req as never);
+    expect(res.status).toBe(401);
+    const body = await res.json();
+    expect(body.error.code).toBe("UNAUTHORIZED");
   });
 
   // ── Validation ──

@@ -198,4 +198,57 @@ export function requireCronAuth(request: NextRequest): boolean {
   return timingSafeCompare(token, env.CRON_SECRET);
 }
 
+// ── Member auth with coach override ──
+
+export type AuthResult =
+  | { authorized: true; role: "coach" | "member"; email: string }
+  | { authorized: false; role: null; email: null };
+
+/**
+ * Verify that the request is authorised to access data for `requestedEmail`.
+ *
+ * Two paths:
+ * 1. **Coach Bearer token** — `Authorization: Bearer COACH_SECRET` allows access
+ *    to any member's data (used by the admin dashboard).
+ * 2. **Session cookie** — the JWT `email` claim must match `requestedEmail`
+ *    (case-insensitive). Members can only access their own data.
+ *
+ * Returns `{ authorized: true, role, email }` on success, or
+ * `{ authorized: false }` when the request should be rejected.
+ *
+ * Usage:
+ * ```ts
+ * const auth = await requireMemberOrCoachAuth(request, email);
+ * if (!auth.authorized) return NextResponse.json({ error: ... }, { status: 401 });
+ * ```
+ */
+export async function requireMemberOrCoachAuth(
+  request: NextRequest,
+  requestedEmail: string
+): Promise<AuthResult> {
+  // Path 1: Coach bearer token — allows any email
+  if (requireCoachAuth(request)) {
+    return { authorized: true, role: "coach", email: requestedEmail };
+  }
+
+  // Path 2: Session cookie — email must match
+  const cookieHeader = request.headers.get("cookie");
+  const sessionToken = getSessionFromRequest(cookieHeader);
+  if (!sessionToken) {
+    return { authorized: false, role: null, email: null };
+  }
+
+  const payload = await verifySessionToken(sessionToken);
+  if (!payload) {
+    return { authorized: false, role: null, email: null };
+  }
+
+  // Case-insensitive email match — members can only see their own data
+  if (payload.email.toLowerCase() !== requestedEmail.toLowerCase()) {
+    return { authorized: false, role: null, email: null };
+  }
+
+  return { authorized: true, role: "member", email: payload.email };
+}
+
 export { SESSION_COOKIE_NAME };
