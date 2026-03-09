@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { stripe } from "@/services/stripe";
+import { getStripe } from "@/services/stripe";
 import {
   verifySessionToken,
   getSessionFromRequest,
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Cancel at period end
-    await stripe.subscriptions.update(member.stripeSubId, {
+    await getStripe().subscriptions.update(member.stripeSubId, {
       cancel_at_period_end: true,
     });
 

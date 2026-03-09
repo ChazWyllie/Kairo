@@ -92,7 +92,7 @@ export const mockStripeCheckoutCreate = vi.fn();
 export const mockStripeConstructEvent = vi.fn();
 
 vi.mock("@/services/stripe", () => ({
-  stripe: {
+  getStripe: () => ({
     checkout: {
       sessions: {
         create: mockStripeCheckoutCreate,
@@ -101,7 +101,10 @@ vi.mock("@/services/stripe", () => ({
     webhooks: {
       constructEvent: mockStripeConstructEvent,
     },
-  },
+    subscriptions: {
+      update: vi.fn().mockResolvedValue({}),
+    },
+  }),
 }));
 
 // ── Mock email service ──
