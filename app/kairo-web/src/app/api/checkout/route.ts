@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { stripe } from "@/services/stripe";
+import { getStripe } from "@/services/stripe";
 import { env } from "@/lib/env";
 import { prisma } from "@/lib/prisma";
 import { checkoutLimiter } from "@/lib/rate-limit";
@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    const session = await stripe.checkout.sessions.create({
+    const session = await getStripe().checkout.sessions.create({
       mode: "subscription",
       customer_email: email,
       line_items: [

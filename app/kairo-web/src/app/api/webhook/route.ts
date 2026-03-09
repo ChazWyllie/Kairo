@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
-import { stripe } from "@/services/stripe";
+import { getStripe } from "@/services/stripe";
 import { env } from "@/lib/env";
 import { prisma } from "@/lib/prisma";
 import { notifyAdmin, notifyAdminCancellation, sendWelcomeEmail } from "@/services/email";
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
   // 2. Verify signature
   let event: Stripe.Event;
   try {
-    event = stripe.webhooks.constructEvent(
+    event = getStripe().webhooks.constructEvent(
       rawBody,
       signature,
       env.STRIPE_WEBHOOK_SECRET

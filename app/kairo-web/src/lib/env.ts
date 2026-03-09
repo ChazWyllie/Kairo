@@ -1,13 +1,17 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 
-// Guard: SKIP_ENV_VALIDATION must not be set in production.
+// Guard: SKIP_ENV_VALIDATION must not be set at production runtime.
+// Allow it during build phase (NEXT_PHASE=phase-production-build) because
+// Vercel injects env vars at runtime, not during `next build`.
+const isBuildPhase = process.env.NEXT_PHASE === "phase-production-build";
 if (
   process.env.SKIP_ENV_VALIDATION &&
-  process.env.NODE_ENV === "production"
+  process.env.NODE_ENV === "production" &&
+  !isBuildPhase
 ) {
   throw new Error(
-    "SKIP_ENV_VALIDATION is set in production — this is unsafe. " +
+    "SKIP_ENV_VALIDATION is set in production runtime — this is unsafe. " +
       "Remove it from your deployment environment."
   );
 }
