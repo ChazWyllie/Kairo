@@ -5,6 +5,7 @@ import {
   createSessionToken,
   getSessionCookieConfig,
 } from "@/lib/auth";
+import { registerLimiter } from "@/lib/rate-limit";
 
 /**
  * POST /api/auth/register
@@ -46,35 +47,42 @@ export async function POST(request: NextRequest) {
 
     const { email, password } = parsed.data;
 
+    // ── Rate limiting ──
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+    const rateCheck = registerLimiter.check(ip);
+    if (!rateCheck.allowed) {
+      return NextResponse.json(
+        {
+          error: {
+            code: "RATE_LIMITED",
+            message: "Too many registration attempts. Please try again later.",
+          },
+        },
+        {
+          status: 429,
+          headers: { "Retry-After": String(rateCheck.retryAfter) },
+        }
+      );
+    }
+
     // Check member exists and is active
     const member = await prisma.member.findUnique({
       where: { email },
       select: { id: true, status: true, passwordHash: true },
     });
 
-    if (!member || member.status !== "active") {
+    // Generic error for both "not found/not eligible" and "already registered"
+    // to prevent account enumeration attacks.
+    if (!member || member.status !== "active" || member.passwordHash) {
       return NextResponse.json(
         {
           error: {
-            code: "NOT_ELIGIBLE",
+            code: "REGISTRATION_FAILED",
             message:
-              "No active membership found. Complete checkout first, then set your password.",
+              "Unable to register. Please check your email or contact support.",
           },
         },
         { status: 403 }
-      );
-    }
-
-    if (member.passwordHash) {
-      return NextResponse.json(
-        {
-          error: {
-            code: "ALREADY_REGISTERED",
-            message:
-              "Password already set. Use the login page instead.",
-          },
-        },
-        { status: 409 }
       );
     }
 
