@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { env } from "@/lib/env";
+import { requireCoachAuth } from "@/lib/auth";
 
 /**
- * PATCH /api/checkin/respond?secret=...
+ * PATCH /api/checkin/respond (Authorization: Bearer COACH_SECRET)
  *
  * Coach responds to a check-in — sets triage status (green/yellow/red)
  * and writes a coach response. Used from the coach dashboard.
@@ -22,9 +22,8 @@ const RespondSchema = z.object({
 });
 
 export async function PATCH(request: NextRequest) {
-  const secret = request.nextUrl.searchParams.get("secret");
-
-  if (!secret || secret !== env.COACH_SECRET) {
+  // ── Auth: Authorization header with constant-time comparison ──
+  if (!requireCoachAuth(request)) {
     return NextResponse.json(
       { error: { code: "UNAUTHORIZED", message: "Invalid coach secret" } },
       { status: 401 }

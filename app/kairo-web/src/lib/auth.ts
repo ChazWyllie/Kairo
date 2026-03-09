@@ -1,3 +1,5 @@
+import { NextRequest } from "next/server";
+import { timingSafeEqual } from "crypto";
 import { env } from "@/lib/env";
 
 /**
@@ -149,6 +151,51 @@ export function getSessionFromRequest(
     new RegExp(`(?:^|;\\s*)${SESSION_COOKIE_NAME}=([^;]+)`)
   );
   return match ? match[1] : null;
+}
+
+// ── Coach / Cron auth utilities ──
+
+/**
+ * Extract a Bearer token from the Authorization header.
+ */
+function extractBearer(request: NextRequest): string | null {
+  const header = request.headers.get("authorization");
+  if (!header?.startsWith("Bearer ")) return null;
+  return header.slice(7);
+}
+
+/**
+ * Constant-time comparison of two strings.
+ * Prevents timing side-channels when comparing secrets.
+ */
+function timingSafeCompare(a: string, b: string): boolean {
+  const bufA = Buffer.from(a, "utf-8");
+  const bufB = Buffer.from(b, "utf-8");
+  if (bufA.length !== bufB.length) return false;
+  return timingSafeEqual(bufA, bufB);
+}
+
+/**
+ * Verify the request carries a valid coach secret in the Authorization header.
+ * Returns true if the secret matches COACH_SECRET.
+ *
+ * Usage:
+ *   if (!requireCoachAuth(request)) return NextResponse.json(..., { status: 401 });
+ */
+export function requireCoachAuth(request: NextRequest): boolean {
+  const token = extractBearer(request);
+  if (!token || !env.COACH_SECRET) return false;
+  return timingSafeCompare(token, env.COACH_SECRET);
+}
+
+/**
+ * Verify the request carries a valid cron secret in the Authorization header.
+ * Returns true if the secret matches CRON_SECRET.
+ */
+export function requireCronAuth(request: NextRequest): boolean {
+  const token = extractBearer(request);
+  if (!token || !env.CRON_SECRET) return false;
+  return timingSafeCompare(token, env.CRON_SECRET);
 }
 
 export { SESSION_COOKIE_NAME };

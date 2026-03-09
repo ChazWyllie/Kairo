@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { env } from "@/lib/env";
+import { requireCronAuth } from "@/lib/auth";
 import { sendCheckInReminder } from "@/services/email";
 
 /**
- * POST /api/cron/checkin-reminder?secret=CRON_SECRET
+ * POST /api/cron/checkin-reminder (Authorization: Bearer CRON_SECRET)
  *
  * Weekly cron job — sends check-in reminders to active members
  * who haven't submitted a check-in in the last 3+ days.
@@ -18,9 +18,8 @@ import { sendCheckInReminder } from "@/services/email";
  */
 
 export async function POST(request: NextRequest) {
-  const secret = request.nextUrl.searchParams.get("secret");
-
-  if (!secret || secret !== env.CRON_SECRET) {
+  // ── Auth: Authorization header with constant-time comparison ──
+  if (!requireCronAuth(request)) {
     return NextResponse.json(
       { error: { code: "UNAUTHORIZED", message: "Invalid cron secret" } },
       { status: 401 }

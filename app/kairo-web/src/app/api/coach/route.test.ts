@@ -11,10 +11,11 @@ import { mockPrisma } from "@/test/setup";
 import { GET } from "./route";
 
 function makeRequest(secret?: string): NextRequest {
-  const url = secret
-    ? `http://localhost:3000/api/coach?secret=${secret}`
-    : "http://localhost:3000/api/coach";
-  return new NextRequest(url);
+  const headers: Record<string, string> = {};
+  if (secret) {
+    headers["authorization"] = `Bearer ${secret}`;
+  }
+  return new NextRequest("http://localhost:3000/api/coach", { headers });
 }
 
 describe("GET /api/coach", () => {

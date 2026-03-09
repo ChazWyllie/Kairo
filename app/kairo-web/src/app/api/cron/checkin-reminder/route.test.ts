@@ -13,10 +13,14 @@ import { POST } from "@/app/api/cron/checkin-reminder/route";
 const CRON_SECRET = "test-cron-secret-1234567890";
 
 function makeRequest(secret?: string): NextRequest {
-  const url = secret
-    ? `http://localhost:3000/api/cron/checkin-reminder?secret=${secret}`
-    : "http://localhost:3000/api/cron/checkin-reminder";
-  return new NextRequest(url, { method: "POST" });
+  const headers: Record<string, string> = {};
+  if (secret) {
+    headers["authorization"] = `Bearer ${secret}`;
+  }
+  return new NextRequest("http://localhost:3000/api/cron/checkin-reminder", {
+    method: "POST",
+    headers,
+  });
 }
 
 describe("POST /api/cron/checkin-reminder", () => {

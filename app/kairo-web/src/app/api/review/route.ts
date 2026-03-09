@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { env } from "@/lib/env";
+import { requireCoachAuth } from "@/lib/auth";
 import { sendReviewDelivered } from "@/services/email";
 
 /**
  * Review API — coach reviews for members.
  *
- * POST   /api/review?secret=  — create a review (coach only)
+ * POST   /api/review  — create a review (Authorization: Bearer COACH_SECRET)
  * GET    /api/review?email=   — get reviews for a member (public by email)
- * PATCH  /api/review?secret=  — update a review (coach only)
+ * PATCH  /api/review  — update a review (Authorization: Bearer COACH_SECRET)
  *
  * Review types: monthly, quarterly, form_review, live_call
  *
@@ -43,8 +43,7 @@ const PatchReviewSchema = z.object({
 
 // ── Auth helper ──
 function checkCoachAuth(request: NextRequest): boolean {
-  const secret = request.nextUrl.searchParams.get("secret");
-  return !!secret && secret === env.COACH_SECRET;
+  return requireCoachAuth(request);
 }
 
 // ── POST — Create a review ──
