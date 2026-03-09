@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { env } from "@/lib/env";
+import { requireCoachAuth } from "@/lib/auth";
 
 /**
  * Macro API — manage nutrition/macro targets for members.
  *
- * POST   /api/macro?secret=  — create a macro target (coach only)
+ * POST   /api/macro  — create a macro target (Authorization: Bearer COACH_SECRET)
  * GET    /api/macro?email=   — get macro targets for a member
- * PATCH  /api/macro?secret=  — update a macro target (coach only)
+ * PATCH  /api/macro  — update a macro target (Authorization: Bearer COACH_SECRET)
  *
  * Security:
  * - POST/PATCH require COACH_SECRET
@@ -42,8 +42,7 @@ const PatchMacroSchema = z.object({
 
 // ── Auth helper ──
 function checkCoachAuth(request: NextRequest): boolean {
-  const secret = request.nextUrl.searchParams.get("secret");
-  return !!secret && secret === env.COACH_SECRET;
+  return requireCoachAuth(request);
 }
 
 // ── POST — Create a macro target ──

@@ -7,24 +7,12 @@
  * Returns batch results: { processed, sent, skipped, errors }.
  */
 import { NextRequest, NextResponse } from "next/server";
-import { env } from "@/lib/env";
+import { requireCronAuth } from "@/lib/auth";
 import { processNurtureBatch } from "@/services/nurture";
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
-  // ── Auth: require CRON_SECRET ──
-  if (!env.CRON_SECRET) {
-    return NextResponse.json(
-      { error: "CRON_SECRET not configured" },
-      { status: 503 }
-    );
-  }
-
-  const authHeader = req.headers.get("authorization");
-  const token = authHeader?.startsWith("Bearer ")
-    ? authHeader.slice(7)
-    : null;
-
-  if (token !== env.CRON_SECRET) {
+  // ── Auth: require CRON_SECRET via Authorization header ──
+  if (!requireCronAuth(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

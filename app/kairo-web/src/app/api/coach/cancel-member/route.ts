@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { env } from "@/lib/env";
+import { requireCoachAuth } from "@/lib/auth";
 import { stripe } from "@/services/stripe";
 
 /**
- * POST /api/coach/cancel-member?secret=...
+ * POST /api/coach/cancel-member (Authorization: Bearer COACH_SECRET)
  *
  * Allows coach to cancel a member's Stripe subscription.
  * This immediately cancels (at period end) the subscription in Stripe.
@@ -21,10 +21,8 @@ const CancelSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
-  // ── Auth ──
-  const secret = new URL(request.url).searchParams.get("secret");
-
-  if (!env.COACH_SECRET || !secret || secret !== env.COACH_SECRET) {
+  // ── Auth: Authorization header with constant-time comparison ──
+  if (!requireCoachAuth(request)) {
     return NextResponse.json(
       {
         error: {
