@@ -6,6 +6,7 @@ import {
   createSessionToken,
   getSessionCookieConfig,
 } from "@/lib/auth";
+import { loginLimiter } from "@/lib/rate-limit";
 
 /**
  * POST /api/auth/login
@@ -46,19 +47,43 @@ export async function POST(request: NextRequest) {
 
     const { email, password } = parsed.data;
 
+    // ── Rate limiting ──
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+    const rateLimitKey = `${ip}:${email}`;
+    const rateCheck = loginLimiter.check(rateLimitKey);
+    if (!rateCheck.allowed) {
+      return NextResponse.json(
+        {
+          error: {
+            code: "RATE_LIMITED",
+            message: "Too many login attempts. Please try again later.",
+          },
+        },
+        {
+          status: 429,
+          headers: { "Retry-After": String(rateCheck.retryAfter) },
+        }
+      );
+    }
+
     // ── Coach auth (hidden path) ──
-    // If password matches COACH_SECRET, authenticate as coach.
-    // Uses constant-time comparison to prevent timing attacks.
+    // Always perform constant-time comparison regardless of password length.
+    // No length check — that would leak secret length via timing.
     const coachSecret = env.COACH_SECRET;
-    if (coachSecret && password.length === coachSecret.length) {
-      const encoder = new TextEncoder();
-      const a = encoder.encode(password);
-      const b = encoder.encode(coachSecret);
-      let mismatch = 0;
-      for (let i = 0; i < a.length; i++) {
-        mismatch |= a[i] ^ b[i];
-      }
-      if (mismatch === 0) {
+    if (coachSecret) {
+      const { timingSafeEqual } = await import("crypto");
+      const maxLen = Math.max(
+        Buffer.byteLength(password),
+        Buffer.byteLength(coachSecret)
+      );
+      const bufA = Buffer.alloc(maxLen);
+      const bufB = Buffer.alloc(maxLen);
+      Buffer.from(password).copy(bufA);
+      Buffer.from(coachSecret).copy(bufB);
+      const match =
+        timingSafeEqual(bufA, bufB) &&
+        Buffer.byteLength(password) === Buffer.byteLength(coachSecret);
+      if (match) {
         const token = await createSessionToken(email);
         console.log("[auth/login] Coach authenticated");
         const response = NextResponse.json({

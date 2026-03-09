@@ -83,3 +83,21 @@ export const quizLimiter = createRateLimiter({
   maxRequests: 10,
   windowMs: 60_000,
 });
+
+/**
+ * Shared login rate limiter instance.
+ * 5 requests per 15 minutes per IP+email — prevents brute-force attacks.
+ */
+export const loginLimiter = createRateLimiter({
+  maxRequests: 5,
+  windowMs: 15 * 60_000, // 15 minutes
+});
+
+/**
+ * Shared register rate limiter instance.
+ * 5 requests per 15 minutes per IP — prevents enumeration attacks.
+ */
+export const registerLimiter = createRateLimiter({
+  maxRequests: 5,
+  windowMs: 15 * 60_000, // 15 minutes
+});
