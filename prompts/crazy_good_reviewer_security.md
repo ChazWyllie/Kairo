@@ -1,0 +1,1 @@
+Use planner.md to emphasize reviewer.md and security.md and review the entire repository to ensure everything is tested fully, security is maximize, try your find to find concerns and issues in that area. and use agents provided that to maximize quality and efficiency.
