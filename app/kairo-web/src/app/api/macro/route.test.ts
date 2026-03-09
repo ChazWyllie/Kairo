@@ -29,10 +29,14 @@ function makePostRequest(
   });
 }
 
-function makeGetRequest(email: string): NextRequest {
+function makeGetRequest(email: string, secret?: string): NextRequest {
+  const headers: Record<string, string> = {};
+  if (secret !== "") {
+    headers["authorization"] = `Bearer ${secret ?? COACH_SECRET}`;
+  }
   return new NextRequest(
     `http://localhost:3000/api/macro?email=${encodeURIComponent(email)}`,
-    { method: "GET" }
+    { method: "GET", headers }
   );
 }
 
@@ -254,6 +258,13 @@ describe("GET /api/macro", () => {
   beforeEach(() => {
     mockPrisma.member.findUnique.mockReset();
     mockPrisma.macroTarget.findMany.mockReset();
+  });
+
+  it("returns 401 without authentication", async () => {
+    const res = await GET(makeGetRequest("a@b.com", ""));
+    expect(res.status).toBe(401);
+    const body = await res.json();
+    expect(body.error.code).toBe("UNAUTHORIZED");
   });
 
   it("returns 400 without email param", async () => {

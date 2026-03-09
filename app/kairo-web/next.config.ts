@@ -4,13 +4,13 @@ import type { NextConfig } from "next";
  * Next.js configuration with defense-in-depth security headers.
  *
  * These headers are a FALLBACK layer. The primary enforcement is in
- * src/middleware.ts (via proxy.ts). If middleware fails to run on a
- * path, these framework-level headers still apply.
+ * src/proxy.ts. If the proxy fails to run on a path, these
+ * framework-level headers still apply.
  *
  * @see docs/07-security-controls.md §6
  */
 const nextConfig: NextConfig = {
-  poweredBy: false,
+  poweredByHeader: false,
   async headers() {
     return [
       {

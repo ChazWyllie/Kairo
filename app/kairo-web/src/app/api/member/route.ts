@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { isValidEmail } from "@/lib/validation";
+import { requireMemberOrCoachAuth } from "@/lib/auth";
 
 /**
  * GET /api/member?email=...
@@ -9,7 +10,7 @@ import { isValidEmail } from "@/lib/validation";
  * and check-in statistics (total check-ins, current streak).
  *
  * Security:
- * - No auth (Stripe is the identity provider — MVP)
+ * - Requires session cookie (email must match) or coach Bearer token
  * - Email validated before query
  * - Stripe IDs are NOT returned (prevent data leakage)
  * - No PII logged
@@ -29,6 +30,15 @@ export async function GET(request: NextRequest) {
           },
         },
         { status: 400 }
+      );
+    }
+
+    // ── Auth: require session cookie (email match) or coach Bearer token ──
+    const auth = await requireMemberOrCoachAuth(request, email);
+    if (!auth.authorized) {
+      return NextResponse.json(
+        { error: { code: "UNAUTHORIZED", message: "Authentication required" } },
+        { status: 401 }
       );
     }
 

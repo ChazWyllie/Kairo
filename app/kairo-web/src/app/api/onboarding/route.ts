@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { requireMemberOrCoachAuth } from "@/lib/auth";
 
 /**
  * POST /api/onboarding
@@ -94,6 +95,15 @@ export async function POST(request: NextRequest) {
     }
 
     const { email, ...fields } = parsed.data;
+
+    // ── Auth: require session cookie (email match) or coach Bearer token ──
+    const auth = await requireMemberOrCoachAuth(request, email);
+    if (!auth.authorized) {
+      return NextResponse.json(
+        { error: { code: "UNAUTHORIZED", message: "Authentication required" } },
+        { status: 401 }
+      );
+    }
 
     // Only allow onboarding for active members
     const member = await prisma.member.findUnique({
