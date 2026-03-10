@@ -89,6 +89,14 @@ export const mockPrisma = {
     updateMany: vi.fn(),
     count: vi.fn(),
   },
+  dailyPlan: {
+    upsert: vi.fn(),
+    findUnique: vi.fn(),
+    findMany: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+    count: vi.fn(),
+  },
 };
 
 vi.mock("@/lib/prisma", () => ({
@@ -164,6 +172,11 @@ export const mockRegisterRateLimitCheck = vi.fn().mockReturnValue({
   retryAfter: 0,
 });
 
+export const mockPlanRateLimitCheck = vi.fn().mockReturnValue({
+  allowed: true,
+  retryAfter: 0,
+});
+
 vi.mock("@/lib/rate-limit", () => ({
   checkoutLimiter: {
     check: (...args: unknown[]) => mockRateLimitCheck(...args),
@@ -176,6 +189,9 @@ vi.mock("@/lib/rate-limit", () => ({
   },
   registerLimiter: {
     check: (...args: unknown[]) => mockRegisterRateLimitCheck(...args),
+  },
+  planLimiter: {
+    check: (...args: unknown[]) => mockPlanRateLimitCheck(...args),
   },
   createRateLimiter: vi.fn(),
 }));

@@ -119,6 +119,7 @@ model Member {
   reviews          Review[]
   programBlocks    ProgramBlock[]
   macroTargets     MacroTarget[]
+  dailyPlans       DailyPlan[]
 }
 
 model StripeEvent {
@@ -314,4 +315,22 @@ model MacroTarget {
 
   @@index([memberId])
   @@index([memberId, status])
+}
+
+/// Generated daily plan — workout + nutrition for a given day.
+/// Stores the full plan output and the constraints used to generate it.
+model DailyPlan {
+  id           String   @id @default(cuid())
+  memberId     String
+  member       Member   @relation(fields: [memberId], references: [id])
+  date         DateTime @db.Date
+  mode         String   // "travel" | "normal" | "recovery"
+  plan         Json     // full DailyPlan output (workouts + nutrition)
+  constraints  Json     // NormalizedConstraints snapshot
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([memberId, date])
+  @@index([memberId])
 }

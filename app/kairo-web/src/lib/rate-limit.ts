@@ -101,3 +101,12 @@ export const registerLimiter = createRateLimiter({
   maxRequests: 5,
   windowMs: 15 * 60_000, // 15 minutes
 });
+
+/**
+ * Shared plan generation rate limiter instance.
+ * 10 requests per 60 seconds per IP — prevents plan generation spam.
+ */
+export const planLimiter = createRateLimiter({
+  maxRequests: 10,
+  windowMs: 60_000,
+});
