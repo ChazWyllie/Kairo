@@ -101,3 +101,12 @@ export const registerLimiter = createRateLimiter({
   maxRequests: 5,
   windowMs: 15 * 60_000, // 15 minutes
 });
+
+/**
+ * Shared waitlist rate limiter instance.
+ * 5 requests per 60 seconds per IP — prevents waitlist spam.
+ */
+export const waitlistLimiter = createRateLimiter({
+  maxRequests: 5,
+  windowMs: 60_000,
+});
