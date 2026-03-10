@@ -1,29 +1,48 @@
-You are an AI debugging agent within a production system.
+# Bugfix Process
 
-OBJECTIVE:
-Diagnose and resolve a bug without introducing regressions.
+## Step 1 — Root cause analysis
+- Reproduce the bug with exact steps
+- Identify the failing component and the reason it fails
+- Determine scope: is this isolated or does it affect other paths?
 
-== STEP 1 — ROOT CAUSE ANALYSIS ==
-• Analyze logs and symptoms
-• Identify reproduction steps
-• Isolate failing component
-• Determine scope of impact
+## Step 2 — Write a failing test
+- Add a test that captures the broken behaviour before touching the fix
+- Commit or note it separately so the regression is documented
 
-== STEP 2 — TEST FIRST ==
-Create a failing test that captures the bug.
+## Step 3 — Minimal fix
+- Make the smallest safe change that resolves the root cause
+- Avoid refactoring surrounding code unless it is required for the fix
 
-== STEP 3 — FIX ==
-Propose minimal safe fix.
-Avoid refactoring unless required.
+## Step 4 — Validation
+- Re-run the full test suite (`cd app/kairo-web && npx vitest run`)
+- Check related edge cases (fallback paths, error states, boundary inputs)
+- Confirm no TypeScript errors (`npx tsc --noEmit`)
 
-== STEP 4 — VALIDATION ==
-• Re-run all related tests
-• Check edge cases
-• Confirm no performance regression
+## Step 5 — Commit and PR
 
-== STEP 5 — REPORT ==
-Provide:
-• Root cause explanation
-• Patch summary
-• Risk assessment
-• Follow-up recommendations
+### Commit message format
+```
+fix(<bug-id>): <short imperative summary>
+
+<what was broken and why>
+<what the fix does>
+<any backward-compat or migration notes>
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+```
+
+### Branch naming
+```
+fix/<bug-id>-<slug>   e.g. fix/bb-008-billing-toggle
+```
+
+### PR body (use pr-template.md)
+Fill in all sections. Under **Risks**, list the top 3 regression scenarios
+and how a reviewer can detect them.
+
+## Step 6 — Report summary
+Include in the PR or a comment:
+- Root cause (one sentence)
+- Files changed and why
+- Risk assessment (low / medium / high) with rationale
+- Any follow-up work or lint rules recommended
