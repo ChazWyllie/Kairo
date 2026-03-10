@@ -4,7 +4,8 @@ import { getStripe } from "@/services/stripe";
 import { env } from "@/lib/env";
 import { prisma } from "@/lib/prisma";
 import { checkoutLimiter } from "@/lib/rate-limit";
-import { ALLOWED_PRICE_IDS, getPlanFromPriceId } from "@/lib/stripe-prices";
+import { ALLOWED_PRICE_IDS, getPlanFromPriceId, getStripePriceId } from "@/lib/stripe-server";
+import type { PlanTier, BillingInterval } from "@/lib/stripe-prices";
 
 /**
  * POST /api/checkout
@@ -25,8 +26,14 @@ import { ALLOWED_PRICE_IDS, getPlanFromPriceId } from "@/lib/stripe-prices";
 const CheckoutSchema = z.object({
   email: z.string().email("A valid email is required"),
   phone: z.string().optional(),
-  planId: z.string().min(1, "Plan selection is required"),
-});
+  // Accept either planId (legacy) or tier+interval (new — keeps price IDs server-side)
+  planId: z.string().min(1).optional(),
+  tier: z.enum(["foundation", "coaching", "performance", "vip"]).optional(),
+  interval: z.enum(["monthly", "annual"]).optional(),
+}).refine(
+  (d) => d.planId || (d.tier && d.interval),
+  { message: "Either planId or tier+interval is required" }
+);
 
 export async function POST(request: NextRequest) {
   // Rate limit — 5 requests per 60s per IP (mitigates T-04 Checkout Spam)
@@ -67,23 +74,36 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { email, phone, planId } = parsed.data;
+    const { email, phone } = parsed.data;
 
-    // Validate planId against our allowlist
-    if (!ALLOWED_PRICE_IDS.has(planId)) {
-      return NextResponse.json(
-        {
-          error: {
-            code: "INVALID_PLAN",
-            message: "Invalid plan selection",
+    // Resolve Stripe price ID + plan metadata from either path
+    let stripePriceId: string;
+    let planTier: PlanTier;
+    let billingInterval: BillingInterval;
+
+    if (parsed.data.planId) {
+      // Legacy path: planId sent directly
+      if (!ALLOWED_PRICE_IDS.has(parsed.data.planId)) {
+        return NextResponse.json(
+          {
+            error: {
+              code: "INVALID_PLAN",
+              message: "Invalid plan selection",
+            },
           },
-        },
-        { status: 400 }
-      );
+          { status: 400 }
+        );
+      }
+      const planInfo = getPlanFromPriceId(parsed.data.planId)!;
+      stripePriceId = parsed.data.planId;
+      planTier = planInfo.tier;
+      billingInterval = planInfo.interval;
+    } else {
+      // New path: tier + interval (price ID resolved server-side)
+      planTier = parsed.data.tier!;
+      billingInterval = parsed.data.interval!;
+      stripePriceId = getStripePriceId(planTier, billingInterval);
     }
-
-    // Look up tier + interval from the price ID
-    const planInfo = getPlanFromPriceId(planId)!;
 
     // Upsert a pending member — webhook will activate on payment success
     await prisma.member.upsert({
@@ -92,13 +112,13 @@ export async function POST(request: NextRequest) {
         email,
         phone: phone || null,
         status: "pending",
-        planTier: planInfo.plan.tier,
-        billingInterval: planInfo.interval,
+        planTier,
+        billingInterval,
       },
       update: {
         phone: phone || null,
-        planTier: planInfo.plan.tier,
-        billingInterval: planInfo.interval,
+        planTier,
+        billingInterval,
       },
     });
 
@@ -107,13 +127,13 @@ export async function POST(request: NextRequest) {
       customer_email: email,
       line_items: [
         {
-          price: planId,
+          price: stripePriceId,
           quantity: 1,
         },
       ],
       metadata: {
-        planTier: planInfo.plan.tier,
-        billingInterval: planInfo.interval,
+        planTier,
+        billingInterval,
       },
       success_url: `${env.APP_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${env.APP_URL}`,
