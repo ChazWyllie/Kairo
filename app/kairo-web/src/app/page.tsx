@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { track } from "@/lib/analytics";
-import { PLANS, type PlanConfig } from "@/lib/stripe-prices";
+import { PLANS, type PlanDisplay } from "@/lib/stripe-prices";
 import {
   LANDING_SECTIONS,
   type HeroSection,
@@ -221,7 +221,7 @@ function PricingCard({
   billingInterval,
   highlighted,
 }: {
-  plan: PlanConfig;
+  plan: PlanDisplay;
   billingInterval: "monthly" | "annual";
   highlighted?: boolean;
 }) {
