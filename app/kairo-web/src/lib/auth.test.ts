@@ -154,30 +154,25 @@ describe("getSessionCookieConfig", () => {
   });
 
   it("omits Secure in non-production", () => {
-    const original = process.env.NODE_ENV;
-    process.env.NODE_ENV = "test";
+    vi.stubEnv("NODE_ENV", "test");
     const config = getSessionCookieConfig("token");
     expect(config).not.toContain("Secure");
-    process.env.NODE_ENV = original;
+    vi.unstubAllEnvs();
   });
 
   it("includes Secure in production", () => {
-    const original = process.env.NODE_ENV;
-    process.env.NODE_ENV = "production";
+    vi.stubEnv("NODE_ENV", "production");
     const config = getSessionCookieConfig("token");
     expect(config).toContain("Secure");
-    process.env.NODE_ENV = original;
+    vi.unstubAllEnvs();
   });
 
   it("includes Secure when APP_URL is https even in non-production", () => {
-    const origEnv = process.env.NODE_ENV;
-    const origUrl = process.env.APP_URL;
-    process.env.NODE_ENV = "test";
-    process.env.APP_URL = "https://staging.kairo.fitness";
+    vi.stubEnv("NODE_ENV", "test");
+    vi.stubEnv("APP_URL", "https://staging.kairo.fitness");
     const config = getSessionCookieConfig("token");
     expect(config).toContain("Secure");
-    process.env.NODE_ENV = origEnv;
-    process.env.APP_URL = origUrl;
+    vi.unstubAllEnvs();
   });
 });
 

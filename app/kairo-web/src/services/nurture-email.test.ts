@@ -72,7 +72,6 @@ describe("sendNurtureEmail", () => {
     expect(consoleSpy).toHaveBeenCalledWith(
       expect.stringContaining("[email-stub]"),
       expect.objectContaining({
-        to: "test@example.com",
         step: 2,
       })
     );

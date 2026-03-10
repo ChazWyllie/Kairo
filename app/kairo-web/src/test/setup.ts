@@ -84,6 +84,7 @@ export const mockPrisma = {
   macroTarget: {
     create: vi.fn(),
     findUnique: vi.fn(),
+    findFirst: vi.fn(),
     findMany: vi.fn(),
     update: vi.fn(),
     updateMany: vi.fn(),

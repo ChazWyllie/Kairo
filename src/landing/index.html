@@ -464,7 +464,14 @@
           submitBtn.textContent = 'Joining...';
         }
 
-        // Submit to API
+        // Submit to API (graceful fallback for file:// protocol)
+        if (window.location.protocol === 'file:') {
+          // No backend available from file:// — show success state directly
+          form.style.display = 'none';
+          successMsg.classList.add('show');
+          return;
+        }
+
         fetch('/api/waitlist', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
