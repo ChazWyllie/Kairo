@@ -140,13 +140,13 @@ describe("runAdaptation — happy path", () => {
       id: "mt-1",
       calories: 2500,
       protein: 180,
-      active: true,
+      status: "active",
     });
 
     await runAdaptation("test@example.com");
 
     expect(mockPrisma.macroTarget.findFirst).toHaveBeenCalledWith({
-      where: { memberId: "member-1", active: true },
+      where: { memberId: "member-1", status: "active" },
       orderBy: { createdAt: "desc" },
     });
   });

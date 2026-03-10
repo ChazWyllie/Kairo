@@ -61,7 +61,7 @@ describe("sendQuizWelcomeEmail", () => {
 
     expect(consoleSpy).toHaveBeenCalledWith(
       expect.stringContaining("[email-stub]"),
-      expect.objectContaining({ to: "test@example.com" })
+      expect.objectContaining({ recommendedTier: "coaching" })
     );
     consoleSpy.mockRestore();
   });

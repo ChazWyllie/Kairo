@@ -44,9 +44,7 @@ export async function notifyAdmin(data: AdminNotification): Promise<void> {
   // In development or when Resend isn't configured, log and return
   if (!env.RESEND_API_KEY) {
     console.log("[email-stub] Admin notification:", {
-      to: env.ADMIN_NOTIFY_EMAIL,
       subject: "New Kairo member activated",
-      memberEmail,
     });
     return;
   }
@@ -78,7 +76,6 @@ export async function notifyAdminCancellation(
 
   if (!env.RESEND_API_KEY) {
     console.log("[email-stub] Cancellation notification:", {
-      to: env.ADMIN_NOTIFY_EMAIL,
       subject: "Member canceled",
       stripeSubId,
     });
@@ -108,7 +105,6 @@ export async function sendWelcomeEmail(data: WelcomeEmail): Promise<void> {
 
   if (!env.RESEND_API_KEY) {
     console.log("[email-stub] Welcome email:", {
-      to: memberEmail,
       subject: "Welcome to Kairo Coaching",
     });
     return;
@@ -155,7 +151,6 @@ export async function sendQuizWelcomeEmail(
 
   if (!env.RESEND_API_KEY) {
     console.log("[email-stub] Quiz welcome email:", {
-      to: email,
       subject: "Your Kairo recommendation is ready",
       recommendedTier,
     });
@@ -223,7 +218,6 @@ export async function sendNurtureEmail(
 
   if (!env.RESEND_API_KEY) {
     console.log("[email-stub] Nurture email:", {
-      to: email,
       step,
       subject: content.subject,
     });
@@ -288,7 +282,6 @@ export async function sendApplicationReceived(
 
   if (!env.RESEND_API_KEY) {
     console.log("[email-stub] Application received:", {
-      to: email,
       subject: "Application received",
     });
     return;
@@ -339,7 +332,6 @@ export async function sendApplicationApproved(
 
   if (!env.RESEND_API_KEY) {
     console.log("[email-stub] Application approved:", {
-      to: email,
       subject: "You're approved!",
       preferredTier,
     });
@@ -375,9 +367,7 @@ export async function notifyAdminNewApplication(
 
   if (!env.RESEND_API_KEY) {
     console.log("[email-stub] Admin application notification:", {
-      to: env.ADMIN_NOTIFY_EMAIL,
       subject: "New application",
-      applicantEmail,
     });
     return;
   }
@@ -490,7 +480,6 @@ export async function sendReviewDelivered(
 
   if (!env.RESEND_API_KEY) {
     console.log("[email-stub] Review delivered:", {
-      to: email,
       subject: label,
       hasLoom: !!loomLink,
     });
@@ -528,7 +517,6 @@ export async function sendProgramUpdated(
 
   if (!env.RESEND_API_KEY) {
     console.log("[email-stub] Program updated:", {
-      to: email,
       subject: "Program updated",
       programName,
     });
@@ -562,7 +550,7 @@ export async function sendCheckInReminder(
   const firstName = fullName.split(" ")[0] || "there";
 
   if (!env.RESEND_API_KEY) {
-    console.log("[email-stub] Check-in reminder:", { to: email });
+    console.log("[email-stub] Check-in reminder sent");
     return;
   }
 
