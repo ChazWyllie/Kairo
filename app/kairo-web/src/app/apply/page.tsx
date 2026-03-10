@@ -199,7 +199,7 @@ export default function ApplyPage() {
         {/* Progress bar */}
         <div className="mb-8">
           <div className="flex justify-between text-xs text-neutral-500 mb-1">
-            <span>Step {currentIdx + 1} of {steps.length}</span>
+            <span>Step {currentIdx + 1} of {APPLY_STEPS.length}</span>
             <span>{Math.round(progress)}%</span>
           </div>
           <div className="h-2 rounded-full bg-neutral-200 overflow-hidden">
