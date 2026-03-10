@@ -40,6 +40,7 @@
 | Control | Implementation | File(s) | Status |
 |---------|---------------|---------|--------|
 | Member login | `POST /api/auth/login` — email + bcrypt password verification → session cookie | `app/api/auth/login/route.ts` | ✅ |
+| Coach login (hidden path) | Same endpoint — if password matches `COACH_SECRET`, returns `role: "coach"` with session cookie. Constant-time comparison, generic error on mismatch, no DB query. | `app/api/auth/login/route.ts` | ✅ |
 | Member registration | `POST /api/auth/register` — password-set for active members only (8–128 chars, bcrypt hashed) | `app/api/auth/register/route.ts` | ✅ |
 | Session tokens | HMAC-SHA256 JWT with `AUTH_SECRET` (≥32 chars, required); contains `{ email, iat, exp }` | `lib/auth.ts` | ✅ |
 | Session cookie flags | HttpOnly, SameSite=Strict, Secure in production, 7-day Max-Age, path=/ | `lib/auth.ts` | ✅ |

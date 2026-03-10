@@ -84,6 +84,7 @@ export const mockPrisma = {
   macroTarget: {
     create: vi.fn(),
     findUnique: vi.fn(),
+    findFirst: vi.fn(),
     findMany: vi.fn(),
     update: vi.fn(),
     updateMany: vi.fn(),
@@ -172,7 +173,7 @@ export const mockRegisterRateLimitCheck = vi.fn().mockReturnValue({
   retryAfter: 0,
 });
 
-export const mockPlanRateLimitCheck = vi.fn().mockReturnValue({
+export const mockWaitlistRateLimitCheck = vi.fn().mockReturnValue({
   allowed: true,
   retryAfter: 0,
 });
@@ -190,8 +191,8 @@ vi.mock("@/lib/rate-limit", () => ({
   registerLimiter: {
     check: (...args: unknown[]) => mockRegisterRateLimitCheck(...args),
   },
-  planLimiter: {
-    check: (...args: unknown[]) => mockPlanRateLimitCheck(...args),
+  waitlistLimiter: {
+    check: (...args: unknown[]) => mockWaitlistRateLimitCheck(...args),
   },
   createRateLimiter: vi.fn(),
 }));

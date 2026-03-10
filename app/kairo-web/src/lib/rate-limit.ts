@@ -103,10 +103,10 @@ export const registerLimiter = createRateLimiter({
 });
 
 /**
- * Shared plan generation rate limiter instance.
- * 10 requests per 60 seconds per IP — prevents plan generation spam.
+ * Shared waitlist rate limiter instance.
+ * 5 requests per 60 seconds per IP — prevents waitlist spam.
  */
-export const planLimiter = createRateLimiter({
-  maxRequests: 10,
+export const waitlistLimiter = createRateLimiter({
+  maxRequests: 5,
   windowMs: 60_000,
 });

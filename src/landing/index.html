@@ -457,9 +457,53 @@
         // Reset border
         emailInput.style.borderColor = '';
 
-        // Show success (placeholder — real submission in WP3)
-        form.style.display = 'none';
-        successMsg.classList.add('show');
+        // Disable button to prevent double-submit
+        var submitBtn = form.querySelector('.waitlist-submit');
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.textContent = 'Joining...';
+        }
+
+        // Submit to API (graceful fallback for file:// protocol)
+        if (window.location.protocol === 'file:') {
+          // No backend available from file:// — show success state directly
+          form.style.display = 'none';
+          successMsg.classList.add('show');
+          return;
+        }
+
+        fetch('/api/waitlist', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email }),
+        })
+          .then(function (res) {
+            if (res.status === 429) {
+              throw new Error('Too many requests. Please wait and try again.');
+            }
+            return res.json();
+          })
+          .then(function (data) {
+            if (data.success) {
+              form.style.display = 'none';
+              successMsg.classList.add('show');
+            } else {
+              throw new Error(data.error?.message || 'Something went wrong.');
+            }
+          })
+          .catch(function (err) {
+            if (submitBtn) {
+              submitBtn.disabled = false;
+              submitBtn.textContent = 'Join Waitlist';
+            }
+            emailInput.style.borderColor = '#ff6b6b';
+            // Show error inline (avoid alert for better UX)
+            var note = form.parentElement.querySelector('.waitlist-note');
+            if (note) {
+              note.textContent = err.message || 'Something went wrong. Please try again.';
+              note.style.color = '#ff6b6b';
+            }
+          });
       });
 
       // Reset border on input

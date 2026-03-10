@@ -52,6 +52,7 @@ Common codes: `VALIDATION_ERROR`, `UNAUTHORIZED`, `NOT_FOUND`, `RATE_LIMITED`, `
 #### `POST /api/auth/login`
 
 Authenticate member with email + password.
+Also serves as the coach login path — if the password matches `COACH_SECRET`, returns `role: "coach"` with a session cookie (no separate endpoint, no UI indication).
 
 | Field | Type | Required | Validation |
 |-------|------|----------|------------|
@@ -60,7 +61,7 @@ Authenticate member with email + password.
 
 **Rate Limit:** 5 req / 15min per IP+email
 
-**Success (200):**
+**Success — member (200):**
 ```json
 {
   "status": "ok",
@@ -68,6 +69,15 @@ Authenticate member with email + password.
   "memberStatus": "active"
 }
 ```
+
+**Success — coach (200):**
+```json
+{
+  "status": "ok",
+  "role": "coach"
+}
+```
+
 Sets `kairo_session` cookie (HttpOnly, SameSite=Strict, 7-day expiry).
 
 | Error | Code | Status |
