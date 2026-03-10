@@ -291,6 +291,12 @@ export default function ApplyPage() {
                 />
               </div>
 
+              {error && (
+                <p className="text-sm text-red-600" role="alert">
+                  {error}
+                </p>
+              )}
+
               <button
                 type="button"
                 onClick={goNext}
@@ -374,6 +380,12 @@ export default function ApplyPage() {
                   maxLength={1000}
                 />
               </div>
+
+              {error && (
+                <p className="text-sm text-red-600" role="alert">
+                  {error}
+                </p>
+              )}
 
               <div className="flex gap-3">
                 <button
