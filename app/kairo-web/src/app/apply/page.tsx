@@ -298,6 +298,12 @@ export default function ApplyPage() {
                 />
               </div>
 
+              {error && (
+                <p className="text-sm text-red-600" role="alert">
+                  {error}
+                </p>
+              )}
+
               <button
                 type="submit"
                 className="w-full rounded-xl bg-black px-4 py-3 text-white font-medium"
@@ -386,6 +392,12 @@ export default function ApplyPage() {
                   maxLength={1000}
                 />
               </div>
+
+              {error && (
+                <p className="text-sm text-red-600" role="alert">
+                  {error}
+                </p>
+              )}
 
               <div className="flex gap-3">
                 <button
