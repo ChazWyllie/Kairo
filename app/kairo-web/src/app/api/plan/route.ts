@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import type { Prisma } from "@prisma/client";
 import { requireMemberOrCoachAuth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { planLimiter } from "@/lib/rate-limit";
@@ -179,13 +180,13 @@ export async function POST(request: NextRequest) {
         memberId: member.id,
         date: today,
         mode: plan.mode,
-        plan: plan as unknown as Record<string, unknown>,
-        constraints: constraints as unknown as Record<string, unknown>,
+        plan: JSON.parse(JSON.stringify(plan)) as Prisma.InputJsonValue,
+        constraints: JSON.parse(JSON.stringify(constraints)) as Prisma.InputJsonValue,
       },
       update: {
         mode: plan.mode,
-        plan: plan as unknown as Record<string, unknown>,
-        constraints: constraints as unknown as Record<string, unknown>,
+        plan: JSON.parse(JSON.stringify(plan)) as Prisma.InputJsonValue,
+        constraints: JSON.parse(JSON.stringify(constraints)) as Prisma.InputJsonValue,
       },
     });
 
