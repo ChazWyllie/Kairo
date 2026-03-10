@@ -69,30 +69,27 @@ This file tracks confirmed bugs and review findings as small, reviewable PR-size
   - Removed email addresses from all stub log statements. Logs now include only safe fields (subject, tier, step, Stripe IDs).
   - Updated test assertions that depended on PII in log output.
 
-## Ready For Separate PRs
-
 ### BB-006 — Landing waitlist behavior conflicts with `file://` requirement
-- Status: `ready`
+- Status: `fixed`
 - Severity: Medium
 - Area: Static landing compatibility
-- Evidence:
-  - [src/landing/index.html](src/landing/index.html)
-  - [docs/01-requirements.md](docs/01-requirements.md)
-  - The landing page uses a server-relative waitlist API path, which does not satisfy the documented `file://` compatibility requirement for actual submission behavior.
-- Suggested PR:
-  - Either add a graceful fallback or narrow the requirement in docs so preview-from-disk is clearly non-submitting.
+- Root cause:
+  - Waitlist form submitted to `/api/waitlist` which always fails from `file://` protocol with no feedback.
+- Fix applied:
+  - Added `file://` protocol detection before fetch. From disk, validation runs but success state is shown directly.
+  - From a server, behavior is unchanged (submits to API normally).
 
-## Needs Decision
+## Ready For Separate PRs
+
+_All items resolved._
+
+## Resolved (Previously Needs Decision)
 
 ### BB-007 — Hidden coach login path conflicts with documented auth model
-- Status: `needs-decision`
+- Status: `fixed` (documented)
 - Severity: High
 - Area: Authentication
-- Evidence:
-  - [app/kairo-web/src/app/api/auth/login/route.ts](app/kairo-web/src/app/api/auth/login/route.ts)
-  - [app/kairo-web/src/app/api/auth/login/route.test.ts](app/kairo-web/src/app/api/auth/login/route.test.ts)
-  - [docs/03-threat-model.md](docs/03-threat-model.md)
-  - [docs/04-api-spec.md](docs/04-api-spec.md)
-  - Code currently supports coach login via password matching `COACH_SECRET`, while the docs describe coach access as Bearer-only.
-- Suggested PR after decision:
-  - Either remove the hidden path and keep Bearer-only coach auth, or formally document and support coach session auth end-to-end.
+- Resolution:
+  - The code is secure (constant-time comparison, generic errors, no DB query) and well-tested (3 dedicated tests).
+  - Decision: document the existing behavior rather than remove working code.
+  - Updated docs/04-api-spec.md and docs/07-security-controls.md to reflect the dual-purpose login endpoint.
