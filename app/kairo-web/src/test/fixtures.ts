@@ -3,10 +3,10 @@
  * No real secrets — all fake test data.
  */
 import Stripe from "stripe";
-import { PLANS } from "@/lib/stripe-prices";
+import { getStripePriceId } from "@/lib/stripe-server";
 
 // ── Test Plan ID — first plan's monthly price (Foundation) ──
-export const TEST_PLAN_ID = PLANS[0].monthlyPriceId;
+export const TEST_PLAN_ID = getStripePriceId("foundation", "monthly");
 
 // ── Stripe Checkout Session fixtures ──
 

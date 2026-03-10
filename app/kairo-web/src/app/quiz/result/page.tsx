@@ -4,7 +4,7 @@ import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { track } from "@/lib/analytics";
-import { PLANS, type PlanConfig, type PlanTier } from "@/lib/stripe-prices";
+import { PLANS, type PlanDisplay, type PlanTier } from "@/lib/stripe-prices";
 import { isValidEmail } from "@/lib/validation";
 
 /**
@@ -28,7 +28,7 @@ function ResultContent() {
     ? (tierParam as PlanTier)
     : "coaching";
 
-  const plan: PlanConfig = PLANS.find((p) => p.tier === tier) ?? PLANS[1]; // fallback to coaching
+  const plan: PlanDisplay = PLANS.find((p) => p.tier === tier) ?? PLANS[1]; // fallback to coaching
 
   const [billingInterval, setBillingInterval] = useState<"monthly" | "annual">("monthly");
 
@@ -38,8 +38,6 @@ function ResultContent() {
       : plan.monthlyPrice;
   const totalPrice =
     billingInterval === "monthly" ? plan.monthlyPrice : plan.annualPrice;
-  const priceId =
-    billingInterval === "monthly" ? plan.monthlyPriceId : plan.annualPriceId;
 
   useEffect(() => {
     track({ name: "quiz_result_viewed", properties: { tier } });
@@ -76,7 +74,8 @@ function ResultContent() {
         body: JSON.stringify({
           email,
           phone: phone.trim() || undefined,
-          planId: priceId,
+          tier: plan.tier,
+          interval: billingInterval,
           ...(leadId ? { leadId } : {}),
         }),
       });
