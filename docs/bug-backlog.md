@@ -41,39 +41,35 @@ This file tracks confirmed bugs and review findings as small, reviewable PR-size
   - Made Monthly and Annual direct button targets.
   - Added pressed-state semantics so the interval control is clearer and more accessible.
 
-## Ready For Separate PRs
-
 ### BB-003 — Adaptation endpoint type mismatch blocks app typecheck
-- Status: `ready`
+- Status: `fixed`
 - Severity: Critical
 - Area: Adaptation engine
-- Evidence:
-  - [app/kairo-web/src/services/adaptation.ts](app/kairo-web/src/services/adaptation.ts)
-  - [app/kairo-web/prisma/schema.prisma](app/kairo-web/prisma/schema.prisma)
-  - Workspace diagnostics report a compile error because adaptation filters `macroTarget` by `active`, but the Prisma model uses `status`.
-- Suggested PR:
-  - Align service logic and tests with the actual MacroTarget schema.
+- Root cause:
+  - Adaptation service and tests queried MacroTarget by boolean `active: true`, but the Prisma schema uses `status: MacroTargetStatus` enum.
+- Fix applied:
+  - Changed filter to `status: "active"` in adaptation.ts and all test mocks.
 
 ### BB-004 — Auth tests mutate readonly env fields
-- Status: `ready`
+- Status: `fixed`
 - Severity: High
 - Area: Test stability
-- Evidence:
-  - [app/kairo-web/src/lib/auth.test.ts](app/kairo-web/src/lib/auth.test.ts)
-  - Workspace diagnostics report direct assignment to `process.env.NODE_ENV` as a compile error.
-- Suggested PR:
-  - Replace direct env mutation with a test-safe override pattern.
+- Root cause:
+  - Direct assignment to `process.env.NODE_ENV` which is typed readonly in TypeScript strict mode.
+- Fix applied:
+  - Replaced with `vi.stubEnv()` / `vi.unstubAllEnvs()` — Vitest's idiomatic env override pattern.
 
 ### BB-005 — PII appears in development log and stub-log paths
-- Status: `ready`
+- Status: `fixed`
 - Severity: High
 - Area: Logging and privacy
-- Evidence:
-  - [app/kairo-web/src/services/email.ts](app/kairo-web/src/services/email.ts)
-  - [app/kairo-web/src/services/application.ts](app/kairo-web/src/services/application.ts)
-  - Current stub logging includes email-bearing fields even though repo policy says logs must not contain PII.
-- Suggested PR:
-  - Scrub or remove sensitive log fields and standardize safe-field-only logging.
+- Root cause:
+  - All 11 email stub logs included email addresses via `to:` or named fields like `memberEmail`.
+- Fix applied:
+  - Removed email addresses from all stub log statements. Logs now include only safe fields (subject, tier, step, Stripe IDs).
+  - Updated test assertions that depended on PII in log output.
+
+## Ready For Separate PRs
 
 ### BB-006 — Landing waitlist behavior conflicts with `file://` requirement
 - Status: `ready`

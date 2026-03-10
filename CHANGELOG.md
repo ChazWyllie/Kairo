@@ -11,6 +11,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Fixed
 - Apply flow progression on [app/kairo-web/src/app/apply/page.tsx](app/kairo-web/src/app/apply/page.tsx) now advances through the form submit path with clearer validation feedback.
 - Pricing interval controls on [app/kairo-web/src/app/page.tsx](app/kairo-web/src/app/page.tsx) and [app/kairo-web/src/app/quiz/result/page.tsx](app/kairo-web/src/app/quiz/result/page.tsx) now allow direct monthly and annual selection.
+- Adaptation engine MacroTarget query now uses correct `status` enum field instead of nonexistent `active` boolean.
+- Auth tests now use `vi.stubEnv()` instead of readonly `process.env.NODE_ENV` assignment.
+- Removed email addresses from all 11 development stub log statements to comply with no-PII logging policy.
 
 ### Added — Repository Restructuring
 - Numbered docs series (`docs/00-overview.md` through `docs/11-product-copy.md`)
