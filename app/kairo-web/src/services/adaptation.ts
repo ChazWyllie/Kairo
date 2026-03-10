@@ -66,7 +66,7 @@ export async function runAdaptation(email: string): Promise<AdaptationResult> {
 
   // Build member context
   const macroTarget = await prisma.macroTarget.findFirst({
-    where: { memberId: member.id, active: true },
+    where: { memberId: member.id, status: "active" },
     orderBy: { createdAt: "desc" },
   });
 

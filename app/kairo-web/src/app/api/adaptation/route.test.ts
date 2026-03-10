@@ -151,7 +151,7 @@ describe("GET /api/adaptation", () => {
       memberId: "member-1",
       calories: 2200,
       protein: 160,
-      active: true,
+      status: "active",
     });
 
     const res = await GET(makeGetRequest("test@example.com") as never);
