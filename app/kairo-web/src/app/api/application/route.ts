@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { requireCoachAuth } from "@/lib/auth";
+import { isValidEmail } from "@/lib/validation";
 import {
   submitApplication,
   getApplicationByEmail,
@@ -110,12 +111,12 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   const email = request.nextUrl.searchParams.get("email");
 
-  if (!email) {
+  if (!email || !isValidEmail(email)) {
     return NextResponse.json(
       {
         error: {
           code: "VALIDATION_ERROR",
-          message: "Email query parameter is required",
+          message: "A valid email query parameter is required",
         },
       },
       { status: 400 }

@@ -73,7 +73,7 @@ const CardNav: React.FC<CardNavProps> = ({
         <div className="card-nav-top">
           <button
             type="button"
-            className={`hamburger-menu ${isExpanded ? "open" : ""}`}
+            className={`hamburger-menu ${isHamburgerOpen ? "open" : ""}`}
             onClick={toggleMenu}
             aria-label={isExpanded ? "Close menu" : "Open menu"}
             aria-expanded={isExpanded}
