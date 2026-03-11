@@ -133,7 +133,7 @@ describe("POST /api/program", () => {
       startDate: new Date("2025-01-01"),
       endDate: null,
       primaryGoal: "hypertrophy",
-      split: "upper_lower",
+      split: "upperLower",
       daysPerWeek: 4,
       progressionModel: "double progression",
       deloadPlanned: true,
@@ -154,7 +154,7 @@ describe("POST /api/program", () => {
           name: "Hypertrophy Block 1",
           startDate: "2025-01-01T00:00:00.000Z",
           primaryGoal: "hypertrophy",
-          split: "upper_lower",
+          split: "upperLower",
           daysPerWeek: 4,
           progressionModel: "double progression",
           deloadPlanned: true,
@@ -172,7 +172,7 @@ describe("POST /api/program", () => {
     expect(json.program.id).toBe("pb1");
     expect(json.program.name).toBe("Hypertrophy Block 1");
     expect(json.program.primaryGoal).toBe("hypertrophy");
-    expect(json.program.split).toBe("upper_lower");
+    expect(json.program.split).toBe("upperLower");
     expect(json.program.daysPerWeek).toBe(4);
     expect(json.program.deloadPlanned).toBe(true);
     expect(json.program.stepsTarget).toBe(10000);
@@ -270,7 +270,7 @@ describe("GET /api/program", () => {
         startDate: new Date("2025-01-01"),
         endDate: null,
         primaryGoal: "hypertrophy",
-        split: "upper_lower",
+        split: "upperLower",
         daysPerWeek: 4,
         progressionModel: "double progression",
         deloadPlanned: true,

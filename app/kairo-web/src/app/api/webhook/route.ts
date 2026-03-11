@@ -4,6 +4,7 @@ import { getStripe } from "@/services/stripe";
 import { env } from "@/lib/env";
 import { prisma } from "@/lib/prisma";
 import { notifyAdmin, notifyAdminCancellation, sendWelcomeEmail } from "@/services/email";
+import { PlanTier, BillingInterval } from "@prisma/client";
 
 /**
  * POST /api/webhook
@@ -111,8 +112,14 @@ export async function POST(request: NextRequest) {
     }
 
     // 5. Extract plan metadata (set during checkout)
-    const planTier = (session.metadata?.planTier as string) || null;
-    const billingInterval = (session.metadata?.billingInterval as string) || null;
+    const rawPlanTier = session.metadata?.planTier;
+    const rawBillingInterval = session.metadata?.billingInterval;
+    const planTier = (rawPlanTier && Object.values(PlanTier).includes(rawPlanTier as PlanTier))
+      ? (rawPlanTier as PlanTier)
+      : null;
+    const billingInterval = (rawBillingInterval && Object.values(BillingInterval).includes(rawBillingInterval as BillingInterval))
+      ? (rawBillingInterval as BillingInterval)
+      : null;
 
     // 6. Atomically record event + upsert member in a transaction.
     //    If the member upsert fails, the StripeEvent record is rolled back

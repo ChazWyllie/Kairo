@@ -11,7 +11,7 @@ import { sendReviewDelivered } from "@/services/email";
  * GET    /api/review?email=   — get reviews for a member (public by email)
  * PATCH  /api/review  — update a review (Authorization: Bearer COACH_SECRET)
  *
- * Review types: monthly, quarterly, form_review, live_call
+ * Review types: weekly, monthly, custom
  *
  * Security:
  * - POST/PATCH require COACH_SECRET
@@ -19,7 +19,7 @@ import { sendReviewDelivered } from "@/services/email";
  * - No PII logged
  */
 
-const REVIEW_TYPES = ["monthly", "quarterly", "form_review", "live_call"] as const;
+const REVIEW_TYPES = ["weekly", "monthly", "custom"] as const;
 
 const CreateReviewSchema = z.object({
   email: z.string().email("A valid member email is required"),
@@ -241,7 +241,7 @@ export async function PATCH(request: NextRequest) {
         sendReviewDelivered({
           email: member.email,
           fullName: member.fullName ?? "there",
-          reviewType: existing.type,
+          reviewType: existing.type ?? "custom",
           summary: fields.summary ?? existing.summary ?? "",
           loomLink: fields.loomLink ?? existing.loomLink ?? undefined,
         }).catch((err: unknown) => {
