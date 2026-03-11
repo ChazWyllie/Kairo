@@ -30,6 +30,7 @@ vi.mock("@/lib/env", () => ({
 
 // ── Mock Prisma ──
 export const mockPrisma = {
+  $transaction: vi.fn(async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma)),
   member: {
     upsert: vi.fn(),
     findUnique: vi.fn(),

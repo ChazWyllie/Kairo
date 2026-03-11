@@ -39,6 +39,10 @@ function makeRequest(
 describe("POST /api/webhook", () => {
   beforeEach(() => {
     mockStripeConstructEvent.mockReset();
+    mockPrisma.$transaction.mockReset();
+    mockPrisma.$transaction.mockImplementation(
+      async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma)
+    );
     mockPrisma.stripeEvent.findUnique.mockReset();
     mockPrisma.stripeEvent.create.mockReset();
     mockPrisma.member.upsert.mockReset();
@@ -113,7 +117,7 @@ describe("POST /api/webhook", () => {
       expect(mockNotifyAdmin).not.toHaveBeenCalled();
     });
 
-    it("stores event ID before processing", async () => {
+    it("stores event ID within a transaction", async () => {
       const event = makeCheckoutCompletedEvent({ eventId: "evt_new_123" });
       mockStripeConstructEvent.mockReturnValue(event);
       mockPrisma.stripeEvent.findUnique.mockResolvedValue(null);
@@ -122,12 +126,13 @@ describe("POST /api/webhook", () => {
 
       await POST(makeRequest());
 
+      expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
       expect(mockPrisma.stripeEvent.create).toHaveBeenCalledWith({
         data: { id: "evt_new_123" },
       });
     });
 
-    it("records event before upserting member", async () => {
+    it("records event and upserts member atomically in a transaction", async () => {
       const callOrder: string[] = [];
       const event = makeCheckoutCompletedEvent();
       mockStripeConstructEvent.mockReturnValue(event);
@@ -143,7 +148,19 @@ describe("POST /api/webhook", () => {
 
       await POST(makeRequest());
 
+      expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
       expect(callOrder).toEqual(["createEvent", "upsertMember"]);
+    });
+
+    it("propagates error when member upsert fails so Stripe can retry", async () => {
+      const event = makeCheckoutCompletedEvent();
+      mockStripeConstructEvent.mockReturnValue(event);
+      mockPrisma.stripeEvent.findUnique.mockResolvedValue(null);
+      mockPrisma.stripeEvent.create.mockResolvedValue({ id: event.id });
+      mockPrisma.member.upsert.mockRejectedValue(new Error("DB constraint violation"));
+
+      // Transaction propagates the upsert error — Stripe will retry
+      await expect(POST(makeRequest())).rejects.toThrow("DB constraint violation");
     });
   });
 
