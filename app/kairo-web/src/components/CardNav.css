@@ -43,6 +43,9 @@
   justify-content: center;
   cursor: pointer;
   gap: 6px;
+  background: none;
+  border: none;
+  padding: 0;
 }
 
 .hamburger-menu:hover .hamburger-line {
