@@ -142,7 +142,7 @@ describe("POST /api/review", () => {
     });
     mockPrisma.review.create.mockResolvedValue({
       id: "rev_2",
-      type: "form_review",
+      type: "custom",
       dueDate: new Date("2026-04-01T00:00:00.000Z"),
       completedDate: new Date("2026-03-15T00:00:00.000Z"),
       summary: "Form looks good",
@@ -155,7 +155,7 @@ describe("POST /api/review", () => {
       makePostRequest(
         {
           email: "active@test.com",
-          type: "form_review",
+          type: "custom",
           dueDate: "2026-04-01T00:00:00.000Z",
           completedDate: "2026-03-15T00:00:00.000Z",
           summary: "Form looks good",
@@ -169,7 +169,7 @@ describe("POST /api/review", () => {
     const data = await res.json();
 
     expect(res.status).toBe(201);
-    expect(data.review.type).toBe("form_review");
+    expect(data.review.type).toBe("custom");
     expect(data.review.followUpNeeded).toBe(true);
     expect(data.review.loomLink).toBe("https://loom.com/share/abc123");
   });
@@ -337,7 +337,7 @@ describe("PATCH /api/review", () => {
   it("marks a review as completed", async () => {
     mockPrisma.review.findUnique.mockResolvedValue({
       id: "rev_1",
-      type: "quarterly",
+      type: "monthly",
     });
     mockPrisma.review.update.mockResolvedValue({});
 
