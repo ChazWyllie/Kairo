@@ -28,8 +28,6 @@ interface RateLimiter {
   check: (key: string) => RateLimitResult;
 }
 
-const store = new Map<string, number[]>();
-
 /**
  * Creates a rate limiter with the given config.
  * Each call creates a fresh limiter (useful for testing).

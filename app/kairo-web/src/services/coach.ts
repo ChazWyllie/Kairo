@@ -7,6 +7,11 @@
 import { prisma } from "@/lib/prisma";
 import { calculateStreak } from "@/lib/streak";
 
+// ── Constants ──
+
+/** Average number of weeks in a 30-day period (30 / 7). */
+const WEEKS_IN_30_DAYS = 4.29;
+
 // ── Types ──
 
 export interface ClientHealth {
@@ -169,7 +174,7 @@ export async function getCoachDashboard(): Promise<CoachDashboardData> {
 
     // 30-day adherence
     const workouts30d = checkIns.filter((ci) => ci.workout).length;
-    const weeksIn30 = 4.29;
+    const weeksIn30 = WEEKS_IN_30_DAYS;
     const target30d = Math.round((m.daysPerWeek ?? 7) * weeksIn30);
     const adherence30d = target30d > 0 ? Math.min(100, Math.round((workouts30d / target30d) * 100)) : 0;
 
