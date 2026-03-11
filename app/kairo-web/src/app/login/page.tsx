@@ -51,7 +51,9 @@ export default function LoginPage() {
       const role = data?.role;
       if (role === "coach") {
         track({ name: "coach_login", properties: {} });
-        router.push("/coach?secret=" + encodeURIComponent(password));
+        // Cookie-based auth: server set httpOnly coach_session cookie,
+        // so we redirect without exposing the secret in the URL.
+        router.push("/coach");
       } else {
         track({ name: "member_login", properties: {} });
         router.push("/dashboard");
