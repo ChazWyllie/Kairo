@@ -198,17 +198,27 @@ function ResultContent() {
                 autoComplete="tel"
               />
               {error && (
-                <p className="text-sm text-red-600" role="alert">
-                  {error}
-                </p>
+                <div className="rounded-xl border border-red-200 bg-red-50 p-3 space-y-2">
+                  <p className="text-sm text-red-600" role="alert">
+                    {error}
+                  </p>
+                  <button
+                    type="submit"
+                    className="w-full rounded-xl bg-red-600 px-4 py-2.5 text-white font-medium text-sm hover:bg-red-700 transition-colors"
+                  >
+                    Try again
+                  </button>
+                </div>
               )}
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full rounded-xl bg-black px-6 py-3.5 text-white font-semibold text-base transition-opacity disabled:opacity-60"
-              >
-                {loading ? "Loading…" : `Start Your ${plan.name} Plan →`}
-              </button>
+              {!error && (
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full rounded-xl bg-black px-6 py-3.5 text-white font-semibold text-base transition-opacity disabled:opacity-60"
+                >
+                  {loading ? "Redirecting to checkout…" : `Start Your ${plan.name} Plan →`}
+                </button>
+              )}
             </form>
           </div>
 
