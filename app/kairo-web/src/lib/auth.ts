@@ -18,6 +18,7 @@ import { env } from "@/lib/env";
  */
 
 const SESSION_COOKIE_NAME = "kairo_session";
+const COACH_SESSION_COOKIE_NAME = "coach_session";
 const SESSION_EXPIRY_SECONDS = 7 * 24 * 60 * 60; // 7 days
 
 interface SessionPayload {
@@ -142,6 +143,33 @@ export function getClearSessionCookie(): string {
 }
 
 /**
+ * Get Set-Cookie header value for a coach session cookie.
+ * Stores the COACH_SECRET as an httpOnly cookie scoped to /coach and /api/coach paths.
+ * This replaces the insecure pattern of passing secrets via URL query parameters.
+ */
+export function getCoachSessionCookieConfig(secret: string): string {
+  const isProduction = process.env.NODE_ENV === "production";
+  const parts = [
+    `${COACH_SESSION_COOKIE_NAME}=${secret}`,
+    `Path=/`,
+    `HttpOnly`,
+    `SameSite=Strict`,
+    `Max-Age=${SESSION_EXPIRY_SECONDS}`,
+  ];
+  if (isProduction || (process.env.APP_URL ?? "").startsWith("https://")) {
+    parts.push("Secure");
+  }
+  return parts.join("; ");
+}
+
+/**
+ * Get a clear-cookie string to delete the coach session.
+ */
+export function getClearCoachSessionCookie(): string {
+  return `${COACH_SESSION_COOKIE_NAME}=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0`;
+}
+
+/**
  * Extract session token from request cookies.
  */
 export function getSessionFromRequest(
@@ -150,6 +178,17 @@ export function getSessionFromRequest(
   if (!cookieHeader) return null;
   const match = cookieHeader.match(
     new RegExp(`(?:^|;\\s*)${SESSION_COOKIE_NAME}=([^;]+)`)
+  );
+  return match ? match[1] : null;
+}
+
+/**
+ * Extract coach session token from request cookies.
+ */
+function getCoachSessionFromRequest(cookieHeader: string | null): string | null {
+  if (!cookieHeader) return null;
+  const match = cookieHeader.match(
+    new RegExp(`(?:^|;\\s*)${COACH_SESSION_COOKIE_NAME}=([^;]+)`)
   );
   return match ? match[1] : null;
 }
@@ -183,16 +222,34 @@ function timingSafeCompare(a: string, b: string): boolean {
 }
 
 /**
- * Verify the request carries a valid coach secret in the Authorization header.
+ * Verify the request carries a valid coach secret.
+ *
+ * Checks two sources (in order):
+ * 1. Authorization: Bearer header (for programmatic/API access)
+ * 2. coach_session httpOnly cookie (for browser-based access)
+ *
  * Returns true if the secret matches COACH_SECRET.
  *
  * Usage:
  *   if (!requireCoachAuth(request)) return NextResponse.json(..., { status: 401 });
  */
 export function requireCoachAuth(request: NextRequest): boolean {
-  const token = extractBearer(request);
-  if (!token || !env.COACH_SECRET) return false;
-  return timingSafeCompare(token, env.COACH_SECRET);
+  if (!env.COACH_SECRET) return false;
+
+  // Path 1: Authorization Bearer header (programmatic access)
+  const bearerToken = extractBearer(request);
+  if (bearerToken && timingSafeCompare(bearerToken, env.COACH_SECRET)) {
+    return true;
+  }
+
+  // Path 2: coach_session httpOnly cookie (browser access)
+  const cookieHeader = request.headers.get("cookie");
+  const cookieToken = getCoachSessionFromRequest(cookieHeader);
+  if (cookieToken && timingSafeCompare(cookieToken, env.COACH_SECRET)) {
+    return true;
+  }
+
+  return false;
 }
 
 /**
@@ -258,4 +315,4 @@ export async function requireMemberOrCoachAuth(
   return { authorized: true, role: "member", email: payload.email };
 }
 
-export { SESSION_COOKIE_NAME };
+export { SESSION_COOKIE_NAME, COACH_SESSION_COOKIE_NAME };
