@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { isValidEmail } from "@/lib/validation";
 import { requireMemberOrCoachAuth } from "@/lib/auth";
+import { calculateStreak } from "@/lib/streak";
 
 /**
  * GET /api/member?email=...
@@ -109,48 +110,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
-
-/**
- * Calculate the current streak — consecutive days with a check-in,
- * starting from today (or yesterday if no check-in today yet).
- */
-function calculateStreak(dates: Date[]): number {
-  if (dates.length === 0) return 0;
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  // Normalize all dates to midnight UTC for comparison
-  const normalized = dates.map((d) => {
-    const nd = new Date(d);
-    nd.setHours(0, 0, 0, 0);
-    return nd.getTime();
-  });
-
-  // Deduplicate and sort descending
-  const unique = [...new Set(normalized)].sort((a, b) => b - a);
-
-  const oneDay = 24 * 60 * 60 * 1000;
-  let streak = 0;
-
-  // Start from today — if no check-in today, try yesterday
-  let cursor = today.getTime();
-  if (unique[0] !== cursor) {
-    cursor = cursor - oneDay; // allow starting from yesterday
-    if (unique[0] !== cursor) {
-      return 0; // no recent check-in
-    }
-  }
-
-  for (const dateMs of unique) {
-    if (dateMs === cursor) {
-      streak++;
-      cursor -= oneDay;
-    } else if (dateMs < cursor) {
-      break; // gap found
-    }
-  }
-
-  return streak;
 }

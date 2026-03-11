@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { requireMemberOrCoachAuth } from "@/lib/auth";
 import { createCheckIn, getCheckInHistory } from "@/services/checkin";
+import { isValidEmail } from "@/lib/validation";
 
 /**
  * POST /api/checkin
@@ -172,7 +173,7 @@ export async function GET(request: NextRequest) {
     const limitParam = searchParams.get("limit");
 
     // Validate email
-    if (!email || !/\S+@\S+\.\S+/.test(email)) {
+    if (!email || !isValidEmail(email)) {
       return NextResponse.json(
         {
           error: {

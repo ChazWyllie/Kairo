@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { track } from "@/lib/analytics";
+import { isValidEmail } from "@/lib/validation";
 
 /**
  * Extended onboarding form — collects full intake after sign-up.
@@ -121,7 +122,7 @@ export default function OnboardingPage() {
     e.preventDefault();
     setError(null);
 
-    if (!/\S+@\S+\.\S+/.test(email)) {
+    if (!isValidEmail(email)) {
       setError("Please enter the email you used to sign up.");
       setStep("basics");
       return;
