@@ -197,20 +197,17 @@ const CardNav: React.FC<CardNavProps> = ({
         style={{ backgroundColor: baseColor }}
       >
         <div className="card-nav-top">
-          <div
+          <button
+            type="button"
             className={`hamburger-menu ${isHamburgerOpen ? "open" : ""}`}
             onClick={toggleMenu}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") toggleMenu();
-            }}
-            role="button"
             aria-label={isExpanded ? "Close menu" : "Open menu"}
-            tabIndex={0}
+            aria-expanded={isExpanded}
             style={{ color: menuColor || "#000" }}
           >
             <div className="hamburger-line" />
             <div className="hamburger-line" />
-          </div>
+          </button>
 
           <div className="logo-container">
             <Link href="/" className="logo-text">

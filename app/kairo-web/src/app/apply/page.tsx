@@ -236,9 +236,12 @@ export default function ApplyPage() {
                     setFieldErrors((prev) => { const { fullName: _, ...rest } = prev; return rest; });
                   }}
                   required
+                  autoComplete="name"
+                  aria-invalid={!!fieldErrors.fullName}
+                  aria-describedby={fieldErrors.fullName ? "apply-name-error" : undefined}
                 />
                 {fieldErrors.fullName && (
-                  <p className="text-xs text-red-600 mt-1">{fieldErrors.fullName}</p>
+                  <p id="apply-name-error" className="text-xs text-red-600 mt-1">{fieldErrors.fullName}</p>
                 )}
               </div>
 
@@ -262,9 +265,12 @@ export default function ApplyPage() {
                     setFieldErrors((prev) => { const { email: _, ...rest } = prev; return rest; });
                   }}
                   required
+                  autoComplete="email"
+                  aria-invalid={!!fieldErrors.email}
+                  aria-describedby={fieldErrors.email ? "apply-email-error" : undefined}
                 />
                 {fieldErrors.email && (
-                  <p className="text-xs text-red-600 mt-1">{fieldErrors.email}</p>
+                  <p id="apply-email-error" className="text-xs text-red-600 mt-1">{fieldErrors.email}</p>
                 )}
               </div>
 
@@ -279,6 +285,7 @@ export default function ApplyPage() {
                   placeholder="+1 (555) 000-0000"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
+                  autoComplete="tel"
                 />
               </div>
 
