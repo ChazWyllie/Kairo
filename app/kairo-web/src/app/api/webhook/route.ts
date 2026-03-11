@@ -110,36 +110,39 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 5. Record event for idempotency (before processing to prevent race conditions)
-    await prisma.stripeEvent.create({
-      data: { id: event.id },
-    });
-
-    // 6. Extract plan metadata (set during checkout)
+    // 5. Extract plan metadata (set during checkout)
     const planTier = (session.metadata?.planTier as string) || null;
     const billingInterval = (session.metadata?.billingInterval as string) || null;
 
-    // 7. Upsert member — create if new, update if existing
-    await prisma.member.upsert({
-      where: { email },
-      create: {
-        email,
-        stripeCustomerId: customerId,
-        stripeSubId: subscriptionId,
-        status: "active",
-        planTier,
-        billingInterval,
-      },
-      update: {
-        stripeCustomerId: customerId,
-        stripeSubId: subscriptionId,
-        status: "active",
-        planTier,
-        billingInterval,
-      },
+    // 6. Atomically record event + upsert member in a transaction.
+    //    If the member upsert fails, the StripeEvent record is rolled back
+    //    so Stripe can safely retry the webhook.
+    await prisma.$transaction(async (tx) => {
+      await tx.stripeEvent.create({
+        data: { id: event.id },
+      });
+
+      await tx.member.upsert({
+        where: { email },
+        create: {
+          email,
+          stripeCustomerId: customerId,
+          stripeSubId: subscriptionId,
+          status: "active",
+          planTier,
+          billingInterval,
+        },
+        update: {
+          stripeCustomerId: customerId,
+          stripeSubId: subscriptionId,
+          status: "active",
+          planTier,
+          billingInterval,
+        },
+      });
     });
 
-    // 8. Notify admin (fire-and-forget — don't fail the webhook)
+    // 7. Notify admin (fire-and-forget — don't fail the webhook)
     try {
       await notifyAdmin({
         memberEmail: email,
@@ -151,14 +154,14 @@ export async function POST(request: NextRequest) {
       console.error("[webhook] Admin notification failed (non-fatal)");
     }
 
-    // 9. Send welcome email to new member (fire-and-forget)
+    // 8. Send welcome email to new member (fire-and-forget)
     try {
       await sendWelcomeEmail({ memberEmail: email });
     } catch (emailErr) {
       console.error("[webhook] Welcome email failed (non-fatal)");
     }
 
-    // 10. Update lead conversion tracking (fire-and-forget)
+    // 9. Update lead conversion tracking (fire-and-forget)
     try {
       const lead = await prisma.lead.findUnique({
         where: { email },
@@ -174,7 +177,7 @@ export async function POST(request: NextRequest) {
       console.error("[webhook] Lead conversion tracking failed (non-fatal)");
     }
 
-    // 11. Bridge application→member conversion (fire-and-forget)
+    // 10. Bridge application→member conversion (fire-and-forget)
     try {
       const application = await prisma.application.findUnique({
         where: { email },
