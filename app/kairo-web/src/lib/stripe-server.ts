@@ -40,6 +40,16 @@ export const ALLOWED_PRICE_IDS = new Set(
   Object.values(PRICE_IDS).flatMap((p) => [p.monthly, p.annual])
 );
 
+/** Pre-built reverse map: priceId → { tier, interval } for O(1) lookup */
+const PRICE_ID_REVERSE = new Map<string, { tier: PlanTier; interval: BillingInterval }>(
+  (Object.entries(PRICE_IDS) as [PlanTier, { monthly: string; annual: string }][]).flatMap(
+    ([tier, ids]) => [
+      [ids.monthly, { tier, interval: "monthly" as BillingInterval }],
+      [ids.annual, { tier, interval: "annual" as BillingInterval }],
+    ]
+  )
+);
+
 /**
  * Look up plan display config + billing interval from a Stripe Price ID.
  * Returns null for unknown price IDs.
@@ -47,13 +57,9 @@ export const ALLOWED_PRICE_IDS = new Set(
 export function getPlanFromPriceId(
   priceId: string
 ): { plan: PlanDisplay; tier: PlanTier; interval: BillingInterval } | null {
-  for (const [tier, ids] of Object.entries(PRICE_IDS)) {
-    if (priceId === ids.monthly || priceId === ids.annual) {
-      const interval: BillingInterval = priceId === ids.monthly ? "monthly" : "annual";
-      const plan = PLANS.find((p) => p.tier === tier) ?? null;
-      if (!plan) return null;
-      return { plan, tier: tier as PlanTier, interval };
-    }
-  }
-  return null;
+  const entry = PRICE_ID_REVERSE.get(priceId);
+  if (!entry) return null;
+  const plan = PLANS.find((p) => p.tier === entry.tier) ?? null;
+  if (!plan) return null;
+  return { plan, tier: entry.tier, interval: entry.interval };
 }
