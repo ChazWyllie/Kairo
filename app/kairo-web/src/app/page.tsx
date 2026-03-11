@@ -75,7 +75,6 @@ export default function HomePage() {
         buttonTextColor="#fff"
         ctaHref="/login"
         ctaLabel="Sign In"
-        ease="power3.out"
       />
 
       {/* ─── Hero ─── */}
