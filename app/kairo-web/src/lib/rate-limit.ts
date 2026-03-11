@@ -110,3 +110,13 @@ export const waitlistLimiter = createRateLimiter({
   maxRequests: 5,
   windowMs: 60_000,
 });
+
+/**
+ * Shared plan generation rate limiter instance.
+ * 10 requests per 60 seconds per IP — plan gen is CPU-intensive
+ * but members should be able to retry without long waits.
+ */
+export const planLimiter = createRateLimiter({
+  maxRequests: 10,
+  windowMs: 60_000,
+});
