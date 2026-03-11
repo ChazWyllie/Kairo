@@ -73,6 +73,7 @@ export const env = createEnv({
     STRIPE_PRICE_VIP_MONTHLY: process.env.STRIPE_PRICE_VIP_MONTHLY,
     STRIPE_PRICE_VIP_ANNUAL: process.env.STRIPE_PRICE_VIP_ANNUAL,
   },
-  // Skip validation during CI builds only (never in production — guarded above)
-  skipValidation: !!process.env.SKIP_ENV_VALIDATION,
+  // Skip validation during build phase (env vars are injected at runtime on Vercel,
+  // not available during `next build`) or when explicitly bypassed for CI.
+  skipValidation: isBuildPhase || !!process.env.SKIP_ENV_VALIDATION,
 });
