@@ -3,7 +3,6 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireCoachAuth, requireMemberOrCoachAuth } from "@/lib/auth";
 import { sendReviewDelivered } from "@/services/email";
-import { ReviewType } from "@prisma/client";
 
 /**
  * Review API — coach reviews for members.
@@ -88,7 +87,7 @@ export async function POST(request: NextRequest) {
     const review = await prisma.review.create({
       data: {
         memberId: member.id,
-        type: type as ReviewType,
+        type: type,
         dueDate: fields.dueDate ? new Date(fields.dueDate) : null,
         completedDate: fields.completedDate ? new Date(fields.completedDate) : null,
         summary: fields.summary ?? null,

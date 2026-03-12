@@ -19,7 +19,6 @@ import { sendProgramUpdated } from "@/services/email";
 
 const GOALS = ["hypertrophy", "strength", "fat_loss", "maintenance"] as const;
 const STATUSES = ["active", "completed", "upcoming"] as const;
-const SPLITS = ["fullBody", "upperLower", "pushPullLegs", "ppl4Day", "custom"] as const;
 
 const CreateProgramSchema = z.object({
   email: z.string().email("A valid member email is required"),
@@ -30,7 +29,7 @@ const CreateProgramSchema = z.object({
 
   // Programming details
   primaryGoal: z.enum(GOALS).optional(),
-  split: z.enum(SPLITS).optional(),
+  split: z.string().max(100).optional(),
   daysPerWeek: z.number().int().min(1).max(7).optional(),
   progressionModel: z.string().max(200).optional(),
   deloadPlanned: z.boolean().default(false),
@@ -52,7 +51,7 @@ const PatchProgramSchema = z.object({
   status: z.enum(STATUSES).optional(),
   endDate: z.string().datetime().optional(),
   primaryGoal: z.enum(GOALS).optional(),
-  split: z.enum(SPLITS).optional(),
+  split: z.string().max(100).optional(),
   daysPerWeek: z.number().int().min(1).max(7).optional(),
   progressionModel: z.string().max(200).optional(),
   deloadPlanned: z.boolean().optional(),
