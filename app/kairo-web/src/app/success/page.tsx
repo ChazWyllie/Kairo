@@ -1,4 +1,10 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
+
+export const metadata: Metadata = {
+  title: "Payment Successful | Kairo",
+  description: "Your Kairo Coaching membership is being activated. Check your email for next steps.",
+};
 import Link from "next/link";
 import { redirect } from "next/navigation";
 

@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
     const review = await prisma.review.create({
       data: {
         memberId: member.id,
-        type,
+        type: type,
         dueDate: fields.dueDate ? new Date(fields.dueDate) : null,
         completedDate: fields.completedDate ? new Date(fields.completedDate) : null,
         summary: fields.summary ?? null,
