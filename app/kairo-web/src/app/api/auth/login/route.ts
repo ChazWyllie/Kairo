@@ -5,6 +5,7 @@ import { env } from "@/lib/env";
 import {
   createSessionToken,
   getSessionCookieConfig,
+  getCoachSessionCookieConfig,
 } from "@/lib/auth";
 import { loginLimiter } from "@/lib/rate-limit";
 
@@ -90,7 +91,11 @@ export async function POST(request: NextRequest) {
           status: "ok",
           role: "coach",
         });
-        response.headers.set("Set-Cookie", getSessionCookieConfig(token));
+        // Set both session JWT cookie and coach_session httpOnly cookie.
+        // The coach_session cookie carries the validated secret so the
+        // browser flow never needs to pass it via URL or client-side JS.
+        response.headers.append("Set-Cookie", getSessionCookieConfig(token));
+        response.headers.append("Set-Cookie", getCoachSessionCookieConfig(coachSecret));
         return response;
       }
     }

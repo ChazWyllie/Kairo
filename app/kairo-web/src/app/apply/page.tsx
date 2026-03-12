@@ -3,6 +3,14 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { track } from "@/lib/analytics";
+import {
+  APPLY_STEPS,
+  getNextApplyStep,
+  getPreviousApplyStep,
+  validateApplyStep,
+  validateApplySubmission,
+  type ApplyStep,
+} from "@/lib/apply-flow";
 
 /**
  * Application form — pre-payment screening.
@@ -39,10 +47,8 @@ const TIERS = [
   { value: "vip", label: "VIP Elite · $349/mo", desc: "Daily access + priority everything" },
 ] as const;
 
-type FormStep = "info" | "training" | "goals" | "review";
-
 export default function ApplyPage() {
-  const [step, setStep] = useState<FormStep>("info");
+  const [step, setStep] = useState<ApplyStep>("info");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
@@ -69,54 +75,47 @@ export default function ApplyPage() {
     track({ name: "page_view", properties: { path: "/apply" } });
   }, []);
 
-  const steps: FormStep[] = ["info", "training", "goals", "review"];
-  const currentIdx = steps.indexOf(step);
-  const progress = ((currentIdx + 1) / steps.length) * 100;
-
-  function validateStep(s: FormStep): Record<string, string> {
-    const errors: Record<string, string> = {};
-    if (s === "info") {
-      if (!fullName.trim()) errors.fullName = "Full name is required.";
-      if (!email.trim()) errors.email = "Email is required.";
-      else if (!/\S+@\S+\.\S+/.test(email)) errors.email = "Please enter a valid email.";
-    }
-    if (s === "goals") {
-      if (!goal) errors.goal = "Please select a goal.";
-    }
-    return errors;
-  }
+  const currentIdx = APPLY_STEPS.indexOf(step);
+  const progress = ((currentIdx + 1) / APPLY_STEPS.length) * 100;
 
   function goNext() {
-    const errors = validateStep(step);
+    const errors = validateApplyStep(step, { email, fullName, goal });
     setFieldErrors(errors);
-    if (Object.keys(errors).length > 0) return;
-    const nextIdx = currentIdx + 1;
-    if (nextIdx < steps.length) setStep(steps[nextIdx]);
+    if (Object.keys(errors).length > 0) {
+      setError("Please correct the highlighted fields before continuing.");
+      return;
+    }
+
+    setError(null);
+    const nextStep = getNextApplyStep(step);
+    if (nextStep) {
+      setStep(nextStep);
+    }
   }
 
   function goBack() {
     setFieldErrors({});
-    const prevIdx = currentIdx - 1;
-    if (prevIdx >= 0) setStep(steps[prevIdx]);
+    setError(null);
+    const previousStep = getPreviousApplyStep(step);
+    if (previousStep) {
+      setStep(previousStep);
+    }
   }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
 
-    if (!/\S+@\S+\.\S+/.test(email)) {
-      setError("Please enter a valid email.");
-      setStep("info");
+    if (step !== "review") {
+      goNext();
       return;
     }
-    if (!fullName.trim()) {
-      setError("Please enter your full name.");
-      setStep("info");
-      return;
-    }
-    if (!goal) {
-      setError("Please select a goal.");
-      setStep("goals");
+
+    const submissionValidation = validateApplySubmission({ email, fullName, goal });
+    if (submissionValidation.firstInvalidStep) {
+      setFieldErrors(submissionValidation.errors);
+      setError("Please complete the required fields before submitting.");
+      setStep(submissionValidation.firstInvalidStep);
       return;
     }
 
@@ -200,7 +199,7 @@ export default function ApplyPage() {
         {/* Progress bar */}
         <div className="mb-8">
           <div className="flex justify-between text-xs text-neutral-500 mb-1">
-            <span>Step {currentIdx + 1} of {steps.length}</span>
+            <span>Step {currentIdx + 1} of {APPLY_STEPS.length}</span>
             <span>{Math.round(progress)}%</span>
           </div>
           <div className="h-2 rounded-full bg-neutral-200 overflow-hidden">
@@ -231,11 +230,18 @@ export default function ApplyPage() {
                   }`}
                   placeholder="Your full name"
                   value={fullName}
-                  onChange={(e) => { setFullName(e.target.value); setFieldErrors((prev) => { const { fullName: _, ...rest } = prev; return rest; }); }}
+                  onChange={(e) => {
+                    setFullName(e.target.value);
+                    setError(null);
+                    setFieldErrors((prev) => { const { fullName: _, ...rest } = prev; return rest; });
+                  }}
                   required
+                  autoComplete="name"
+                  aria-invalid={!!fieldErrors.fullName}
+                  aria-describedby={fieldErrors.fullName ? "apply-name-error" : undefined}
                 />
                 {fieldErrors.fullName && (
-                  <p className="text-xs text-red-600 mt-1">{fieldErrors.fullName}</p>
+                  <p id="apply-name-error" className="text-xs text-red-600 mt-1">{fieldErrors.fullName}</p>
                 )}
               </div>
 
@@ -253,11 +259,18 @@ export default function ApplyPage() {
                   }`}
                   placeholder="you@example.com"
                   value={email}
-                  onChange={(e) => { setEmail(e.target.value); setFieldErrors((prev) => { const { email: _, ...rest } = prev; return rest; }); }}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setError(null);
+                    setFieldErrors((prev) => { const { email: _, ...rest } = prev; return rest; });
+                  }}
                   required
+                  autoComplete="email"
+                  aria-invalid={!!fieldErrors.email}
+                  aria-describedby={fieldErrors.email ? "apply-email-error" : undefined}
                 />
                 {fieldErrors.email && (
-                  <p className="text-xs text-red-600 mt-1">{fieldErrors.email}</p>
+                  <p id="apply-email-error" className="text-xs text-red-600 mt-1">{fieldErrors.email}</p>
                 )}
               </div>
 
@@ -272,6 +285,7 @@ export default function ApplyPage() {
                   placeholder="+1 (555) 000-0000"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
+                  autoComplete="tel"
                 />
               </div>
 
@@ -291,9 +305,14 @@ export default function ApplyPage() {
                 />
               </div>
 
+              {error && (
+                <p className="text-sm text-red-600" role="alert">
+                  {error}
+                </p>
+              )}
+
               <button
-                type="button"
-                onClick={goNext}
+                type="submit"
                 className="w-full rounded-xl bg-black px-4 py-3 text-white font-medium"
               >
                 Continue →
@@ -336,7 +355,10 @@ export default function ApplyPage() {
                   className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-900"
                   placeholder="e.g., 3x per week, inconsistent"
                   value={trainingFrequency}
-                  onChange={(e) => setTrainingFrequency(e.target.value)}
+                  onChange={(e) => {
+                    setTrainingFrequency(e.target.value);
+                    setError(null);
+                  }}
                 />
               </div>
 
@@ -370,10 +392,19 @@ export default function ApplyPage() {
                   rows={2}
                   placeholder="e.g., ACL tear 2024, chronic lower back pain"
                   value={injuryHistory}
-                  onChange={(e) => setInjuryHistory(e.target.value)}
+                  onChange={(e) => {
+                    setInjuryHistory(e.target.value);
+                    setError(null);
+                  }}
                   maxLength={1000}
                 />
               </div>
+
+              {error && (
+                <p className="text-sm text-red-600" role="alert">
+                  {error}
+                </p>
+              )}
 
               <div className="flex gap-3">
                 <button
@@ -384,8 +415,7 @@ export default function ApplyPage() {
                   ← Back
                 </button>
                 <button
-                  type="button"
-                  onClick={goNext}
+                  type="submit"
                   className="flex-1 rounded-xl bg-black px-4 py-3 text-white font-medium"
                 >
                   Continue →
@@ -408,7 +438,11 @@ export default function ApplyPage() {
                     <button
                       key={g.value}
                       type="button"
-                      onClick={() => { setGoal(g.value); setFieldErrors((prev) => { const { goal: _, ...rest } = prev; return rest; }); }}
+                      onClick={() => {
+                        setGoal(g.value);
+                        setError(null);
+                        setFieldErrors((prev) => { const { goal: _, ...rest } = prev; return rest; });
+                      }}
                       className={`rounded-xl border px-4 py-2 text-sm font-medium transition-colors ${
                         goal === g.value
                           ? "border-black bg-black text-white"
@@ -434,7 +468,10 @@ export default function ApplyPage() {
                   rows={3}
                   placeholder="What's driving you to make a change right now?"
                   value={whyNow}
-                  onChange={(e) => setWhyNow(e.target.value)}
+                  onChange={(e) => {
+                    setWhyNow(e.target.value);
+                    setError(null);
+                  }}
                   maxLength={1000}
                 />
               </div>
@@ -449,7 +486,10 @@ export default function ApplyPage() {
                   rows={2}
                   placeholder="e.g., late night snacking, meal prep, eating out"
                   value={nutritionStruggles}
-                  onChange={(e) => setNutritionStruggles(e.target.value)}
+                  onChange={(e) => {
+                    setNutritionStruggles(e.target.value);
+                    setError(null);
+                  }}
                   maxLength={1000}
                 />
               </div>
@@ -464,7 +504,10 @@ export default function ApplyPage() {
                   className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-900"
                   placeholder="e.g., time, motivation, knowledge"
                   value={biggestObstacle}
-                  onChange={(e) => setBiggestObstacle(e.target.value)}
+                  onChange={(e) => {
+                    setBiggestObstacle(e.target.value);
+                    setError(null);
+                  }}
                 />
               </div>
 
@@ -478,9 +521,18 @@ export default function ApplyPage() {
                   className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-900"
                   placeholder="e.g., programming, nutrition, accountability"
                   value={helpWithMost}
-                  onChange={(e) => setHelpWithMost(e.target.value)}
+                  onChange={(e) => {
+                    setHelpWithMost(e.target.value);
+                    setError(null);
+                  }}
                 />
               </div>
+
+              {error && (
+                <p className="text-sm text-red-600" role="alert">
+                  {error}
+                </p>
+              )}
 
               <div className="flex gap-3">
                 <button
@@ -491,8 +543,7 @@ export default function ApplyPage() {
                   ← Back
                 </button>
                 <button
-                  type="button"
-                  onClick={goNext}
+                  type="submit"
                   className="flex-1 rounded-xl bg-black px-4 py-3 text-white font-medium"
                 >
                   Continue →
@@ -514,7 +565,10 @@ export default function ApplyPage() {
                   <button
                     key={t.value}
                     type="button"
-                    onClick={() => setPreferredTier(t.value)}
+                    onClick={() => {
+                      setPreferredTier(t.value);
+                      setError(null);
+                    }}
                     className={`w-full text-left rounded-xl border px-4 py-3 transition-colors ${
                       preferredTier === t.value
                         ? "border-black bg-neutral-50"
@@ -531,7 +585,10 @@ export default function ApplyPage() {
                 <input
                   type="checkbox"
                   checked={readyForStructure}
-                  onChange={(e) => setReadyForStructure(e.target.checked)}
+                  onChange={(e) => {
+                    setReadyForStructure(e.target.checked);
+                    setError(null);
+                  }}
                   className="mt-1 h-4 w-4 accent-black"
                 />
                 <span className="text-sm">

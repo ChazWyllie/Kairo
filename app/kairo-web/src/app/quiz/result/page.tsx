@@ -4,7 +4,7 @@ import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { track } from "@/lib/analytics";
-import { PLANS, type PlanConfig, type PlanTier } from "@/lib/stripe-prices";
+import { PLANS, type PlanDisplay, type PlanTier } from "@/lib/stripe-prices";
 import { isValidEmail } from "@/lib/validation";
 
 /**
@@ -28,7 +28,7 @@ function ResultContent() {
     ? (tierParam as PlanTier)
     : "coaching";
 
-  const plan: PlanConfig = PLANS.find((p) => p.tier === tier) ?? PLANS[1]; // fallback to coaching
+  const plan: PlanDisplay = PLANS.find((p) => p.tier === tier) ?? PLANS[1]; // fallback to coaching
 
   const [billingInterval, setBillingInterval] = useState<"monthly" | "annual">("monthly");
 
@@ -38,8 +38,6 @@ function ResultContent() {
       : plan.monthlyPrice;
   const totalPrice =
     billingInterval === "monthly" ? plan.monthlyPrice : plan.annualPrice;
-  const priceId =
-    billingInterval === "monthly" ? plan.monthlyPriceId : plan.annualPriceId;
 
   useEffect(() => {
     track({ name: "quiz_result_viewed", properties: { tier } });
@@ -76,7 +74,8 @@ function ResultContent() {
         body: JSON.stringify({
           email,
           phone: phone.trim() || undefined,
-          planId: priceId,
+          tier: plan.tier,
+          interval: billingInterval,
           ...(leadId ? { leadId } : {}),
         }),
       });
@@ -115,12 +114,15 @@ function ResultContent() {
           {/* Plan card */}
           <div className="rounded-2xl border border-black ring-2 ring-black p-6 shadow-sm mb-6">
             {/* Billing toggle */}
-            <div className="flex items-center justify-center gap-3 mb-6">
-              <span
-                className={`text-sm font-medium ${billingInterval === "monthly" ? "text-black" : "text-neutral-400"}`}
+            <div className="flex items-center justify-center gap-3 mb-6" role="group" aria-label="Billing interval">
+              <button
+                type="button"
+                onClick={() => setBillingInterval("monthly")}
+                aria-pressed={billingInterval === "monthly"}
+                className={`text-sm font-medium transition-colors ${billingInterval === "monthly" ? "text-black" : "text-neutral-400 hover:text-neutral-700"}`}
               >
                 Monthly
-              </span>
+              </button>
               <button
                 type="button"
                 onClick={() =>
@@ -129,6 +131,7 @@ function ResultContent() {
                 className="relative inline-flex h-7 w-12 items-center rounded-full transition-colors"
                 style={{ backgroundColor: billingInterval === "annual" ? "#000" : "#d4d4d4" }}
                 aria-label="Toggle annual billing"
+                aria-pressed={billingInterval === "annual"}
               >
                 <span
                   className="inline-block h-5 w-5 rounded-full bg-white transition-transform"
@@ -137,11 +140,14 @@ function ResultContent() {
                   }}
                 />
               </button>
-              <span
-                className={`text-sm font-medium ${billingInterval === "annual" ? "text-black" : "text-neutral-400"}`}
+              <button
+                type="button"
+                onClick={() => setBillingInterval("annual")}
+                aria-pressed={billingInterval === "annual"}
+                className={`text-sm font-medium transition-colors ${billingInterval === "annual" ? "text-black" : "text-neutral-400 hover:text-neutral-700"}`}
               >
                 Annual
-              </span>
+              </button>
               {billingInterval === "annual" && (
                 <span className="ml-2 rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
                   Save ~17%
@@ -192,17 +198,27 @@ function ResultContent() {
                 autoComplete="tel"
               />
               {error && (
-                <p className="text-sm text-red-600" role="alert">
-                  {error}
-                </p>
+                <div className="rounded-xl border border-red-200 bg-red-50 p-3 space-y-2">
+                  <p className="text-sm text-red-600" role="alert">
+                    {error}
+                  </p>
+                  <button
+                    type="submit"
+                    className="w-full rounded-xl bg-red-600 px-4 py-2.5 text-white font-medium text-sm hover:bg-red-700 transition-colors"
+                  >
+                    Try again
+                  </button>
+                </div>
               )}
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full rounded-xl bg-black px-6 py-3.5 text-white font-semibold text-base transition-opacity disabled:opacity-60"
-              >
-                {loading ? "Loading…" : `Start Your ${plan.name} Plan →`}
-              </button>
+              {!error && (
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full rounded-xl bg-black px-6 py-3.5 text-white font-semibold text-base transition-opacity disabled:opacity-60"
+                >
+                  {loading ? "Redirecting to checkout…" : `Start Your ${plan.name} Plan →`}
+                </button>
+              )}
             </form>
           </div>
 

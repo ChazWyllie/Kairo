@@ -27,6 +27,10 @@ import { POST } from "@/app/api/webhook/route";
 
 describe("Lead conversion tracking in webhook", () => {
   beforeEach(() => {
+    mockPrisma.$transaction.mockReset();
+    mockPrisma.$transaction.mockImplementation(
+      async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma)
+    );
     mockPrisma.stripeEvent.findUnique.mockResolvedValue(null);
     mockPrisma.stripeEvent.create.mockResolvedValue({ id: "evt_test" });
     mockPrisma.member.upsert.mockResolvedValue({ id: "m1", status: "active" });

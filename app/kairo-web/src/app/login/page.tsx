@@ -51,7 +51,9 @@ export default function LoginPage() {
       const role = data?.role;
       if (role === "coach") {
         track({ name: "coach_login", properties: {} });
-        router.push("/coach?secret=" + encodeURIComponent(password));
+        // Cookie-based auth: server set httpOnly coach_session cookie,
+        // so we redirect without exposing the secret in the URL.
+        router.push("/coach");
       } else {
         track({ name: "member_login", properties: {} });
         router.push("/dashboard");
@@ -122,10 +124,7 @@ export default function LoginPage() {
 
         <div className="mt-6 text-center space-y-2">
           <p className="text-sm text-neutral-500">
-            Forgot your password?{" "}
-            <Link href="/register" className="text-black underline">
-              Reset password
-            </Link>
+            Forgot your password? Contact your admin to reset your credentials.
           </p>
           <Link href="/" className={components.button.ghost}>
             ← Back to home

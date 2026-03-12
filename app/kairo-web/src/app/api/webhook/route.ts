@@ -4,6 +4,7 @@ import { getStripe } from "@/services/stripe";
 import { env } from "@/lib/env";
 import { prisma } from "@/lib/prisma";
 import { notifyAdmin, notifyAdminCancellation, sendWelcomeEmail } from "@/services/email";
+import { PlanTier, BillingInterval } from "@prisma/client";
 
 /**
  * POST /api/webhook
@@ -110,36 +111,45 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 5. Record event for idempotency (before processing to prevent race conditions)
-    await prisma.stripeEvent.create({
-      data: { id: event.id },
+    // 5. Extract plan metadata (set during checkout)
+    const rawPlanTier = session.metadata?.planTier;
+    const rawBillingInterval = session.metadata?.billingInterval;
+    const planTier = (rawPlanTier && Object.values(PlanTier).includes(rawPlanTier as PlanTier))
+      ? (rawPlanTier as PlanTier)
+      : null;
+    const billingInterval = (rawBillingInterval && Object.values(BillingInterval).includes(rawBillingInterval as BillingInterval))
+      ? (rawBillingInterval as BillingInterval)
+      : null;
+
+    // 6. Atomically record event + upsert member in a transaction.
+    //    If the member upsert fails, the StripeEvent record is rolled back
+    //    so Stripe can safely retry the webhook.
+    await prisma.$transaction(async (tx) => {
+      await tx.stripeEvent.create({
+        data: { id: event.id },
+      });
+
+      await tx.member.upsert({
+        where: { email },
+        create: {
+          email,
+          stripeCustomerId: customerId,
+          stripeSubId: subscriptionId,
+          status: "active",
+          planTier,
+          billingInterval,
+        },
+        update: {
+          stripeCustomerId: customerId,
+          stripeSubId: subscriptionId,
+          status: "active",
+          planTier,
+          billingInterval,
+        },
+      });
     });
 
-    // 6. Extract plan metadata (set during checkout)
-    const planTier = session.metadata?.planTier || null;
-    const billingInterval = session.metadata?.billingInterval || null;
-
-    // 7. Upsert member — create if new, update if existing
-    await prisma.member.upsert({
-      where: { email },
-      create: {
-        email,
-        stripeCustomerId: customerId,
-        stripeSubId: subscriptionId,
-        status: "active",
-        planTier,
-        billingInterval,
-      },
-      update: {
-        stripeCustomerId: customerId,
-        stripeSubId: subscriptionId,
-        status: "active",
-        planTier,
-        billingInterval,
-      },
-    });
-
-    // 8. Notify admin (fire-and-forget — don't fail the webhook)
+    // 7. Notify admin (fire-and-forget — don't fail the webhook)
     try {
       await notifyAdmin({
         memberEmail: email,
@@ -151,14 +161,14 @@ export async function POST(request: NextRequest) {
       console.error("[webhook] Admin notification failed (non-fatal)");
     }
 
-    // 9. Send welcome email to new member (fire-and-forget)
+    // 8. Send welcome email to new member (fire-and-forget)
     try {
       await sendWelcomeEmail({ memberEmail: email });
     } catch (emailErr) {
       console.error("[webhook] Welcome email failed (non-fatal)");
     }
 
-    // 10. Update lead conversion tracking (fire-and-forget)
+    // 9. Update lead conversion tracking (fire-and-forget)
     try {
       const lead = await prisma.lead.findUnique({
         where: { email },
@@ -174,7 +184,7 @@ export async function POST(request: NextRequest) {
       console.error("[webhook] Lead conversion tracking failed (non-fatal)");
     }
 
-    // 11. Bridge application→member conversion (fire-and-forget)
+    // 10. Bridge application→member conversion (fire-and-forget)
     try {
       const application = await prisma.application.findUnique({
         where: { email },
@@ -215,15 +225,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Record event for idempotency
-    await prisma.stripeEvent.create({
-      data: { id: event.id },
-    });
+    // Atomically record event + update member in a transaction.
+    // If the member update fails, the StripeEvent record is rolled back
+    // so Stripe can safely retry the webhook.
+    await prisma.$transaction(async (tx) => {
+      await tx.stripeEvent.create({
+        data: { id: event.id },
+      });
 
-    // Mark the member as canceled
-    await prisma.member.updateMany({
-      where: { stripeSubId: subscriptionId },
-      data: { status: "canceled" },
+      await tx.member.updateMany({
+        where: { stripeSubId: subscriptionId },
+        data: { status: "canceled" },
+      });
     });
 
     // Notify admin of cancellation (fire-and-forget)
@@ -249,14 +262,15 @@ export async function POST(request: NextRequest) {
         : null;
 
     if (subscriptionId) {
-      // Record event for idempotency
-      await prisma.stripeEvent.create({
-        data: { id: event.id },
-      });
+      await prisma.$transaction(async (tx) => {
+        await tx.stripeEvent.create({
+          data: { id: event.id },
+        });
 
-      await prisma.member.updateMany({
-        where: { stripeSubId: subscriptionId },
-        data: { status: "past_due" },
+        await tx.member.updateMany({
+          where: { stripeSubId: subscriptionId },
+          data: { status: "past_due" },
+        });
       });
     }
 
@@ -276,14 +290,15 @@ export async function POST(request: NextRequest) {
         : null;
 
     if (subscriptionId) {
-      // Record event for idempotency
-      await prisma.stripeEvent.create({
-        data: { id: event.id },
-      });
+      await prisma.$transaction(async (tx) => {
+        await tx.stripeEvent.create({
+          data: { id: event.id },
+        });
 
-      await prisma.member.updateMany({
-        where: { stripeSubId: subscriptionId, status: "past_due" },
-        data: { status: "active" },
+        await tx.member.updateMany({
+          where: { stripeSubId: subscriptionId, status: "past_due" },
+          data: { status: "active" },
+        });
       });
     }
 

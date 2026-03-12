@@ -6,6 +6,7 @@ export const metadata: Metadata = {
   description: "Your Kairo Coaching membership is being activated. Check your email for next steps.",
 };
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +15,20 @@ export const dynamic = "force-dynamic";
  * Shown after Stripe Checkout redirects back.
  * Note: membership activation is handled by the webhook, not this page.
  */
-export default function SuccessPage() {
+export default function SuccessPage({
+  searchParams,
+}: {
+  searchParams: Record<string, string | string[] | undefined>;
+}) {
+  const sessionId =
+    typeof searchParams.session_id === "string"
+      ? searchParams.session_id
+      : undefined;
+
+  if (!sessionId || !sessionId.startsWith("cs_")) {
+    redirect("/");
+  }
+
   return (
     <Suspense
       fallback={

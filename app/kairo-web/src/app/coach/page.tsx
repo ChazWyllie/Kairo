@@ -121,33 +121,23 @@ type CoachState =
   | { phase: "dashboard"; data: CoachData };
 
 export default function CoachPage() {
-  const [state, setState] = useState<CoachState>({ phase: "auth" });
-  const [secret, setSecret] = useState("");
+  const [state, setState] = useState<CoachState>({ phase: "loading" });
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [expandedClient, setExpandedClient] = useState<string | null>(null);
 
-  useEffect(() => {
-    track({ name: "page_view", properties: { path: "/coach" } });
-
-    // Auto-load if secret is in URL
-    const params = new URLSearchParams(window.location.search);
-    const urlSecret = params.get("secret");
-    if (urlSecret) {
-      setSecret(urlSecret);
-      loadCoachData(urlSecret);
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const loadCoachData = useCallback(async (coachSecret: string) => {
+  const loadCoachData = useCallback(async () => {
     setState({ phase: "loading" });
 
     try {
-      const res = await fetch(`/api/coach?secret=${encodeURIComponent(coachSecret)}`);
+      const res = await fetch("/api/coach", { credentials: "include" });
 
       if (!res.ok) {
-        const data = await res.json().catch(() => null);
         if (res.status === 401) {
-          throw new Error("Invalid coach secret.");
+          setState({ phase: "auth" });
+          return;
         }
+        const data = await res.json().catch(() => null);
         throw new Error(data?.error?.message ?? "Failed to load coach data");
       }
 
@@ -162,10 +152,43 @@ export default function CoachPage() {
     }
   }, []);
 
-  function onAuth(e: React.FormEvent) {
+  useEffect(() => {
+    track({ name: "page_view", properties: { path: "/coach" } });
+    // Check if already authenticated via cookie
+    loadCoachData();
+  }, [loadCoachData]);
+
+  async function onAuth(e: React.FormEvent) {
     e.preventDefault();
-    if (!secret.trim()) return;
-    loadCoachData(secret.trim());
+    if (!email.trim() || !password.trim()) return;
+    setState({ phase: "loading" });
+
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim(), password: password.trim() }),
+        credentials: "include",
+      });
+
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        throw new Error(data?.error?.message ?? "Invalid credentials");
+      }
+
+      if (data?.role !== "coach") {
+        throw new Error("This account does not have coach access.");
+      }
+
+      // Cookie is set by the server; now load the dashboard
+      await loadCoachData();
+    } catch (err) {
+      setState({
+        phase: "error",
+        message: err instanceof Error ? err.message : "Something went wrong",
+      });
+    }
   }
 
   // ── Auth screen ──
@@ -175,20 +198,41 @@ export default function CoachPage() {
         <div className="mx-auto max-w-md px-6 py-16">
           <h1 className="text-2xl font-semibold text-center">Coach Portal</h1>
           <p className="mt-2 text-center text-neutral-500 text-sm">
-            Enter your coach secret to access the dashboard.
+            Sign in to access the coach dashboard.
           </p>
 
           <form onSubmit={onAuth} className="mt-8 space-y-4">
-            <input
-              type="password"
-              className={components.input.base}
-              placeholder="Coach secret"
-              value={secret}
-              onChange={(e) => setSecret(e.target.value)}
-              required
-              aria-label="Coach secret"
-              autoComplete="off"
-            />
+            <div>
+              <label htmlFor="coach-email" className="block text-sm font-medium text-neutral-700 mb-1">
+                Email
+              </label>
+              <input
+                id="coach-email"
+                type="email"
+                className={components.input.base}
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoComplete="email"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="coach-password" className="block text-sm font-medium text-neutral-700 mb-1">
+                Password
+              </label>
+              <input
+                id="coach-password"
+                type="password"
+                className={components.input.base}
+                placeholder="Coach secret"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                autoComplete="current-password"
+              />
+            </div>
 
             {state.phase === "error" && (
               <p className="text-sm text-red-600" role="alert">
@@ -251,7 +295,7 @@ export default function CoachPage() {
             </p>
           </div>
           <button
-            onClick={() => loadCoachData(secret)}
+            onClick={() => loadCoachData()}
             className={components.button.secondary}
             aria-label="Refresh data"
           >
@@ -300,8 +344,7 @@ export default function CoachPage() {
                   onToggle={() =>
                     setExpandedClient(expandedClient === client.email ? null : client.email)
                   }
-                  coachSecret={secret}
-                  onRefresh={() => loadCoachData(secret)}
+                  onRefresh={() => loadCoachData()}
                 />
               ))}
               {needsAttentionClients.map((client) => (
@@ -312,8 +355,7 @@ export default function CoachPage() {
                   onToggle={() =>
                     setExpandedClient(expandedClient === client.email ? null : client.email)
                   }
-                  coachSecret={secret}
-                  onRefresh={() => loadCoachData(secret)}
+                  onRefresh={() => loadCoachData()}
                 />
               ))}
             </div>
@@ -352,8 +394,7 @@ export default function CoachPage() {
                   onToggle={() =>
                     setExpandedClient(expandedClient === client.email ? null : client.email)
                   }
-                  coachSecret={secret}
-                  onRefresh={() => loadCoachData(secret)}
+                  onRefresh={() => loadCoachData()}
                 />
               ))}
             </div>
@@ -364,12 +405,11 @@ export default function CoachPage() {
         <ApplicationsSection
           pendingApps={pendingApps}
           processedApps={processedApps}
-          coachSecret={secret}
-          onRefresh={() => loadCoachData(secret)}
+          onRefresh={() => loadCoachData()}
         />
 
         {/* ── TEMPLATES — quick-access coach scripts ── */}
-        <TemplatesSection coachSecret={secret} />
+        <TemplatesSection />
 
         {/* ── Navigation ── */}
         <nav className="flex gap-4 text-sm pb-8">
@@ -388,13 +428,11 @@ function ClientCard({
   client,
   expanded,
   onToggle,
-  coachSecret,
   onRefresh,
 }: {
   client: ClientHealth;
   expanded: boolean;
   onToggle: () => void;
-  coachSecret: string;
   onRefresh: () => void;
 }) {
   const statusConfig = getStatusConfig(client.status);
@@ -411,10 +449,11 @@ function ClientCard({
     setCancelLoading(true);
     setCancelMsg(null);
     try {
-      const res = await fetch(`/api/coach/cancel-member`, {
+      const res = await fetch("/api/coach/cancel-member", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: client.email, secret: coachSecret }),
+        body: JSON.stringify({ email: client.email }),
+        credentials: "include",
       });
       if (!res.ok) {
         const data = await res.json().catch(() => null);
@@ -434,7 +473,7 @@ function ClientCard({
     setTriageMessage(null);
 
     try {
-      const res = await fetch(`/api/checkin/respond?secret=${encodeURIComponent(coachSecret)}`, {
+      const res = await fetch("/api/checkin/respond", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -442,6 +481,7 @@ function ClientCard({
           coachStatus,
           coachResponse: responseText.trim() || undefined,
         }),
+        credentials: "include",
       });
 
       if (!res.ok) {
@@ -827,12 +867,10 @@ function DetailField({
 function ApplicationsSection({
   pendingApps,
   processedApps,
-  coachSecret,
   onRefresh,
 }: {
   pendingApps: ApplicationInfo[];
   processedApps: ApplicationInfo[];
-  coachSecret: string;
   onRefresh: () => void;
 }) {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -844,10 +882,11 @@ function ApplicationsSection({
     setActionLoading(email);
     setActionMessage(null);
     try {
-      const res = await fetch(`/api/application?secret=${encodeURIComponent(coachSecret)}`, {
+      const res = await fetch("/api/application", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, status }),
+        credentials: "include",
       });
       if (!res.ok) {
         const data = await res.json().catch(() => null);
@@ -1055,7 +1094,7 @@ interface Template {
   variables: string[];
 }
 
-function TemplatesSection({ coachSecret }: { coachSecret: string }) {
+function TemplatesSection() {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -1068,7 +1107,7 @@ function TemplatesSection({ coachSecret }: { coachSecret: string }) {
     }
     setLoading(true);
     try {
-      const res = await fetch(`/api/templates?secret=${encodeURIComponent(coachSecret)}`);
+      const res = await fetch("/api/templates", { credentials: "include" });
       if (res.ok) {
         const data = await res.json();
         setTemplates(data.templates ?? []);

@@ -8,6 +8,32 @@ datasource db {
 
 // ── Enums ──
 
+enum PlanTier {
+  foundation
+  coaching
+  performance
+  vip
+}
+
+enum BillingInterval {
+  monthly
+  annual
+}
+
+enum ReviewType {
+  weekly
+  monthly
+  custom
+}
+
+enum ProgramSplit {
+  fullBody
+  upperLower
+  pushPullLegs
+  ppl4Day
+  custom
+}
+
 enum MemberStatus {
   pending
   active
@@ -62,8 +88,8 @@ model Member {
   passwordHash     String?  // bcrypt hash, null until member sets password
 
   // Multi-tier pricing (Phase 7+)
-  planTier         String?  // "foundation" | "coaching" | "performance" | "vip"
-  billingInterval  String?  // "monthly" | "annual"
+  planTier         PlanTier?
+  billingInterval  BillingInterval?
 
   // Onboarding — basic (Phase 4)
   goal             String?  // "fat_loss" | "muscle" | "maintenance"
@@ -115,10 +141,13 @@ model Member {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
+  @@index([status])
+
   checkIns         CheckIn[]
   reviews          Review[]
   programBlocks    ProgramBlock[]
   macroTargets     MacroTarget[]
+  dailyPlans       DailyPlan[]
 }
 
 model StripeEvent {
@@ -195,6 +224,7 @@ model Lead {
   nurtureOptedOut Boolean  @default(false) // unsubscribe flag
 
   @@index([email])
+  @@index([source])
 }
 
 model Application {
@@ -233,7 +263,7 @@ model Review {
   id             String    @id @default(cuid())
   memberId       String
   member         Member    @relation(fields: [memberId], references: [id])
-  type           String    // "monthly" | "quarterly" | "form_review" | "live_call"
+  type           ReviewType?
   dueDate        DateTime?
   completedDate  DateTime?
   summary        String?
@@ -262,7 +292,7 @@ model ProgramBlock {
 
   // Programming details
   primaryGoal     PrimaryGoal?
-  split           String?   // "upper_lower" | "ppl" | "full_body" | "bro_split" | custom
+  split           ProgramSplit?
   daysPerWeek     Int?      // 2-6
   progressionModel String?  // e.g. "double progression", "linear", "wave"
   deloadPlanned   Boolean   @default(false)
@@ -314,4 +344,22 @@ model MacroTarget {
 
   @@index([memberId])
   @@index([memberId, status])
+}
+
+/// Generated daily plan — workout + nutrition for a given day.
+/// Stores the full plan output and the constraints used to generate it.
+model DailyPlan {
+  id           String   @id @default(cuid())
+  memberId     String
+  member       Member   @relation(fields: [memberId], references: [id])
+  date         DateTime @db.Date
+  mode         String   // "travel" | "normal" | "recovery"
+  plan         Json     // full DailyPlan output (workouts + nutrition)
+  constraints  Json     // NormalizedConstraints snapshot
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([memberId, date])
+  @@index([memberId])
 }

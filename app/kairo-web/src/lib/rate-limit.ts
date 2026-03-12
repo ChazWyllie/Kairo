@@ -28,8 +28,6 @@ interface RateLimiter {
   check: (key: string) => RateLimitResult;
 }
 
-const store = new Map<string, number[]>();
-
 /**
  * Creates a rate limiter with the given config.
  * Each call creates a fresh limiter (useful for testing).
@@ -108,5 +106,15 @@ export const registerLimiter = createRateLimiter({
  */
 export const waitlistLimiter = createRateLimiter({
   maxRequests: 5,
+  windowMs: 60_000,
+});
+
+/**
+ * Shared plan generation rate limiter instance.
+ * 10 requests per 60 seconds per IP — plan gen is CPU-intensive
+ * but members should be able to retry without long waits.
+ */
+export const planLimiter = createRateLimiter({
+  maxRequests: 10,
   windowMs: 60_000,
 });

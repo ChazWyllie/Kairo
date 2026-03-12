@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { track } from "@/lib/analytics";
-import { PLANS, type PlanConfig } from "@/lib/stripe-prices";
+import { PLANS, type PlanDisplay } from "@/lib/stripe-prices";
 import {
   LANDING_SECTIONS,
   type HeroSection,
@@ -75,7 +75,6 @@ export default function HomePage() {
         buttonTextColor="#fff"
         ctaHref="/login"
         ctaLabel="Sign In"
-        ease="power3.out"
       />
 
       {/* ─── Hero ─── */}
@@ -140,12 +139,15 @@ export default function HomePage() {
           </div>
 
           {/* Billing Toggle */}
-          <div className="flex items-center justify-center gap-3 mb-8">
-            <span
-              className={`text-sm font-medium ${billingInterval === "monthly" ? "text-black" : "text-neutral-400"}`}
+          <div className="flex items-center justify-center gap-3 mb-8" role="group" aria-label="Billing interval">
+            <button
+              type="button"
+              onClick={() => setBillingInterval("monthly")}
+              aria-pressed={billingInterval === "monthly"}
+              className={`text-sm font-medium transition-colors ${billingInterval === "monthly" ? "text-black" : "text-neutral-400 hover:text-neutral-700"}`}
             >
               Monthly
-            </span>
+            </button>
             <button
               type="button"
               onClick={() =>
@@ -154,6 +156,7 @@ export default function HomePage() {
               className="relative inline-flex h-7 w-12 items-center rounded-full transition-colors"
               style={{ backgroundColor: billingInterval === "annual" ? "#000" : "#d4d4d4" }}
               aria-label="Toggle annual billing"
+              aria-pressed={billingInterval === "annual"}
             >
               <span
                 className="inline-block h-5 w-5 rounded-full bg-white transition-transform"
@@ -162,11 +165,14 @@ export default function HomePage() {
                 }}
               />
             </button>
-            <span
-              className={`text-sm font-medium ${billingInterval === "annual" ? "text-black" : "text-neutral-400"}`}
+            <button
+              type="button"
+              onClick={() => setBillingInterval("annual")}
+              aria-pressed={billingInterval === "annual"}
+              className={`text-sm font-medium transition-colors ${billingInterval === "annual" ? "text-black" : "text-neutral-400 hover:text-neutral-700"}`}
             >
               Annual
-            </span>
+            </button>
             {billingInterval === "annual" && (
               <span className="ml-2 rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
                 Save ~17%
@@ -221,7 +227,7 @@ function PricingCard({
   billingInterval,
   highlighted,
 }: {
-  plan: PlanConfig;
+  plan: PlanDisplay;
   billingInterval: "monthly" | "annual";
   highlighted?: boolean;
 }) {

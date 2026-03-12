@@ -11,7 +11,8 @@
  * - Accessibility: heading hierarchy contract
  */
 import { describe, it, expect } from "vitest";
-import { PLANS, type PlanConfig } from "@/lib/stripe-prices";
+import { PLANS, type PlanDisplay } from "@/lib/stripe-prices";
+import { ALLOWED_PRICE_IDS } from "@/lib/stripe-server";
 
 describe("Landing page data contracts", () => {
   // ── Plan Config Completeness ──
@@ -29,10 +30,9 @@ describe("Landing page data contracts", () => {
     }
   });
 
-  it("all plans have valid price IDs", () => {
-    for (const plan of PLANS) {
-      expect(plan.monthlyPriceId).toMatch(/^price_/);
-      expect(plan.annualPriceId).toMatch(/^price_/);
+  it("all Stripe price IDs start with price_", () => {
+    for (const id of ALLOWED_PRICE_IDS) {
+      expect(id).toMatch(/^price_/);
     }
   });
 
@@ -78,17 +78,15 @@ describe("Landing page data contracts", () => {
     }
   });
 
-  // ── PlanConfig type contract ──
+  // ── PlanDisplay type contract ──
 
-  it("each plan satisfies PlanConfig interface", () => {
-    const requiredKeys: (keyof PlanConfig)[] = [
+  it("each plan satisfies PlanDisplay interface", () => {
+    const requiredKeys: (keyof PlanDisplay)[] = [
       "tier",
       "name",
       "tagline",
       "monthlyPrice",
       "annualPrice",
-      "monthlyPriceId",
-      "annualPriceId",
       "features",
     ];
 

@@ -42,9 +42,10 @@ export function proxy(request: NextRequest): NextResponse {
     "camera=(), microphone=(), geolocation=(), interest-cohort=()"
   );
 
-  // Content Security Policy — nonce-based script-src, 'strict-dynamic' propagates
-  // trust to scripts loaded by nonced scripts. 'unsafe-inline' retained for
-  // style-src only (Tailwind/Next.js inject inline styles that can't use nonces).
+  // Content Security Policy — nonce-based script-src with 'strict-dynamic'.
+  // The nonce is forwarded to the app via x-nonce request header so the root
+  // layout can read it. 'strict-dynamic' cascades trust to scripts loaded by
+  // nonced scripts (covers Next.js dynamic chunks).
   response.headers.set(
     "content-security-policy",
     [
