@@ -12,6 +12,7 @@ import {
   validateApplySubmission,
   type ApplyStep,
 } from "@/lib/apply-flow";
+import { PLANS, type PlanTier } from "@/lib/stripe-prices";
 
 /**
  * Application form — pre-payment screening.
@@ -177,9 +178,20 @@ function ApplyContent() {
 
   // ── Done state ──
   if (done) {
+    const matchedPlan = preferredTier
+      ? PLANS.find((p) => p.tier === (preferredTier as PlanTier))
+      : null;
+    const discountedPrice = matchedPlan
+      ? Math.round(matchedPlan.monthlyPrice * 0.9)
+      : null;
+    const ctaHref = preferredTier
+      ? `/quiz/result?tier=${preferredTier}&founding=true`
+      : "/quiz/result?founding=true";
+
     return (
       <main className="min-h-screen bg-white text-black">
         <div className="mx-auto max-w-2xl px-6 py-16 text-center">
+          {/* Confirmation */}
           <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-3xl mb-4">
             ✅
           </div>
@@ -188,12 +200,68 @@ function ApplyContent() {
             Thanks for applying, {fullName.split(" ")[0]}! We&apos;ll review your
             application and get back to you with the next steps.
           </p>
-          <Link
-            href="/"
-            className="mt-8 inline-block rounded-xl bg-black px-6 py-3 text-white font-medium"
-          >
-            ← Back to home
-          </Link>
+
+          {/* Divider */}
+          <div className="my-10 flex items-center gap-4">
+            <div className="flex-1 h-px bg-neutral-200" />
+            <span className="text-xs text-neutral-400 uppercase tracking-wide">or</span>
+            <div className="flex-1 h-px bg-neutral-200" />
+          </div>
+
+          {/* Founding Member upsell */}
+          <div className="bg-neutral-50 border border-neutral-200 rounded-xl p-6 text-left">
+            <h2 className="text-xl font-semibold text-center">Become a Founding Member</h2>
+            <p className="mt-2 text-sm text-neutral-600 text-center">
+              Pay now and lock in 10% off forever — plus priority onboarding and direct coach access.
+            </p>
+
+            {/* Tier-specific pricing */}
+            {matchedPlan && discountedPrice !== null ? (
+              <p className="mt-4 text-center text-lg font-medium">
+                {matchedPlan.name} ·{" "}
+                <span className="line-through text-neutral-400">${matchedPlan.monthlyPrice}/mo</span>
+                {" "}→ ${discountedPrice}/mo
+              </p>
+            ) : (
+              <p className="mt-4 text-center text-sm text-neutral-600">
+                10% off any plan — forever.
+              </p>
+            )}
+
+            {/* Perks list */}
+            <ul className="mt-5 space-y-2">
+              {[
+                "10% off your subscription — forever",
+                "Locked-in rate — price never increases",
+                "Priority onboarding — first in line",
+                "Direct coach access via WhatsApp",
+              ].map((perk) => (
+                <li key={perk} className="flex items-start gap-2 text-sm text-neutral-700">
+                  <span className="text-green-600 font-bold mt-0.5">✓</span>
+                  {perk}
+                </li>
+              ))}
+            </ul>
+
+            {/* CTAs */}
+            <div className="mt-6 flex flex-col items-center gap-3">
+              <Link
+                href={ctaHref}
+                onClick={() =>
+                  track({
+                    name: "founding_member_cta_click",
+                    properties: { tier: preferredTier || "none" },
+                  })
+                }
+                className="bg-black text-white rounded-xl px-6 py-3 font-medium inline-block"
+              >
+                Secure My Spot
+              </Link>
+              <Link href="/" className="text-sm text-neutral-500 hover:text-neutral-800">
+                No thanks, I&apos;ll wait
+              </Link>
+            </div>
+          </div>
         </div>
       </main>
     );
