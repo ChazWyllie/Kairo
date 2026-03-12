@@ -42,17 +42,15 @@ export function proxy(request: NextRequest): NextResponse {
     "camera=(), microphone=(), geolocation=(), interest-cohort=()"
   );
 
-  // Content Security Policy — 'unsafe-inline' for script-src is required because
-  // Next.js injects inline scripts during hydration that cannot be nonced without
-  // wiring the x-nonce header through layout.tsx. The nonce is still generated and
-  // forwarded (x-nonce header) for future migration.
-  // TODO: once layout.tsx stamps nonce on <script> tags, switch to:
-  //   `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://js.stripe.com`
+  // Content Security Policy — nonce-based script-src with 'strict-dynamic'.
+  // The nonce is forwarded to the app via x-nonce request header so the root
+  // layout can read it. 'strict-dynamic' cascades trust to scripts loaded by
+  // nonced scripts (covers Next.js dynamic chunks).
   response.headers.set(
     "content-security-policy",
     [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' https://js.stripe.com",
+      `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://js.stripe.com`,
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: https:",
       "font-src 'self'",
