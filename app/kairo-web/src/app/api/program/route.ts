@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireCoachAuth, requireMemberOrCoachAuth } from "@/lib/auth";
 import { sendProgramUpdated } from "@/services/email";
+import { ProgramSplit } from "@prisma/client";
 
 /**
  * Program API — manage training program blocks for members.
@@ -116,7 +117,7 @@ export async function POST(request: NextRequest) {
         startDate: new Date(fields.startDate),
         endDate: fields.endDate ? new Date(fields.endDate) : null,
         primaryGoal: fields.primaryGoal ?? null,
-        split: fields.split ?? null,
+        split: (fields.split as ProgramSplit) ?? null,
         daysPerWeek: fields.daysPerWeek ?? null,
         progressionModel: fields.progressionModel ?? null,
         deloadPlanned: fields.deloadPlanned,
@@ -278,7 +279,7 @@ export async function PATCH(request: NextRequest) {
     if (fields.status !== undefined) updateData.status = fields.status;
     if (fields.endDate !== undefined) updateData.endDate = new Date(fields.endDate);
     if (fields.primaryGoal !== undefined) updateData.primaryGoal = fields.primaryGoal;
-    if (fields.split !== undefined) updateData.split = fields.split;
+    if (fields.split !== undefined) updateData.split = fields.split as ProgramSplit;
     if (fields.daysPerWeek !== undefined) updateData.daysPerWeek = fields.daysPerWeek;
     if (fields.progressionModel !== undefined)
       updateData.progressionModel = fields.progressionModel;

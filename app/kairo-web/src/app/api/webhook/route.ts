@@ -3,6 +3,7 @@ import Stripe from "stripe";
 import { getStripe } from "@/services/stripe";
 import { env } from "@/lib/env";
 import { prisma } from "@/lib/prisma";
+import { PlanTier, BillingInterval } from "@prisma/client";
 import { notifyAdmin, notifyAdminCancellation, sendWelcomeEmail } from "@/services/email";
 
 /**
@@ -116,8 +117,8 @@ export async function POST(request: NextRequest) {
     });
 
     // 6. Extract plan metadata (set during checkout)
-    const planTier = (session.metadata?.planTier as string) || null;
-    const billingInterval = (session.metadata?.billingInterval as string) || null;
+    const planTier = (session.metadata?.planTier as PlanTier) || null;
+    const billingInterval = (session.metadata?.billingInterval as BillingInterval) || null;
 
     // 7. Upsert member — create if new, update if existing
     await prisma.member.upsert({
