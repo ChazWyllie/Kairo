@@ -225,15 +225,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Record event for idempotency
-    await prisma.stripeEvent.create({
-      data: { id: event.id },
-    });
+    // Atomically record event + update member in a transaction.
+    // If the member update fails, the StripeEvent record is rolled back
+    // so Stripe can safely retry the webhook.
+    await prisma.$transaction(async (tx) => {
+      await tx.stripeEvent.create({
+        data: { id: event.id },
+      });
 
-    // Mark the member as canceled
-    await prisma.member.updateMany({
-      where: { stripeSubId: subscriptionId },
-      data: { status: "canceled" },
+      await tx.member.updateMany({
+        where: { stripeSubId: subscriptionId },
+        data: { status: "canceled" },
+      });
     });
 
     // Notify admin of cancellation (fire-and-forget)
@@ -259,14 +262,15 @@ export async function POST(request: NextRequest) {
         : null;
 
     if (subscriptionId) {
-      // Record event for idempotency
-      await prisma.stripeEvent.create({
-        data: { id: event.id },
-      });
+      await prisma.$transaction(async (tx) => {
+        await tx.stripeEvent.create({
+          data: { id: event.id },
+        });
 
-      await prisma.member.updateMany({
-        where: { stripeSubId: subscriptionId },
-        data: { status: "past_due" },
+        await tx.member.updateMany({
+          where: { stripeSubId: subscriptionId },
+          data: { status: "past_due" },
+        });
       });
     }
 
@@ -286,14 +290,15 @@ export async function POST(request: NextRequest) {
         : null;
 
     if (subscriptionId) {
-      // Record event for idempotency
-      await prisma.stripeEvent.create({
-        data: { id: event.id },
-      });
+      await prisma.$transaction(async (tx) => {
+        await tx.stripeEvent.create({
+          data: { id: event.id },
+        });
 
-      await prisma.member.updateMany({
-        where: { stripeSubId: subscriptionId, status: "past_due" },
-        data: { status: "active" },
+        await tx.member.updateMany({
+          where: { stripeSubId: subscriptionId, status: "past_due" },
+          data: { status: "active" },
+        });
       });
     }
 
