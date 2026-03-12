@@ -91,6 +91,11 @@ model Member {
   planTier         PlanTier?
   billingInterval  BillingInterval?
 
+  // Founding member — early-pay waitlist offer (10% off forever)
+  isFoundingMember  Boolean   @default(false)
+  foundingMemberAt  DateTime? // when they locked in founding status
+  foundingCouponId  String?   // Stripe coupon ID applied at checkout
+
   // Onboarding — basic (Phase 4)
   goal             String?  // "fat_loss" | "muscle" | "maintenance"
   daysPerWeek      Int?     // 1-7
@@ -252,6 +257,7 @@ model Application {
   approvedAt          DateTime?
   paymentSent         Boolean  @default(false)
   convertedToMember   Boolean  @default(false)
+  isFoundingMember    Boolean  @default(false) // opted into founding member offer
 
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
