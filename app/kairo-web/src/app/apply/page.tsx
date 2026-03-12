@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { track } from "@/lib/analytics";
 import {
@@ -19,6 +20,8 @@ import {
  *
  * Required: email, fullName, goal
  * Everything else is optional but helps coach qualify the lead.
+ *
+ * Accepts ?tier= param from /quiz/result to pre-select the preferred tier.
  */
 
 const GOALS = [
@@ -47,7 +50,10 @@ const TIERS = [
   { value: "vip", label: "VIP Elite · $349/mo", desc: "Daily access + priority everything" },
 ] as const;
 
-export default function ApplyPage() {
+const VALID_APPLY_TIERS = ["foundation", "coaching", "performance", "vip"] as const;
+
+function ApplyContent() {
+  const searchParams = useSearchParams();
   const [step, setStep] = useState<ApplyStep>("info");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -74,6 +80,14 @@ export default function ApplyPage() {
   useEffect(() => {
     track({ name: "page_view", properties: { path: "/apply" } });
   }, []);
+
+  // Pre-select tier from URL param (e.g. coming from /quiz/result?tier=coaching)
+  useEffect(() => {
+    const tierParam = searchParams.get("tier");
+    if (tierParam && (VALID_APPLY_TIERS as readonly string[]).includes(tierParam)) {
+      setPreferredTier(tierParam);
+    }
+  }, [searchParams]);
 
   const currentIdx = APPLY_STEPS.indexOf(step);
   const progress = ((currentIdx + 1) / APPLY_STEPS.length) * 100;
@@ -651,5 +665,19 @@ export default function ApplyPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function ApplyPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-white flex items-center justify-center">
+          <p className="text-neutral-400">Loading application…</p>
+        </main>
+      }
+    >
+      <ApplyContent />
+    </Suspense>
   );
 }

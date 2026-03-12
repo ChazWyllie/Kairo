@@ -5,13 +5,12 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { track } from "@/lib/analytics";
 import { PLANS, type PlanDisplay, type PlanTier } from "@/lib/stripe-prices";
-import { isValidEmail } from "@/lib/validation";
 
 /**
  * /quiz/result — Shows the recommended tier after quiz completion.
  *
- * Reads `tier` and `leadId` from query params (set by /quiz form).
- * Displays the recommended plan, its features, and CTA to checkout.
+ * Reads `tier` from query params (set by /quiz form).
+ * Displays the recommended plan, its features, and CTA to /apply?tier={tier}.
  * Falls back to "coaching" if tier is invalid.
  *
  * Fires `quiz_result_viewed` analytics event on mount.
@@ -22,7 +21,6 @@ const VALID_TIERS: PlanTier[] = ["foundation", "coaching", "performance", "vip"]
 function ResultContent() {
   const searchParams = useSearchParams();
   const tierParam = searchParams.get("tier") ?? "coaching";
-  const leadId = searchParams.get("leadId");
 
   const tier: PlanTier = VALID_TIERS.includes(tierParam as PlanTier)
     ? (tierParam as PlanTier)
@@ -42,56 +40,6 @@ function ResultContent() {
   useEffect(() => {
     track({ name: "quiz_result_viewed", properties: { tier } });
   }, [tier]);
-
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  async function handleCheckout(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-
-    if (!isValidEmail(email)) {
-      setError("Please enter a valid email.");
-      return;
-    }
-
-    setLoading(true);
-    track({
-      name: "checkout_started",
-      properties: {
-        tier: plan.tier,
-        interval: billingInterval,
-        hasPhone: !!phone.trim(),
-      },
-    });
-
-    try {
-      const res = await fetch("/api/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          phone: phone.trim() || undefined,
-          tier: plan.tier,
-          interval: billingInterval,
-          ...(leadId ? { leadId } : {}),
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error?.message ?? "Failed to start checkout.");
-
-      window.location.href = data.url;
-      return;
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Something went wrong.";
-      track({ name: "checkout_error", properties: { error: msg, tier: plan.tier } });
-      setError(msg);
-      setLoading(false);
-    }
-  }
 
   return (
     <main className="min-h-screen bg-white text-black flex flex-col">
@@ -176,51 +124,19 @@ function ResultContent() {
               ))}
             </ul>
 
-            {/* Checkout form */}
-            <form onSubmit={handleCheckout} className="space-y-3">
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Email address"
-                className="w-full rounded-xl border border-neutral-300 px-4 py-3 text-base outline-none focus:border-black focus:ring-1 focus:ring-black"
-                inputMode="email"
-                autoComplete="email"
-                required
-              />
-              <input
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="Phone (optional, for coaching texts)"
-                className="w-full rounded-xl border border-neutral-300 px-4 py-3 text-base outline-none focus:border-black focus:ring-1 focus:ring-black"
-                inputMode="tel"
-                autoComplete="tel"
-              />
-              {error && (
-                <div className="rounded-xl border border-red-200 bg-red-50 p-3 space-y-2">
-                  <p className="text-sm text-red-600" role="alert">
-                    {error}
-                  </p>
-                  <button
-                    type="submit"
-                    className="w-full rounded-xl bg-red-600 px-4 py-2.5 text-white font-medium text-sm hover:bg-red-700 transition-colors"
-                  >
-                    Try again
-                  </button>
-                </div>
-              )}
-              {!error && (
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full rounded-xl bg-black px-6 py-3.5 text-white font-semibold text-base transition-opacity disabled:opacity-60"
-                >
-                  {loading ? "Redirecting to checkout…" : `Start Your ${plan.name} Plan →`}
-                </button>
-              )}
-            </form>
+            {/* Waitlist CTA */}
+            <Link
+              href={`/apply?tier=${tier}`}
+              className="block w-full rounded-xl bg-black px-6 py-3.5 text-white font-semibold text-base text-center transition-opacity hover:opacity-80"
+            >
+              Join the Waitlist →
+            </Link>
           </div>
+
+          {/* Waitlist note */}
+          <p className="text-center text-sm text-neutral-500 mb-6">
+            We&apos;re currently onboarding founding members. Apply now to lock in early-access pricing.
+          </p>
 
           {/* Secondary CTAs */}
           <div className="text-center space-y-3">
