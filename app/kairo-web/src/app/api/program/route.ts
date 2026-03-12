@@ -3,7 +3,6 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireCoachAuth, requireMemberOrCoachAuth } from "@/lib/auth";
 import { sendProgramUpdated } from "@/services/email";
-import { ProgramSplit } from "@prisma/client";
 
 /**
  * Program API — manage training program blocks for members.
@@ -20,6 +19,7 @@ import { ProgramSplit } from "@prisma/client";
 
 const GOALS = ["hypertrophy", "strength", "fat_loss", "maintenance"] as const;
 const STATUSES = ["active", "completed", "upcoming"] as const;
+const SPLITS = ["fullBody", "upperLower", "pushPullLegs", "ppl4Day", "custom"] as const;
 
 const CreateProgramSchema = z.object({
   email: z.string().email("A valid member email is required"),
@@ -30,7 +30,7 @@ const CreateProgramSchema = z.object({
 
   // Programming details
   primaryGoal: z.enum(GOALS).optional(),
-  split: z.string().max(100).optional(),
+  split: z.enum(SPLITS).optional(),
   daysPerWeek: z.number().int().min(1).max(7).optional(),
   progressionModel: z.string().max(200).optional(),
   deloadPlanned: z.boolean().default(false),
@@ -52,7 +52,7 @@ const PatchProgramSchema = z.object({
   status: z.enum(STATUSES).optional(),
   endDate: z.string().datetime().optional(),
   primaryGoal: z.enum(GOALS).optional(),
-  split: z.string().max(100).optional(),
+  split: z.enum(SPLITS).optional(),
   daysPerWeek: z.number().int().min(1).max(7).optional(),
   progressionModel: z.string().max(200).optional(),
   deloadPlanned: z.boolean().optional(),
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
         startDate: new Date(fields.startDate),
         endDate: fields.endDate ? new Date(fields.endDate) : null,
         primaryGoal: fields.primaryGoal ?? null,
-        split: (fields.split as ProgramSplit) ?? null,
+        split: fields.split ?? null,
         daysPerWeek: fields.daysPerWeek ?? null,
         progressionModel: fields.progressionModel ?? null,
         deloadPlanned: fields.deloadPlanned,
@@ -279,7 +279,7 @@ export async function PATCH(request: NextRequest) {
     if (fields.status !== undefined) updateData.status = fields.status;
     if (fields.endDate !== undefined) updateData.endDate = new Date(fields.endDate);
     if (fields.primaryGoal !== undefined) updateData.primaryGoal = fields.primaryGoal;
-    if (fields.split !== undefined) updateData.split = fields.split as ProgramSplit;
+    if (fields.split !== undefined) updateData.split = fields.split;
     if (fields.daysPerWeek !== undefined) updateData.daysPerWeek = fields.daysPerWeek;
     if (fields.progressionModel !== undefined)
       updateData.progressionModel = fields.progressionModel;
