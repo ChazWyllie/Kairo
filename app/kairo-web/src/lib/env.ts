@@ -42,14 +42,16 @@ export const env = createEnv({
     CRON_SECRET: z
       .string()
       .min(16, "CRON_SECRET must be at least 16 characters"),
-    STRIPE_PRICE_FOUNDATION_MONTHLY: z.string().startsWith("price_"),
-    STRIPE_PRICE_FOUNDATION_ANNUAL: z.string().startsWith("price_"),
-    STRIPE_PRICE_COACHING_MONTHLY: z.string().startsWith("price_"),
-    STRIPE_PRICE_COACHING_ANNUAL: z.string().startsWith("price_"),
-    STRIPE_PRICE_PERFORMANCE_MONTHLY: z.string().startsWith("price_"),
-    STRIPE_PRICE_PERFORMANCE_ANNUAL: z.string().startsWith("price_"),
-    STRIPE_PRICE_VIP_MONTHLY: z.string().startsWith("price_"),
-    STRIPE_PRICE_VIP_ANNUAL: z.string().startsWith("price_"),
+    // Stripe price IDs — optional during waitlist phase (checkout disabled).
+    // Will be required once checkout is re-enabled.
+    STRIPE_PRICE_FOUNDATION_MONTHLY: z.string().startsWith("price_").optional(),
+    STRIPE_PRICE_FOUNDATION_ANNUAL: z.string().startsWith("price_").optional(),
+    STRIPE_PRICE_COACHING_MONTHLY: z.string().startsWith("price_").optional(),
+    STRIPE_PRICE_COACHING_ANNUAL: z.string().startsWith("price_").optional(),
+    STRIPE_PRICE_PERFORMANCE_MONTHLY: z.string().startsWith("price_").optional(),
+    STRIPE_PRICE_PERFORMANCE_ANNUAL: z.string().startsWith("price_").optional(),
+    STRIPE_PRICE_VIP_MONTHLY: z.string().startsWith("price_").optional(),
+    STRIPE_PRICE_VIP_ANNUAL: z.string().startsWith("price_").optional(),
   },
   // No client-side env vars — Stripe keys stay server-side
   client: {},
