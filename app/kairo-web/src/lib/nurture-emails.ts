@@ -1,5 +1,5 @@
 /**
- * Nurture email sequence — personalized drip content for quiz leads.
+ * Nurture email sequence with personalized drip content for quiz leads.
  *
  * Per deep research report:
  * - 3-5 emails over 1-2 weeks: useful content, social proof, CTA
@@ -8,12 +8,12 @@
  *
  * Sequence:
  *   Step 0: Quiz welcome (already sent via sendQuizWelcomeEmail)
- *   Step 1: Day 1 — Quick win tip (personalized by goal)
- *   Step 2: Day 3 — Social proof + deeper value
- *   Step 3: Day 5 — Overcome objections + CTA
- *   Step 4: Day 7 — Final nudge + urgency
+ *   Step 1: Day 1 - Quick win tip (personalized by goal)
+ *   Step 2: Day 3 - Social proof + deeper value
+ *   Step 3: Day 5 - Overcome objections + CTA
+ *   Step 4: Day 7 - Final nudge + urgency
  *
- * Pure data — no side effects. Used by the nurture service.
+ * Pure data with no side effects. Used by the nurture service.
  */
 
 export interface NurtureContext {
@@ -63,7 +63,7 @@ function goalContent(goal: string | null): { tip: string; angle: string } {
  * Generate the nurture email for a given step.
  *
  * Returns null for invalid steps or steps beyond the sequence.
- * Step 0 is handled by sendApplicationReceived — this covers steps 1-4.
+ * Step 0 is handled by sendApplicationReceived. This covers steps 1-4.
  */
 export function getNurtureEmail(
   step: number,
@@ -81,7 +81,7 @@ export function getNurtureEmail(
         subject: `One thing to ${angle.split(" ").slice(0, 3).join(" ")} this week`,
         html: `
           <h2>Here's your quick win 💡</h2>
-          <p>Hi — based on your application, your goal is to <strong>${angle}</strong>. Here's one evidence-backed tip you can start today:</p>
+          <p>Hi, based on your application, your goal is to <strong>${angle}</strong>. Here's one evidence-backed tip you can start today:</p>
           <blockquote style="border-left: 3px solid #000; padding-left: 16px; margin: 16px 0; font-style: italic;">
             ${goalContent(ctx.goal).tip}
           </blockquote>
@@ -90,7 +90,7 @@ export function getNurtureEmail(
           <p style="color: #737373; font-size: 12px; margin-top: 32px;">
             <a href="${unsubUrl}" style="color: #737373;">Unsubscribe</a>
           </p>
-          <p>— Kairo Coaching</p>
+          <p>The Kairo Fitness team</p>
         `,
       };
 
@@ -100,7 +100,7 @@ export function getNurtureEmail(
         subject: "How real people are getting results with Kairo",
         html: `
           <h2>It works when you have a system</h2>
-          <p>The difference between people who hit their goals and people who don't? A system that adapts to their life — not the other way around.</p>
+          <p>The difference between people who hit their goals and people who don't? A system that adapts to their life, not the other way around.</p>
           <p>Here's what our members say:</p>
           <blockquote style="border-left: 3px solid #000; padding-left: 16px; margin: 16px 0;">
             <p><em>"I've tried 5 apps and 3 trainers. Kairo is the first one that actually adjusted when life got busy instead of making me feel guilty."</em></p>
@@ -113,7 +113,7 @@ export function getNurtureEmail(
           <p style="color: #737373; font-size: 12px; margin-top: 32px;">
             <a href="${unsubUrl}" style="color: #737373;">Unsubscribe</a>
           </p>
-          <p>— Kairo Coaching</p>
+          <p>The Kairo Fitness team</p>
         `,
       };
 
@@ -123,7 +123,7 @@ export function getNurtureEmail(
         subject: "The 3 things holding you back (and how to fix them)",
         html: `
           <h2>Let's be honest about what's in the way</h2>
-          <p>Most people who apply already know what they should be doing. The problem isn't knowledge — it's execution. Here are the 3 most common blockers:</p>
+          <p>Most people who apply already know what they should be doing. The problem isn't knowledge, it's execution. Here are the 3 most common blockers:</p>
           <ol>
             <li><strong>"I don't have time."</strong> → Our plans start at 20 minutes. If you have time to scroll, you have time to train.</li>
             <li><strong>"I've tried coaching before."</strong> → Kairo isn't a PDF plan. It's adaptive coaching that changes when your life changes.</li>
@@ -134,7 +134,7 @@ export function getNurtureEmail(
           <p style="color: #737373; font-size: 12px; margin-top: 32px;">
             <a href="${unsubUrl}" style="color: #737373;">Unsubscribe</a>
           </p>
-          <p>— Kairo Coaching</p>
+          <p>The Kairo Fitness team</p>
         `,
       };
 
@@ -157,7 +157,7 @@ export function getNurtureEmail(
           <p style="color: #737373; font-size: 12px; margin-top: 32px;">
             This is the last email in this series. <a href="${unsubUrl}" style="color: #737373;">Unsubscribe</a>
           </p>
-          <p>— Kairo Coaching</p>
+          <p>The Kairo Fitness team</p>
         `,
       };
 
