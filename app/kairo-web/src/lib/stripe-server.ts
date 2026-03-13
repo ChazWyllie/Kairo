@@ -14,20 +14,20 @@ import type { PlanTier, PlanDisplay, BillingInterval } from "@/lib/stripe-prices
  *  Values may be undefined during waitlist phase when STRIPE_PRICE_* aren't set. */
 const PRICE_IDS: Record<PlanTier, { monthly: string | undefined; annual: string | undefined }> = {
   foundation: {
-    monthly: env.STRIPE_PRICE_FOUNDATION_MONTHLY,
-    annual: env.STRIPE_PRICE_FOUNDATION_ANNUAL,
+    monthly: env.STRIPE_PRICE_FOUNDATION_MONTHLY ?? "",
+    annual: env.STRIPE_PRICE_FOUNDATION_ANNUAL ?? "",
   },
   coaching: {
-    monthly: env.STRIPE_PRICE_COACHING_MONTHLY,
-    annual: env.STRIPE_PRICE_COACHING_ANNUAL,
+    monthly: env.STRIPE_PRICE_COACHING_MONTHLY ?? "",
+    annual: env.STRIPE_PRICE_COACHING_ANNUAL ?? "",
   },
   performance: {
-    monthly: env.STRIPE_PRICE_PERFORMANCE_MONTHLY,
-    annual: env.STRIPE_PRICE_PERFORMANCE_ANNUAL,
+    monthly: env.STRIPE_PRICE_PERFORMANCE_MONTHLY ?? "",
+    annual: env.STRIPE_PRICE_PERFORMANCE_ANNUAL ?? "",
   },
   vip: {
-    monthly: env.STRIPE_PRICE_VIP_MONTHLY,
-    annual: env.STRIPE_PRICE_VIP_ANNUAL,
+    monthly: env.STRIPE_PRICE_VIP_MONTHLY ?? "",
+    annual: env.STRIPE_PRICE_VIP_ANNUAL ?? "",
   },
 };
 
