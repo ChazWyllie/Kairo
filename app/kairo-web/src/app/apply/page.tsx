@@ -60,6 +60,8 @@ function ApplyContent() {
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [foundingLoading, setFoundingLoading] = useState(false);
+  const [foundingError, setFoundingError] = useState<string | null>(null);
 
   // Form fields
   const [email, setEmail] = useState("");
@@ -176,6 +178,38 @@ function ApplyContent() {
     }
   }
 
+  async function handleFoundingCheckout() {
+    setFoundingError(null);
+    setFoundingLoading(true);
+
+    const tier = preferredTier || "foundation";
+
+    track({
+      name: "founding_member_cta_click",
+      properties: { tier },
+    });
+
+    try {
+      const res = await fetch("/api/checkout/founding", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, tier, interval: "monthly" }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.error?.message ?? "Failed to start checkout.");
+      }
+
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (err: unknown) {
+      setFoundingError(err instanceof Error ? err.message : "Something went wrong.");
+      setFoundingLoading(false);
+    }
+  }
+
   // ── Done state ──
   if (done) {
     const matchedPlan = preferredTier
@@ -184,9 +218,6 @@ function ApplyContent() {
     const discountedPrice = matchedPlan
       ? Math.round(matchedPlan.monthlyPrice * 0.9)
       : null;
-    const ctaHref = preferredTier
-      ? `/quiz/result?tier=${preferredTier}&founding=true`
-      : "/quiz/result?founding=true";
 
     return (
       <main className="min-h-screen bg-white text-black">
@@ -243,20 +274,21 @@ function ApplyContent() {
               ))}
             </ul>
 
+            {foundingError && (
+              <p className="mt-4 text-sm text-red-600 text-center" role="alert">
+                {foundingError}
+              </p>
+            )}
+
             {/* CTAs */}
             <div className="mt-6 flex flex-col items-center gap-3">
-              <Link
-                href={ctaHref}
-                onClick={() =>
-                  track({
-                    name: "founding_member_cta_click",
-                    properties: { tier: preferredTier || "none" },
-                  })
-                }
-                className="bg-black text-white rounded-xl px-6 py-3 font-medium inline-block"
+              <button
+                onClick={handleFoundingCheckout}
+                disabled={foundingLoading}
+                className="bg-black text-white rounded-xl px-6 py-3 font-medium transition-opacity disabled:opacity-60"
               >
-                Secure My Spot
-              </Link>
+                {foundingLoading ? "Redirecting to checkout…" : "Secure My Spot"}
+              </button>
               <Link href="/" className="text-sm text-neutral-500 hover:text-neutral-800">
                 No thanks, I&apos;ll wait
               </Link>

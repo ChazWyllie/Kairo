@@ -3,7 +3,7 @@ import Stripe from "stripe";
 import { getStripe } from "@/services/stripe";
 import { env } from "@/lib/env";
 import { prisma } from "@/lib/prisma";
-import { notifyAdmin, notifyAdminCancellation, sendWelcomeEmail } from "@/services/email";
+import { notifyAdmin, notifyAdminCancellation, sendWelcomeEmail, sendFoundingMemberWelcome } from "@/services/email";
 import { PlanTier, BillingInterval } from "@prisma/client";
 
 /**
@@ -121,6 +121,10 @@ export async function POST(request: NextRequest) {
       ? (rawBillingInterval as BillingInterval)
       : null;
 
+    // 5b. Detect founding member checkout
+    const isFoundingMember = session.metadata?.isFoundingMember === "true";
+    const foundingCouponId = session.metadata?.foundingCouponId ?? null;
+
     // 6. Atomically record event + upsert member in a transaction.
     //    If the member upsert fails, the StripeEvent record is rolled back
     //    so Stripe can safely retry the webhook.
@@ -138,6 +142,9 @@ export async function POST(request: NextRequest) {
           status: "active",
           planTier,
           billingInterval,
+          isFoundingMember,
+          foundingMemberAt: isFoundingMember ? new Date() : null,
+          foundingCouponId: isFoundingMember ? foundingCouponId : null,
         },
         update: {
           stripeCustomerId: customerId,
@@ -145,6 +152,11 @@ export async function POST(request: NextRequest) {
           status: "active",
           planTier,
           billingInterval,
+          ...(isFoundingMember && {
+            isFoundingMember: true,
+            foundingMemberAt: new Date(),
+            foundingCouponId,
+          }),
         },
       });
     });
@@ -163,7 +175,11 @@ export async function POST(request: NextRequest) {
 
     // 8. Send welcome email to new member (fire-and-forget)
     try {
-      await sendWelcomeEmail({ memberEmail: email });
+      if (isFoundingMember) {
+        await sendFoundingMemberWelcome({ email, planTier: planTier ?? undefined });
+      } else {
+        await sendWelcomeEmail({ memberEmail: email });
+      }
     } catch (emailErr) {
       console.error("[webhook] Welcome email failed (non-fatal)");
     }
