@@ -434,6 +434,69 @@ export async function notifyAdminNewApplication(
   });
 }
 
+// ── Founding Member Welcome ──
+
+interface FoundingMemberWelcomeEmail {
+  email: string;
+  planTier?: string;
+}
+
+/**
+ * Send a founding member welcome email with their perks highlighted.
+ * Fire-and-forget — failures should not disrupt webhook processing.
+ */
+export async function sendFoundingMemberWelcome(
+  data: FoundingMemberWelcomeEmail
+): Promise<void> {
+  const { email, planTier } = data;
+
+  const tierNames: Record<string, string> = {
+    foundation: "Foundation",
+    coaching: "Coaching",
+    performance: "Performance",
+    vip: "VIP Elite",
+  };
+  const tierName = planTier ? (tierNames[planTier] ?? planTier) : "your";
+
+  if (!env.RESEND_API_KEY) {
+    console.log("[email-stub] Founding member welcome:", {
+      subject: "Welcome, Founding Member!",
+      planTier,
+    });
+    return;
+  }
+
+  const resend = await getResend();
+
+  await resend.emails.send({
+    from: env.EMAIL_FROM,
+    to: email,
+    subject: "Welcome, Founding Member! You're locked in.",
+    html: `
+      <h2>You're officially a Founding Member.</h2>
+      <p>Your <strong>${escapeHtml(tierName)}</strong> plan is now active with <strong>10% off forever</strong>.</p>
+
+      <h3>Your founding member perks:</h3>
+      <ul>
+        <li><strong>10% off</strong> — applied to every payment, forever</li>
+        <li><strong>Locked-in rate</strong> — your price never increases</li>
+        <li><strong>Priority onboarding</strong> — you're first in line</li>
+        <li><strong>Direct coach access</strong> — via WhatsApp</li>
+      </ul>
+
+      <h3>What happens next:</h3>
+      <ol>
+        <li><strong>Onboarding form</strong> — tell us your goals, schedule, and limitations</li>
+        <li><strong>Your first plan</strong> — personalized training + nutrition within 48 hours</li>
+        <li><strong>Weekly check-ins</strong> — send updates and we'll adjust your plan</li>
+      </ol>
+
+      <p>Questions? Just reply to this email.</p>
+      <p>— Kairo Coaching</p>
+    `,
+  });
+}
+
 // ── Review / Check-in Emails (Milestone L) ──
 
 interface ProgramUpdatedEmail {
