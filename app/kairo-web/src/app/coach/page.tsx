@@ -408,6 +408,9 @@ export default function CoachPage() {
           onRefresh={() => loadCoachData()}
         />
 
+        {/* ── LAUNCH EMAIL — send batch announcement to waitlist ── */}
+        <LaunchEmailSection />
+
         {/* ── TEMPLATES — quick-access coach scripts ── */}
         <TemplatesSection />
 
@@ -1200,6 +1203,86 @@ function TemplatesSection() {
           })}
         </div>
       )}
+    </section>
+  );
+}
+
+// ── Launch Email Section ──
+
+type LaunchEmailResult = { sent: number; skipped: number };
+type LaunchEmailState =
+  | { phase: "idle" }
+  | { phase: "loading" }
+  | { phase: "success"; result: LaunchEmailResult }
+  | { phase: "error"; message: string };
+
+function LaunchEmailSection() {
+  const [state, setState] = useState<LaunchEmailState>({ phase: "idle" });
+
+  async function handleSend() {
+    if (
+      !confirm(
+        "Send launch announcement to all waitlist signups? This cannot be undone."
+      )
+    )
+      return;
+
+    setState({ phase: "loading" });
+
+    try {
+      const res = await fetch("/api/coach/launch-email", {
+        method: "POST",
+        credentials: "include",
+      });
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        throw new Error(
+          data?.error?.message ?? "Failed to send launch emails"
+        );
+      }
+
+      setState({ phase: "success", result: data as LaunchEmailResult });
+    } catch (err) {
+      setState({
+        phase: "error",
+        message:
+          err instanceof Error ? err.message : "Something went wrong",
+      });
+    }
+  }
+
+  return (
+    <section className={components.card.base}>
+      <h2 className="text-lg font-semibold mb-1">Launch Email</h2>
+      <p className="text-sm text-neutral-500 mb-4">
+        Send the Kairo launch announcement to all waitlist signups (Applications
+        + Leads, deduplicated). Founding members receive a reminder that their
+        10% discount is active.
+      </p>
+
+      {state.phase === "success" && (
+        <p className="text-sm text-green-700 mb-3">
+          Sent {state.result.sent} email{state.result.sent !== 1 ? "s" : ""}.
+          {state.result.skipped > 0
+            ? ` ${state.result.skipped} skipped due to errors.`
+            : ""}
+        </p>
+      )}
+
+      {state.phase === "error" && (
+        <p className="text-sm text-red-600 mb-3" role="alert">
+          {state.message}
+        </p>
+      )}
+
+      <button
+        onClick={handleSend}
+        disabled={state.phase === "loading"}
+        className={components.button.primary}
+      >
+        {state.phase === "loading" ? "Sending…" : "Send Launch Email"}
+      </button>
     </section>
   );
 }

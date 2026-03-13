@@ -497,6 +497,58 @@ export async function sendFoundingMemberWelcome(
   });
 }
 
+// ── Launch Email ──
+
+interface LaunchEmail {
+  email: string;
+  isFoundingMember?: boolean;
+}
+
+/**
+ * Send Kairo launch announcement to a waitlist signup.
+ * Founding members get a reminder their 10% discount is active.
+ */
+export async function sendLaunchEmail(data: LaunchEmail): Promise<void> {
+  const { email, isFoundingMember } = data;
+
+  if (!env.RESEND_API_KEY) {
+    console.log("[email-stub] Launch email:", { email, isFoundingMember });
+    return;
+  }
+
+  const resend = await getResend();
+
+  const foundingNote = isFoundingMember
+    ? `<p>As a Founding Member, your <strong>10% lifetime discount</strong> is active and waiting for you.</p>`
+    : "";
+
+  await resend.emails.send({
+    from: env.EMAIL_FROM,
+    to: email,
+    subject: "Kairo is live — your spot is waiting",
+    html: `
+      <h2>Kairo Fitness is now live and accepting members.</h2>
+      ${foundingNote}
+      <p>
+        <a href="${env.APP_URL}/#pricing" style="display:inline-block;background:#000;color:#fff;padding:12px 24px;border-radius:12px;text-decoration:none;font-weight:600;">
+          Choose Your Plan →
+        </a>
+      </p>
+      <h3>Plans available:</h3>
+      <ul>
+        <li><strong>Foundation</strong> — training plan + nutrition targets</li>
+        <li><strong>Coaching</strong> — weekly check-ins + program adjustments</li>
+        <li><strong>Performance</strong> — daily coaching + priority support</li>
+        <li><strong>VIP Elite</strong> — full-service 1-on-1 coaching</li>
+      </ul>
+      <p style="color:#737373;font-size:13px;">
+        You're receiving this because you signed up for the Kairo waitlist.
+        To unsubscribe, reply with "unsubscribe" in the subject line.
+      </p>
+    `,
+  });
+}
+
 // ── Review / Check-in Emails (Milestone L) ──
 
 interface ProgramUpdatedEmail {
