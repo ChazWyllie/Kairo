@@ -67,7 +67,7 @@ export async function notifyAdmin(data: AdminNotification): Promise<void> {
 
 /**
  * Notify admin when a member cancels their subscription.
- * Fire-and-forget — failures should not disrupt webhook processing.
+ * Fire-and-forget. Failures should not disrupt webhook processing.
  */
 export async function notifyAdminCancellation(
   data: AdminCancellationNotification
@@ -98,14 +98,14 @@ export async function notifyAdminCancellation(
 
 /**
  * Send welcome email to a new member with next steps.
- * Fire-and-forget — failures should not disrupt webhook processing.
+ * Fire-and-forget. Failures should not disrupt webhook processing.
  */
 export async function sendWelcomeEmail(data: WelcomeEmail): Promise<void> {
   const { memberEmail } = data;
 
   if (!env.RESEND_API_KEY) {
     console.log("[email-stub] Welcome email:", {
-      subject: "Welcome to Kairo Coaching",
+      subject: "Welcome to Kairo Fitness",
     });
     return;
   }
@@ -115,18 +115,18 @@ export async function sendWelcomeEmail(data: WelcomeEmail): Promise<void> {
   await resend.emails.send({
     from: env.EMAIL_FROM,
     to: memberEmail,
-    subject: "Welcome to Kairo Coaching 🏋️",
+    subject: "Welcome to Kairo Fitness 🏋️",
     html: `
-      <h2>Welcome to Kairo Coaching!</h2>
-      <p>Thanks for joining — your membership is now active.</p>
+      <h2>Welcome to Kairo Fitness!</h2>
+      <p>Thanks for joining. Your membership is now active.</p>
       <h3>What happens next:</h3>
       <ol>
-        <li><strong>Fill out your onboarding form</strong> — tell us your goals, schedule, and any limitations so we can build your plan.</li>
-        <li><strong>Receive your first plan</strong> — personalized training + nutrition targets within 48 hours.</li>
-        <li><strong>Weekly check-in</strong> — every week, send a quick update and we'll adjust your plan.</li>
+        <li><strong>Fill out your onboarding form</strong>, tell us your goals, schedule, and any limitations so we can build your plan.</li>
+        <li><strong>Receive your first plan</strong>, with personalized training + nutrition targets within 48 hours.</li>
+        <li><strong>Weekly check-in</strong>, every week send a quick update and we'll adjust your plan.</li>
       </ol>
       <p>Questions? Just reply to this email.</p>
-      <p>— Kairo Coaching</p>
+      <p>The Kairo Fitness team</p>
     `,
   });
 }
@@ -140,7 +140,7 @@ interface QuizWelcomeEmail {
 
 /**
  * Send a welcome email after quiz completion with recommended tier info.
- * Fire-and-forget — failures should not disrupt quiz submission.
+ * Fire-and-forget. Failures should not disrupt quiz submission.
  *
  * In development or when Resend isn't configured, logs to console.
  */
@@ -178,7 +178,7 @@ export async function sendQuizWelcomeEmail(
       <p>This plan is tailored to match your goals, experience level, and training schedule.</p>
       <p><a href="${env.APP_URL}/quiz/result?tier=${recommendedTier}">View your recommendation →</a></p>
       <p>Questions? Just reply to this email.</p>
-      <p>— Kairo Coaching</p>
+      <p>The Kairo Fitness team</p>
     `,
   });
 }
@@ -199,7 +199,7 @@ interface NurtureEmailParams {
  * is invalid (e.g. step 5 doesn't exist). Caller should update
  * lastNurtureStep only when this returns true.
  *
- * Fire-and-forget — failures should not crash the nurture batch.
+ * Fire-and-forget. Failures should not crash the nurture batch.
  */
 export async function sendNurtureEmail(
   data: NurtureEmailParams
@@ -272,7 +272,7 @@ interface ApplicationAdminNotification {
 
 /**
  * Send confirmation email when someone submits an application.
- * Fire-and-forget — failures should not block the API response.
+ * Fire-and-forget. Failures should not block the API response.
  */
 export async function sendApplicationReceived(
   data: ApplicationReceivedEmail
@@ -295,15 +295,15 @@ export async function sendApplicationReceived(
     subject: "We got your application 🎯",
     html: `
       <h2>Hey ${escapeHtml(firstName)},</h2>
-      <p>Thanks for applying to Kairo Coaching — we've received your application and will review it within 24–48 hours.</p>
+      <p>Thanks for applying to Kairo Fitness. We've received your application and will review it within 24–48 hours.</p>
       <h3>What happens next:</h3>
       <ol>
-        <li><strong>We review your info</strong> — to make sure we're the right fit for your goals.</li>
-        <li><strong>You get an email</strong> — with your approval and a link to get started.</li>
-        <li><strong>We build your plan</strong> — personalized training + nutrition within 48 hours of sign-up.</li>
+        <li><strong>We review your info</strong> to make sure we're the right fit for your goals.</li>
+        <li><strong>You get an email</strong> with your approval and a link to get started.</li>
+        <li><strong>We build your plan</strong> with personalized training + nutrition within 48 hours of sign-up.</li>
       </ol>
       <p>Questions in the meantime? Just reply to this email.</p>
-      <p>— Kairo Coaching</p>
+      <p>The Kairo Fitness team</p>
     `,
   });
 }
@@ -311,7 +311,7 @@ export async function sendApplicationReceived(
 /**
  * Send approval email with a link to choose a plan and pay.
  * Includes tier recommendation if applicant expressed a preference.
- * Fire-and-forget — failures should not block the API response.
+ * Fire-and-forget. Failures should not block the API response.
  */
 export async function sendApplicationApproved(
   data: ApplicationApprovedEmail
@@ -346,19 +346,19 @@ export async function sendApplicationApproved(
     subject: "You're in! Welcome to Kairo 🏋️",
     html: `
       <h2>Hey ${escapeHtml(firstName)},</h2>
-      <p>Great news — your application has been approved! We're excited to work with you.</p>
+      <p>Great news, your application has been approved! We're excited to work with you.</p>
       ${tierNote}
       <p><a href="${env.APP_URL}/#pricing" style="display:inline-block;background:#000;color:#fff;padding:12px 24px;border-radius:12px;text-decoration:none;font-weight:600;">Choose your plan →</a></p>
       <p>Once you sign up, you'll get a welcome email with next steps and your onboarding form.</p>
       <p>Questions? Just reply to this email.</p>
-      <p>— Kairo Coaching</p>
+      <p>The Kairo Fitness team</p>
     `,
   });
 }
 
 /**
  * Notify coach/admin when a new application is submitted.
- * Fire-and-forget — failures should not block the API response.
+ * Fire-and-forget. Failures should not block the API response.
  */
 export async function notifyAdminNewApplication(
   data: ApplicationAdminNotification
@@ -443,7 +443,7 @@ interface FoundingMemberWelcomeEmail {
 
 /**
  * Send a founding member welcome email with their perks highlighted.
- * Fire-and-forget — failures should not disrupt webhook processing.
+ * Fire-and-forget. Failures should not disrupt webhook processing.
  */
 export async function sendFoundingMemberWelcome(
   data: FoundingMemberWelcomeEmail
@@ -478,21 +478,21 @@ export async function sendFoundingMemberWelcome(
 
       <h3>Your founding member perks:</h3>
       <ul>
-        <li><strong>10% off</strong> — applied to every payment, forever</li>
-        <li><strong>Locked-in rate</strong> — your price never increases</li>
-        <li><strong>Priority onboarding</strong> — you're first in line</li>
-        <li><strong>Direct coach access</strong> — via WhatsApp</li>
+        <li><strong>10% off</strong>, applied to every payment, forever</li>
+        <li><strong>Locked-in rate</strong>, your price never increases</li>
+        <li><strong>Priority onboarding</strong>, you're first in line</li>
+        <li><strong>Direct coach access</strong> via WhatsApp</li>
       </ul>
 
       <h3>What happens next:</h3>
       <ol>
-        <li><strong>Onboarding form</strong> — tell us your goals, schedule, and limitations</li>
-        <li><strong>Your first plan</strong> — personalized training + nutrition within 48 hours</li>
-        <li><strong>Weekly check-ins</strong> — send updates and we'll adjust your plan</li>
+        <li><strong>Onboarding form</strong>, tell us your goals, schedule, and limitations</li>
+        <li><strong>Your first plan</strong>, personalized training + nutrition within 48 hours</li>
+        <li><strong>Weekly check-ins</strong>, send updates and we'll adjust your plan</li>
       </ol>
 
       <p>Questions? Just reply to this email.</p>
-      <p>— Kairo Coaching</p>
+      <p>The Kairo Fitness team</p>
     `,
   });
 }
@@ -525,7 +525,7 @@ export async function sendLaunchEmail(data: LaunchEmail): Promise<void> {
   await resend.emails.send({
     from: env.EMAIL_FROM,
     to: email,
-    subject: "Kairo is live — your spot is waiting",
+    subject: "Kairo is live. Your spot is waiting",
     html: `
       <h2>Kairo Fitness is now live and accepting members.</h2>
       ${foundingNote}
@@ -536,10 +536,10 @@ export async function sendLaunchEmail(data: LaunchEmail): Promise<void> {
       </p>
       <h3>Plans available:</h3>
       <ul>
-        <li><strong>Foundation</strong> — training plan + nutrition targets</li>
-        <li><strong>Coaching</strong> — weekly check-ins + program adjustments</li>
-        <li><strong>Performance</strong> — daily coaching + priority support</li>
-        <li><strong>VIP Elite</strong> — full-service 1-on-1 coaching</li>
+        <li><strong>Foundation</strong>, training plan + nutrition targets</li>
+        <li><strong>Coaching</strong>, weekly check-ins + program adjustments</li>
+        <li><strong>Performance</strong>, daily coaching + priority support</li>
+        <li><strong>VIP Elite</strong>, full-service 1-on-1 coaching</li>
       </ul>
       <p style="color:#737373;font-size:13px;">
         You're receiving this because you signed up for the Kairo waitlist.
@@ -615,7 +615,7 @@ export async function sendReviewDelivered(
       </div>
       ${loomSection}
       <p>Check your <a href="${env.APP_URL}/dashboard">dashboard</a> for the full details.</p>
-      <p>— Kairo Coaching</p>
+      <p>The Kairo Fitness team</p>
     `,
   });
 }
@@ -649,7 +649,7 @@ export async function sendProgramUpdated(
       <p>Your training program <strong>${escapeHtml(programName)}</strong> has been updated.</p>
       ${adjustmentsMade ? `<div style="background:#f5f5f5;padding:16px;border-radius:12px;margin:16px 0;"><p style="margin:0;"><strong>What changed:</strong></p><p style="margin:8px 0 0;">${escapeHtml(adjustmentsMade)}</p></div>` : ""}
       <p>Check your <a href="${env.APP_URL}/dashboard">dashboard</a> for the full details.</p>
-      <p>— Kairo Coaching</p>
+      <p>The Kairo Fitness team</p>
     `,
   });
 }
@@ -680,7 +680,7 @@ export async function sendCheckInReminder(
       <p>Just a reminder to submit your weekly check-in so we can review your progress and make any needed adjustments.</p>
       <p>The more consistent your check-ins are, the better we can coach you.</p>
       <p><a href="${env.APP_URL}/dashboard" style="display:inline-block;background:#000;color:#fff;padding:12px 24px;border-radius:12px;text-decoration:none;font-weight:600;">Submit check-in →</a></p>
-      <p>— Kairo Coaching</p>
+      <p>The Kairo Fitness team</p>
     `,
   });
 }
