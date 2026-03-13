@@ -10,8 +10,9 @@ import { env } from "@/lib/env";
 import { PLANS } from "@/lib/stripe-prices";
 import type { PlanTier, PlanDisplay, BillingInterval } from "@/lib/stripe-prices";
 
-/** Price ID lookup table — server only, env vars read here */
-const PRICE_IDS: Record<PlanTier, { monthly: string; annual: string }> = {
+/** Price ID lookup table — server only, env vars read here.
+ *  Values may be undefined during waitlist phase when STRIPE_PRICE_* aren't set. */
+const PRICE_IDS: Record<PlanTier, { monthly: string | undefined; annual: string | undefined }> = {
   foundation: {
     monthly: env.STRIPE_PRICE_FOUNDATION_MONTHLY,
     annual: env.STRIPE_PRICE_FOUNDATION_ANNUAL,
@@ -30,23 +31,32 @@ const PRICE_IDS: Record<PlanTier, { monthly: string; annual: string }> = {
   },
 };
 
-/** Get a Stripe price ID for a given tier + interval */
+/** Get a Stripe price ID for a given tier + interval.
+ *  Throws if the price ID isn't configured (checkout requires it). */
 export function getStripePriceId(tier: PlanTier, interval: BillingInterval): string {
-  return PRICE_IDS[tier][interval === "monthly" ? "monthly" : "annual"];
+  const priceId = PRICE_IDS[tier][interval === "monthly" ? "monthly" : "annual"];
+  if (!priceId) {
+    throw new Error(`Stripe price ID not configured for ${tier}/${interval}`);
+  }
+  return priceId;
 }
 
 /** Set of all valid Stripe Price IDs — for checkout validation */
 export const ALLOWED_PRICE_IDS = new Set(
-  Object.values(PRICE_IDS).flatMap((p) => [p.monthly, p.annual])
+  Object.values(PRICE_IDS)
+    .flatMap((p) => [p.monthly, p.annual])
+    .filter((id): id is string => !!id)
 );
 
 /** Pre-built reverse map: priceId → { tier, interval } for O(1) lookup */
 const PRICE_ID_REVERSE = new Map<string, { tier: PlanTier; interval: BillingInterval }>(
-  (Object.entries(PRICE_IDS) as [PlanTier, { monthly: string; annual: string }][]).flatMap(
-    ([tier, ids]) => [
-      [ids.monthly, { tier, interval: "monthly" as BillingInterval }],
-      [ids.annual, { tier, interval: "annual" as BillingInterval }],
-    ]
+  (Object.entries(PRICE_IDS) as [PlanTier, { monthly: string | undefined; annual: string | undefined }][]).flatMap(
+    ([tier, ids]) => {
+      const entries: [string, { tier: PlanTier; interval: BillingInterval }][] = [];
+      if (ids.monthly) entries.push([ids.monthly, { tier, interval: "monthly" as BillingInterval }]);
+      if (ids.annual) entries.push([ids.annual, { tier, interval: "annual" as BillingInterval }]);
+      return entries;
+    }
   )
 );
 
