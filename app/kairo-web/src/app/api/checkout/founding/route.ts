@@ -42,11 +42,16 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Validate founding member coupon is configured
+  // Founding checkout must apply discount while waitlist offer is active
   if (!env.FOUNDING_MEMBER_COUPON_ID) {
     console.error("[founding-checkout] FOUNDING_MEMBER_COUPON_ID not configured");
     return NextResponse.json(
-      { error: { code: "NOT_AVAILABLE", message: "Founding member offer is not currently available." } },
+      {
+        error: {
+          code: "NOT_AVAILABLE",
+          message: "Founding member checkout is temporarily unavailable. Please try again shortly.",
+        },
+      },
       { status: 503 }
     );
   }
@@ -107,7 +112,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Create Stripe Checkout Session with founding coupon
+    // Create Stripe Checkout Session with founding coupon (required)
     const session = await getStripe().checkout.sessions.create({
       mode: "subscription",
       customer_email: email,
