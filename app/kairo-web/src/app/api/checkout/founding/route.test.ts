@@ -39,7 +39,7 @@ describe("POST /api/checkout/founding", () => {
     mockGetStripePriceId.mockReset();
     mockGetStripePriceId.mockReturnValue("price_test_foundation_m");
     // Restore the coupon ID configured in setup.ts mock
-    env.FOUNDING_COUPON_ID = "coupon_test_founding_10";
+    env.FOUNDING_MEMBER_COUPON_ID = "coupon_test_founding_10";
   });
 
   // ── Happy Path ──
@@ -76,7 +76,7 @@ describe("POST /api/checkout/founding", () => {
 
   describe("founding member session", () => {
     it("applies founding coupon discount to session", async () => {
-      env.FOUNDING_COUPON_ID = "coupon_founding_10";
+      env.FOUNDING_MEMBER_COUPON_ID = "coupon_founding_10";
       mockStripeCheckoutCreate.mockResolvedValue({ id: "cs_test_123", url: MOCK_SESSION_URL });
 
       await POST(makeRequest({ email: "founding@test.com", tier: "coaching", interval: "annual" }));
@@ -89,7 +89,7 @@ describe("POST /api/checkout/founding", () => {
     });
 
     it("includes isFoundingMember and foundingCouponId in session metadata", async () => {
-      env.FOUNDING_COUPON_ID = "coupon_founding_10";
+      env.FOUNDING_MEMBER_COUPON_ID = "coupon_founding_10";
       mockStripeCheckoutCreate.mockResolvedValue({ id: "cs_test_123", url: MOCK_SESSION_URL });
 
       await POST(makeRequest({ email: "founding@test.com", tier: "performance", interval: "monthly" }));
@@ -120,8 +120,8 @@ describe("POST /api/checkout/founding", () => {
   // ── Coupon Not Configured ──
 
   describe("founding coupon not configured", () => {
-    it("returns 503 NOT_AVAILABLE when FOUNDING_COUPON_ID is missing", async () => {
-      env.FOUNDING_COUPON_ID = undefined;
+    it("returns 503 NOT_AVAILABLE when FOUNDING_MEMBER_COUPON_ID is missing", async () => {
+      env.FOUNDING_MEMBER_COUPON_ID = undefined;
 
       const response = await POST(
         makeRequest({ email: "founding@test.com", tier: "foundation", interval: "monthly" })
