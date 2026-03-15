@@ -20,6 +20,18 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Playwright / browser-tool quick start
+
+If browser automation cannot connect, run the dev server bound to `0.0.0.0`:
+
+```bash
+npm run dev:host
+```
+
+Then run Playwright against `http://127.0.0.1:3000`.
+
+> Note: the current `/` route is the waitlist page. Pricing UI lives in `src/components/FullHomePage.tsx` and is not mounted on `/` right now, so target a route that exists (for example `/apply`) unless you temporarily swap the homepage component.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

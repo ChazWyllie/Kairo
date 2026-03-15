@@ -10,7 +10,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "dev:host": "next dev --hostname 0.0.0.0 --port 3000"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.4.2",
