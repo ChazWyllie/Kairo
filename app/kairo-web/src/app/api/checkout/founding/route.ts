@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getStripe } from "@/services/stripe";
 import { env } from "@/lib/env";
-import { prisma } from "@/lib/prisma";
 import { checkoutLimiter } from "@/lib/rate-limit";
 import { getStripePriceId } from "@/lib/stripe-server";
 import type { PlanTier, BillingInterval } from "@/lib/stripe-prices";
@@ -86,33 +85,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Upsert a pending member with founding intent
-    await prisma.member.upsert({
-      where: { email },
-      create: {
-        email,
-        status: "pending",
-        planTier: tier,
-        billingInterval: interval,
-        isFoundingMember: true,
-      },
-      update: {
-        planTier: tier,
-        billingInterval: interval,
-        isFoundingMember: true,
-      },
-    });
-
-    // Mark application as founding member if one exists
-    const application = await prisma.application.findUnique({ where: { email } });
-    if (application) {
-      await prisma.application.update({
-        where: { email },
-        data: { isFoundingMember: true },
-      });
-    }
-
     // Create Stripe Checkout Session with founding coupon (required)
+    // Note: Member activation and DB writes happen in the webhook handler
+    // (checkout.session.completed) after payment is confirmed — not here.
     const session = await getStripe().checkout.sessions.create({
       mode: "subscription",
       customer_email: email,
