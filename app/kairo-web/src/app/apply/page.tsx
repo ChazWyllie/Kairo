@@ -62,6 +62,7 @@ function ApplyContent() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [foundingLoading, setFoundingLoading] = useState(false);
   const [foundingError, setFoundingError] = useState<string | null>(null);
+  const [foundingInterval, setFoundingInterval] = useState<"monthly" | "annual">("monthly");
 
   // Form fields
   const [email, setEmail] = useState("");
@@ -193,7 +194,7 @@ function ApplyContent() {
       const res = await fetch("/api/checkout/founding", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, tier, interval: "monthly" }),
+        body: JSON.stringify({ email, tier, interval: foundingInterval }),
       });
 
       const data = await res.json();
@@ -215,9 +216,13 @@ function ApplyContent() {
     const matchedPlan = preferredTier
       ? PLANS.find((p) => p.tier === (preferredTier as PlanTier))
       : null;
-    const discountedPrice = matchedPlan
-      ? Math.round(matchedPlan.monthlyPrice * 0.9)
+    const basePrice = matchedPlan
+      ? foundingInterval === "annual"
+        ? matchedPlan.annualPrice
+        : matchedPlan.monthlyPrice
       : null;
+    const discountedPrice = basePrice !== null ? Math.round(basePrice * 0.9) : null;
+    const priceSuffix = foundingInterval === "annual" ? "/yr" : "/mo";
 
     return (
       <main className="min-h-screen bg-white text-black">
@@ -246,12 +251,41 @@ function ApplyContent() {
               Pay now and lock in 10% off forever — plus priority onboarding and direct coach access.
             </p>
 
+            {/* Billing interval toggle */}
+            <div className="mt-4 flex justify-center">
+              <div className="inline-flex rounded-lg border border-neutral-200 bg-white p-1 gap-1">
+                <button
+                  type="button"
+                  onClick={() => setFoundingInterval("monthly")}
+                  className={`rounded-md px-4 py-1.5 text-sm font-medium transition-colors ${
+                    foundingInterval === "monthly"
+                      ? "bg-black text-white"
+                      : "text-neutral-600 hover:text-neutral-900"
+                  }`}
+                >
+                  Monthly
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFoundingInterval("annual")}
+                  className={`rounded-md px-4 py-1.5 text-sm font-medium transition-colors ${
+                    foundingInterval === "annual"
+                      ? "bg-black text-white"
+                      : "text-neutral-600 hover:text-neutral-900"
+                  }`}
+                >
+                  Annual
+                  <span className="ml-1.5 text-xs text-green-600 font-semibold">Save ~17%</span>
+                </button>
+              </div>
+            </div>
+
             {/* Tier-specific pricing */}
             {matchedPlan && discountedPrice !== null ? (
               <p className="mt-4 text-center text-lg font-medium">
                 {matchedPlan.name} ·{" "}
-                <span className="line-through text-neutral-400">${matchedPlan.monthlyPrice}/mo</span>
-                {" "}→ ${discountedPrice}/mo
+                <span className="line-through text-neutral-400">${basePrice}{priceSuffix}</span>
+                {" "}→ ${discountedPrice}{priceSuffix}
               </p>
             ) : (
               <p className="mt-4 text-center text-sm text-neutral-600">

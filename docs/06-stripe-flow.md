@@ -14,7 +14,7 @@ Kairo uses Stripe Checkout (hosted) for a single subscription product. Stripe ha
 |---------|-------|---------|
 | Kairo Coaching | $50.00 USD | Monthly, recurring |
 
-Price ID: configured via `STRIPE_PRICE_ID` env var.
+Price IDs: configured via `STRIPE_PRICE_<TIER>_<INTERVAL>` environment variables. Founding checkout also requires `FOUNDING_MEMBER_COUPON_ID`.
 
 ---
 
@@ -32,7 +32,7 @@ Visitor lands on page (from Instagram bio link)
 ┌─────────────────────┐
 │  POST /api/checkout  │  ← Server creates Stripe Checkout Session
 │  line_items:         │     mode: subscription
-│    STRIPE_PRICE_ID   │     from env var
+│ STRIPE_PRICE_<...>   │     resolved on server
 │    quantity: 1       │
 └────────┬────────────┘
          │
@@ -117,12 +117,11 @@ stripe trigger checkout.session.completed
 
 ## 6. Environment Variables
 
-```bash
-STRIPE_SECRET_KEY=sk_test_...          # API secret key (test mode)
-STRIPE_PUBLISHABLE_KEY=pk_test_...     # Publishable key (for client if needed)
-STRIPE_WEBHOOK_SECRET=whsec_...        # Webhook signing secret
-STRIPE_PRICE_ID=price_...              # $50/mo Kairo Coaching (test mode)
-```
+Core Stripe and checkout environment variables are required (API secret, webhook secret, pricing configuration, and optional founding-offer coupon settings).
+
+For a complete, runtime-validated source of truth, see `app/kairo-web/src/lib/env.ts`.
+
+`FOUNDING_MEMBER_COUPON_ID` is required while the founding waitlist offer is active. If missing, `/api/checkout/founding` returns `503 NOT_AVAILABLE` so users are not charged without the founding discount.
 
 ---
 
