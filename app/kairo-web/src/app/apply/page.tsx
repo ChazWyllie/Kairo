@@ -227,10 +227,23 @@ function ApplyContent() {
             ✅
           </div>
           <h1 className="text-3xl font-semibold">Application Received</h1>
-          <p className="mt-4 text-neutral-600 max-w-md mx-auto">
+          <p className="mt-4 max-w-md mx-auto text-neutral-600">
             Thanks for applying, {fullName.split(" ")[0]}! We&apos;ll review your
-            application and get back to you with the next steps.
+            application and email your next steps.
           </p>
+
+          <div className="mx-auto mt-6 grid max-w-lg gap-2 rounded-xl border border-neutral-200 bg-neutral-50 p-4 text-left text-sm text-neutral-700">
+            <p><span className="font-medium">Now:</span> Your application is in review.</p>
+            <p><span className="font-medium">Next 24–48h:</span> You&apos;ll receive approval or follow-up questions by email.</p>
+            <p><span className="font-medium">If approved:</span> You&apos;ll get your payment link and onboarding steps.</p>
+          </div>
+
+          <div className="mx-auto mt-4 max-w-lg rounded-xl border border-neutral-200 bg-white p-4 text-left">
+            <p className="text-sm font-medium text-neutral-800">While you wait</p>
+            <p className="mt-1 text-sm text-neutral-600">
+              Keep an eye on your inbox and promotions tab, and add Kairo to safe senders so you don&apos;t miss your next-step email.
+            </p>
+          </div>
 
           {/* Divider */}
           <div className="my-10 flex items-center gap-4">
@@ -303,31 +316,54 @@ function ApplyContent() {
     <main className="min-h-screen bg-white text-black">
       <div className="mx-auto max-w-2xl px-6 py-12">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-semibold">Apply for Coaching</h1>
-          <p className="mt-2 text-neutral-600">
+        <div className="mb-8 rounded-2xl border border-neutral-200 bg-neutral-50 p-5 sm:p-6">
+          <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Application</p>
+          <h1 className="mt-2 text-2xl sm:text-3xl font-semibold">Apply for Coaching</h1>
+          <p className="mt-2 text-sm sm:text-base text-neutral-600">
             Tell us about yourself so we can build the right plan for you.
           </p>
+          <div className="mt-4 grid gap-2 text-sm text-neutral-600 sm:grid-cols-3">
+            <p className="rounded-lg border border-neutral-200 bg-white px-3 py-2">⏱ Takes about 2–3 minutes</p>
+            <p className="rounded-lg border border-neutral-200 bg-white px-3 py-2">💳 No payment required</p>
+            <p className="rounded-lg border border-neutral-200 bg-white px-3 py-2">📩 Coach reply in 24–48 hours</p>
+          </div>
         </div>
 
         {/* Progress bar */}
         <div className="mb-8">
-          <div className="flex justify-between text-xs text-neutral-500 mb-1">
+          <div className="mb-1 flex justify-between text-xs text-neutral-500">
             <span>Step {currentIdx + 1} of {APPLY_STEPS.length}</span>
             <span>{Math.round(progress)}%</span>
           </div>
-          <div className="h-2 rounded-full bg-neutral-200 overflow-hidden">
+          <div className="h-2 overflow-hidden rounded-full bg-neutral-200">
             <div
               className="h-full rounded-full bg-black transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>
+          <div className="mt-2 hidden grid-cols-4 gap-2 text-[11px] text-neutral-500 sm:grid">
+            <span className={step === "info" ? "font-semibold text-black" : ""}>Info</span>
+            <span className={step === "fitness" ? "font-semibold text-black" : ""}>Fitness</span>
+            <span className={step === "goals" ? "font-semibold text-black" : ""}>Goals</span>
+            <span className={step === "review" ? "font-semibold text-black" : ""}>Review</span>
+          </div>
         </div>
 
         <form onSubmit={onSubmit}>
+          {error && (
+            <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert" aria-live="polite">
+              <p className="font-medium">We need one quick fix</p>
+              <p className="mt-1">{error}</p>
+            </div>
+          )}
+          {loading && step === "review" && (
+            <div className="mb-5 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm text-neutral-700" aria-live="polite">
+              Submitting your application… please don&apos;t close this page.
+            </div>
+          )}
           {/* ── Step 1: Basic Info ── */}
           {step === "info" && (
-            <div className="space-y-5 animate-fade-in">
+            <div className="space-y-5 animate-fade-in rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm sm:p-6">
               <h2 className="text-lg font-semibold">Basic Information</h2>
 
               <div className="space-y-1">
@@ -347,7 +383,7 @@ function ApplyContent() {
                   onChange={(e) => {
                     setFullName(e.target.value);
                     setError(null);
-                    setFieldErrors((prev) => { const { fullName: _, ...rest } = prev; return rest; });
+                    setFieldErrors((prev) => { const next = { ...prev }; delete next.fullName; return next; });
                   }}
                   required
                   autoComplete="name"
@@ -376,7 +412,7 @@ function ApplyContent() {
                   onChange={(e) => {
                     setEmail(e.target.value);
                     setError(null);
-                    setFieldErrors((prev) => { const { email: _, ...rest } = prev; return rest; });
+                    setFieldErrors((prev) => { const next = { ...prev }; delete next.email; return next; });
                   }}
                   required
                   autoComplete="email"
@@ -419,12 +455,6 @@ function ApplyContent() {
                 />
               </div>
 
-              {error && (
-                <p className="text-sm text-red-600" role="alert">
-                  {error}
-                </p>
-              )}
-
               <button
                 type="submit"
                 className="w-full rounded-xl bg-black px-4 py-3 text-white font-medium"
@@ -436,7 +466,7 @@ function ApplyContent() {
 
           {/* ── Step 2: Training Background ── */}
           {step === "training" && (
-            <div className="space-y-5 animate-fade-in">
+            <div className="space-y-5 animate-fade-in rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm sm:p-6">
               <h2 className="text-lg font-semibold">Training Background</h2>
 
               <fieldset className="space-y-2">
@@ -514,13 +544,7 @@ function ApplyContent() {
                 />
               </div>
 
-              {error && (
-                <p className="text-sm text-red-600" role="alert">
-                  {error}
-                </p>
-              )}
-
-              <div className="flex gap-3">
+              <div className="flex flex-col gap-3 sm:flex-row">
                 <button
                   type="button"
                   onClick={goBack}
@@ -530,7 +554,8 @@ function ApplyContent() {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 rounded-xl bg-black px-4 py-3 text-white font-medium"
+                  disabled={loading}
+                  className="flex-1 rounded-xl bg-black px-4 py-3 text-white font-medium transition-opacity disabled:opacity-60"
                 >
                   Continue →
                 </button>
@@ -540,7 +565,7 @@ function ApplyContent() {
 
           {/* ── Step 3: Goals & Struggles ── */}
           {step === "goals" && (
-            <div className="space-y-5 animate-fade-in">
+            <div className="space-y-5 animate-fade-in rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm sm:p-6">
               <h2 className="text-lg font-semibold">Goals & Motivation</h2>
 
               <fieldset className={`space-y-2 ${fieldErrors.goal ? "rounded-xl border-2 border-red-400 p-3" : ""}`}>
@@ -555,7 +580,7 @@ function ApplyContent() {
                       onClick={() => {
                         setGoal(g.value);
                         setError(null);
-                        setFieldErrors((prev) => { const { goal: _, ...rest } = prev; return rest; });
+                        setFieldErrors((prev) => { const next = { ...prev }; delete next.goal; return next; });
                       }}
                       className={`rounded-xl border px-4 py-2 text-sm font-medium transition-colors ${
                         goal === g.value
@@ -642,13 +667,7 @@ function ApplyContent() {
                 />
               </div>
 
-              {error && (
-                <p className="text-sm text-red-600" role="alert">
-                  {error}
-                </p>
-              )}
-
-              <div className="flex gap-3">
+              <div className="flex flex-col gap-3 sm:flex-row">
                 <button
                   type="button"
                   onClick={goBack}
@@ -658,7 +677,8 @@ function ApplyContent() {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 rounded-xl bg-black px-4 py-3 text-white font-medium"
+                  disabled={loading}
+                  className="flex-1 rounded-xl bg-black px-4 py-3 text-white font-medium transition-opacity disabled:opacity-60"
                 >
                   Continue →
                 </button>
@@ -668,13 +688,18 @@ function ApplyContent() {
 
           {/* ── Step 4: Review & Tier Selection ── */}
           {step === "review" && (
-            <div className="space-y-5 animate-fade-in">
+            <div className="space-y-5 animate-fade-in rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm sm:p-6">
               <h2 className="text-lg font-semibold">Choose Your Plan & Submit</h2>
 
               <fieldset className="space-y-3">
                 <legend className="text-sm font-medium">
                   Preferred tier <span className="text-neutral-400">(optional)</span>
                 </legend>
+                {!preferredTier && (
+                  <p className="rounded-lg border border-dashed border-neutral-300 bg-neutral-50 px-3 py-2 text-xs text-neutral-600">
+                    No plan selected yet — choose one for a faster recommendation, or submit without selecting.
+                  </p>
+                )}
                 {TIERS.map((t) => (
                   <button
                     key={t.value}
@@ -727,13 +752,7 @@ function ApplyContent() {
                 )}
               </div>
 
-              {error && (
-                <p className="text-sm text-red-600" role="alert">
-                  {error}
-                </p>
-              )}
-
-              <div className="flex gap-3">
+              <div className="flex flex-col gap-3 sm:flex-row">
                 <button
                   type="button"
                   onClick={goBack}
@@ -751,7 +770,7 @@ function ApplyContent() {
               </div>
 
               <p className="text-xs text-neutral-500 text-center">
-                We&apos;ll review your application and reach out within 24-48 hours.
+                We&apos;ll review your application and email your next steps within 24–48 hours.
               </p>
             </div>
           )}
@@ -772,8 +791,15 @@ export default function ApplyPage() {
   return (
     <Suspense
       fallback={
-        <main className="min-h-screen bg-white flex items-center justify-center">
-          <p className="text-neutral-400">Loading application…</p>
+        <main className="min-h-screen bg-white flex items-center justify-center px-6">
+          <div className="w-full max-w-md rounded-xl border border-neutral-200 bg-white px-6 py-5 shadow-sm">
+            <p className="text-sm font-medium text-neutral-700">Loading application…</p>
+            <p className="mt-1 text-sm text-neutral-500">Preparing your form and plan options.</p>
+            <div className="mt-4 space-y-2">
+              <div className="h-2 w-full animate-pulse rounded bg-neutral-200" />
+              <div className="h-2 w-2/3 animate-pulse rounded bg-neutral-200" />
+            </div>
+          </div>
         </main>
       }
     >
