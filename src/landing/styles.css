@@ -229,7 +229,7 @@ img {
 
 .hero-tagline {
   font-size: var(--text-lg);
-  color: var(--accent-primary);
+  color: var(--accent-light);
   font-style: italic;
   font-weight: 500;
   margin-bottom: var(--space-md);
@@ -267,6 +267,12 @@ img {
   gap: var(--space-md);
   justify-content: center;
   flex-wrap: wrap;
+}
+
+.hero-microcopy {
+  margin-top: var(--space-lg);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
 }
 
 .btn-primary {
@@ -806,7 +812,38 @@ img {
 .waitlist-text {
   font-size: var(--text-base);
   color: var(--text-secondary);
-  margin-bottom: var(--space-xl);
+  margin-bottom: var(--space-lg);
+}
+
+.waitlist-next-steps {
+  display: grid;
+  gap: var(--space-sm);
+  text-align: left;
+  max-width: 440px;
+  margin: 0 auto var(--space-xl);
+}
+
+.waitlist-step {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+.waitlist-step span {
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-full);
+  background: rgba(214, 48, 49, 0.14);
+  border: 1px solid rgba(214, 48, 49, 0.35);
+  color: var(--accent-light);
+  font-size: 11px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .waitlist-form {
@@ -863,6 +900,28 @@ img {
   font-size: var(--text-xs);
   color: var(--text-muted);
   margin-top: var(--space-md);
+}
+
+.waitlist-feedback {
+  min-height: 1.35rem;
+  font-size: var(--text-sm);
+  margin-top: var(--space-sm);
+  color: var(--text-secondary);
+}
+
+.waitlist-feedback.is-loading {
+  color: var(--warning);
+}
+
+.waitlist-feedback.is-error {
+  color: var(--danger);
+}
+
+.waitlist-submit:disabled {
+  opacity: 0.75;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 .waitlist-success {
@@ -948,12 +1007,20 @@ img {
     gap: var(--space-2xl);
   }
 
+  .waitlist-next-steps {
+    margin-bottom: var(--space-lg);
+  }
+
   .waitlist-form {
     flex-direction: column;
   }
 
   .waitlist-submit {
     width: 100%;
+  }
+
+  .waitlist-card {
+    padding: var(--space-2xl) var(--space-lg);
   }
 
   .contrast-card {
@@ -966,6 +1033,11 @@ img {
 }
 
 @media (max-width: 375px) {
+  .nav-cta {
+    padding: var(--space-sm) var(--space-md);
+    font-size: 0.75rem;
+  }
+
   .container {
     padding: 0 var(--space-md);
   }

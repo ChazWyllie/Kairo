@@ -48,6 +48,7 @@
         <a href="#waitlist" class="btn-primary">Get Early Access →</a>
         <a href="#how-it-works" class="btn-secondary">See How It Works</a>
       </div>
+      <p class="hero-microcopy">Built for busy professionals · No rigid plans · Adapts daily</p>
     </div>
   </section>
 
@@ -391,6 +392,11 @@
           <p class="waitlist-text">
             Join the waitlist. Be first to try the fitness app that works around your schedule.
           </p>
+          <div class="waitlist-next-steps" aria-label="What happens after signup">
+            <div class="waitlist-step"><span>1</span> Join the early access queue</div>
+            <div class="waitlist-step"><span>2</span> Get onboarding details by email</div>
+            <div class="waitlist-step"><span>3</span> Start with your adaptive week-one plan</div>
+          </div>
           <form class="waitlist-form" id="waitlist-form" action="#" method="POST" novalidate>
             <input 
               type="email" 
@@ -404,9 +410,10 @@
             >
             <button type="submit" class="waitlist-submit">Join Waitlist</button>
           </form>
-          <p class="waitlist-note">No spam. Unsubscribe anytime. We respect your inbox.</p>
+          <p class="waitlist-note" id="waitlist-note">No spam. Unsubscribe anytime. We respect your inbox.</p>
+          <p class="waitlist-feedback" id="waitlist-feedback" aria-live="polite"></p>
           <div class="waitlist-success" id="waitlist-success" role="alert">
-            🎉 You're on the list! We'll reach out when it's your turn.
+            🎉 You're on the list! Check your inbox — we will send onboarding details within 48 hours.
           </div>
         </div>
       </div>
@@ -439,8 +446,19 @@
       var form = document.getElementById('waitlist-form');
       var emailInput = document.getElementById('waitlist-email');
       var successMsg = document.getElementById('waitlist-success');
+      var feedbackMsg = document.getElementById('waitlist-feedback');
+      var noteMsg = document.getElementById('waitlist-note');
 
       if (!form || !emailInput || !successMsg) return;
+
+      function setFeedback(message, type) {
+        if (!feedbackMsg) return;
+        feedbackMsg.textContent = message || '';
+        feedbackMsg.classList.remove('is-error', 'is-loading');
+        if (type) {
+          feedbackMsg.classList.add(type);
+        }
+      }
 
       form.addEventListener('submit', function (e) {
         e.preventDefault();
@@ -450,12 +468,15 @@
 
         if (!email || !emailPattern.test(email)) {
           emailInput.style.borderColor = '#ff6b6b';
+          setFeedback('Please enter a valid email address.', 'is-error');
           emailInput.focus();
           return;
         }
 
         // Reset border
         emailInput.style.borderColor = '';
+        setFeedback('Saving your spot…', 'is-loading');
+        if (noteMsg) noteMsg.style.color = '';
 
         // Disable button to prevent double-submit
         var submitBtn = form.querySelector('.waitlist-submit');
@@ -468,6 +489,7 @@
         if (window.location.protocol === 'file:') {
           // No backend available from file:// — show success state directly
           form.style.display = 'none';
+          setFeedback('');
           successMsg.classList.add('show');
           return;
         }
@@ -486,6 +508,7 @@
           .then(function (data) {
             if (data.success) {
               form.style.display = 'none';
+              setFeedback('');
               successMsg.classList.add('show');
             } else {
               throw new Error(data.error?.message || 'Something went wrong.');
@@ -497,11 +520,10 @@
               submitBtn.textContent = 'Join Waitlist';
             }
             emailInput.style.borderColor = '#ff6b6b';
+            setFeedback(err.message || 'Something went wrong. Please try again.', 'is-error');
             // Show error inline (avoid alert for better UX)
-            var note = form.parentElement.querySelector('.waitlist-note');
-            if (note) {
-              note.textContent = err.message || 'Something went wrong. Please try again.';
-              note.style.color = '#ff6b6b';
+            if (noteMsg) {
+              noteMsg.style.color = '#ff6b6b';
             }
           });
       });
@@ -509,6 +531,7 @@
       // Reset border on input
       emailInput.addEventListener('input', function () {
         emailInput.style.borderColor = '';
+        setFeedback('');
       });
     })();
   </script>
