@@ -42,8 +42,8 @@ export const env = createEnv({
     CRON_SECRET: z
       .string()
       .min(16, "CRON_SECRET must be at least 16 characters"),
-    // Founding member Stripe coupon (10% off forever) — optional until coupon is created
-    FOUNDING_MEMBER_COUPON_ID: z.string().min(1).optional(),
+    // Founding Stripe coupon (10% off forever) — optional until coupon is created
+    FOUNDING_COUPON_ID: z.string().min(1).optional(),
     // Stripe price IDs — optional during waitlist phase (checkout disabled).
     // Will be required once checkout is re-enabled.
     STRIPE_PRICE_FOUNDATION_MONTHLY: z.string().startsWith("price_").optional(),
@@ -68,7 +68,7 @@ export const env = createEnv({
     AUTH_SECRET: process.env.AUTH_SECRET,
     COACH_SECRET: process.env.COACH_SECRET,
     CRON_SECRET: process.env.CRON_SECRET,
-    FOUNDING_MEMBER_COUPON_ID: process.env.FOUNDING_MEMBER_COUPON_ID,
+    FOUNDING_COUPON_ID: process.env.FOUNDING_COUPON_ID ?? process.env.FOUNDING_MEMBER_COUPON_ID,
     STRIPE_PRICE_FOUNDATION_MONTHLY: process.env.STRIPE_PRICE_FOUNDATION_MONTHLY,
     STRIPE_PRICE_FOUNDATION_ANNUAL: process.env.STRIPE_PRICE_FOUNDATION_ANNUAL,
     STRIPE_PRICE_COACHING_MONTHLY: process.env.STRIPE_PRICE_COACHING_MONTHLY,
