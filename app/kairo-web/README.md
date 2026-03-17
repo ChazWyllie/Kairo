@@ -20,17 +20,16 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-## Playwright / browser-tool quick start
 
-If browser automation cannot connect, run the dev server bound to `0.0.0.0`:
+## Environment variables
 
-```bash
-npm run dev:host
-```
+For local development, create `app/kairo-web/.env.local` and set the required values for your environment.
 
-Then run Playwright against `http://127.0.0.1:3000`.
+To keep sensitive configuration details out of this public README, environment variable requirements are documented in:
+- `src/lib/env.ts` (runtime-validated variable list)
+- `docs/06-stripe-flow.md` (Stripe checkout configuration notes)
 
-> Note: the current `/` route is the waitlist page. Pricing UI lives in `src/components/FullHomePage.tsx` and is not mounted on `/` right now, so target a route that exists (for example `/apply`) unless you temporarily swap the homepage component.
+Do not commit real secrets or production values to the repository.
 
 ## Learn More
 
