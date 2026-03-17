@@ -12,7 +12,7 @@ import {
   validateApplySubmission,
   type ApplyStep,
 } from "@/lib/apply-flow";
-import { PLANS, type PlanTier } from "@/lib/stripe-prices";
+import { PLANS, type BillingInterval, type PlanTier } from "@/lib/stripe-prices";
 
 /**
  * Application form — pre-payment screening.
@@ -45,10 +45,14 @@ const GYM_ACCESS = [
 ] as const;
 
 const TIERS = [
-  { value: "foundation", label: "Foundation · $49/mo", desc: "Templates + async check-ins" },
-  { value: "coaching", label: "Coaching · $129/mo", desc: "Personalized programming + priority support" },
-  { value: "performance", label: "Performance · $229/mo", desc: "Video reviews + weekly calls" },
-  { value: "vip", label: "VIP Elite · $349/mo", desc: "Daily access + priority everything" },
+  { value: "foundation", name: "Foundation", desc: "Templates + async check-ins" },
+  {
+    value: "coaching",
+    name: "Coaching",
+    desc: "Personalized programming + priority support",
+  },
+  { value: "performance", name: "Performance", desc: "Video reviews + weekly calls" },
+  { value: "vip", name: "VIP Elite", desc: "Daily access + priority everything" },
 ] as const;
 
 const VALID_APPLY_TIERS = ["foundation", "coaching", "performance", "vip"] as const;
@@ -79,6 +83,7 @@ function ApplyContent() {
   const [biggestObstacle, setBiggestObstacle] = useState("");
   const [helpWithMost, setHelpWithMost] = useState("");
   const [preferredTier, setPreferredTier] = useState("");
+  const [billingInterval, setBillingInterval] = useState<BillingInterval>("monthly");
   const [readyForStructure, setReadyForStructure] = useState(false);
 
   useEffect(() => {
@@ -95,6 +100,14 @@ function ApplyContent() {
 
   const currentIdx = APPLY_STEPS.indexOf(step);
   const progress = ((currentIdx + 1) / APPLY_STEPS.length) * 100;
+
+  function getTierLabel(tier: (typeof TIERS)[number]) {
+    const plan = PLANS.find((p) => p.tier === tier.value);
+    if (!plan) return tier.name;
+    const amount = billingInterval === "monthly" ? plan.monthlyPrice : plan.annualPrice;
+    const suffix = billingInterval === "monthly" ? "/mo" : "/yr";
+    return `${tier.name} · $${amount}${suffix}`;
+  }
 
   function goNext() {
     const errors = validateApplyStep(step, { email, fullName, goal });
@@ -705,6 +718,25 @@ function ApplyContent() {
             <div className="space-y-5 animate-fade-in">
               <h2 className="text-lg font-semibold">Choose Your Plan & Submit</h2>
 
+              <div className="flex items-center justify-center gap-3" role="group" aria-label="Billing interval">
+                <button
+                  type="button"
+                  onClick={() => setBillingInterval("monthly")}
+                  aria-pressed={billingInterval === "monthly"}
+                  className={`text-sm font-medium transition-colors ${billingInterval === "monthly" ? "text-black" : "text-neutral-400 hover:text-neutral-700"}`}
+                >
+                  Monthly
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBillingInterval("annual")}
+                  aria-pressed={billingInterval === "annual"}
+                  className={`text-sm font-medium transition-colors ${billingInterval === "annual" ? "text-black" : "text-neutral-400 hover:text-neutral-700"}`}
+                >
+                  Annual
+                </button>
+              </div>
+
               <fieldset className="space-y-3">
                 <legend className="text-sm font-medium">
                   Preferred tier <span className="text-neutral-400">(optional)</span>
@@ -723,7 +755,7 @@ function ApplyContent() {
                         : "border-neutral-200 hover:border-neutral-400"
                     }`}
                   >
-                    <p className="font-medium text-sm">{t.label}</p>
+                    <p className="font-medium text-sm">{getTierLabel(t)}</p>
                     <p className="text-xs text-neutral-500">{t.desc}</p>
                   </button>
                 ))}
@@ -756,7 +788,10 @@ function ApplyContent() {
                 </p>
                 {preferredTier && (
                   <p className="text-neutral-600">
-                    Tier: {TIERS.find((t) => t.value === preferredTier)?.label}
+                    Tier: {(() => {
+                      const selectedTier = TIERS.find((t) => t.value === preferredTier);
+                      return selectedTier ? getTierLabel(selectedTier) : "Not selected";
+                    })()}
                   </p>
                 )}
               </div>

@@ -234,8 +234,6 @@ function PricingCard({
   billingInterval: "monthly" | "annual";
   highlighted?: boolean;
 }) {
-  const price =
-    billingInterval === "monthly" ? plan.monthlyPrice : plan.annualPrice;
   const perMonth =
     billingInterval === "annual"
       ? Math.round(plan.annualPrice / 12)
@@ -261,11 +259,11 @@ function PricingCard({
       <div className="mt-3">
         <span className="text-3xl font-bold">${perMonth}</span>
         <span className="text-neutral-500">/mo</span>
-        {billingInterval === "annual" && (
-          <p className="mt-1 text-xs text-neutral-500">
-            ${price}/yr, billed annually
-          </p>
-        )}
+        <p className="mt-1 text-xs text-neutral-500">
+          {billingInterval === "monthly"
+            ? `${plan.monthlyPrice}/mo billed monthly`
+            : `${plan.annualPrice}/yr billed annually`}
+        </p>
       </div>
 
       <ul className="mt-5 flex-1 space-y-2 text-sm text-neutral-700">
