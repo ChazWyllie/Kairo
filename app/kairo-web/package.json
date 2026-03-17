@@ -35,7 +35,7 @@
     "dotenv": "^17.3.1",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
-    "prisma": "^7.4.2",
+    "prisma": "^7.5.0",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^4.1.0"
