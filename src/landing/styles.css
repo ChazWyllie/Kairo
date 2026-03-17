@@ -11,31 +11,66 @@
   padding: 0;
 }
 
+
 :root {
-  /* Colors */
-  --bg-primary: #0a0a0f;
-  --bg-secondary: #12121a;
-  --bg-card: #1a1a28;
-  --bg-card-hover: #222236;
-  --bg-phone: #0d0d14;
+  /* Primitive tokens */
+  --gray-0: #ffffff;
+  --gray-50: #f8f9fb;
+  --gray-100: #eceff3;
+  --gray-200: #d7dce4;
+  --gray-300: #b4bcc8;
+  --gray-500: #697386;
+  --gray-700: #2f3a4d;
+  --gray-900: #121722;
+  --gray-950: #0b0f17;
 
-  --text-primary: #f0f0f5;
-  --text-secondary: #9090a8;
-  --text-muted: #606078;
+  --brand-400: #5b7cfa;
+  --brand-500: #4567ef;
+  --brand-600: #3453d6;
 
-  --accent: #d63031;
-  --accent-light: #ff7675;
-  --accent-glow: rgba(214, 48, 49, 0.25);
-  --accent-gradient: linear-gradient(135deg, #d63031, #ff7675);
+  --success-500: #1f9d68;
+  --warning-500: #b26a00;
+  --danger-500: #c53f3f;
 
-  --success: #00cec9;
-  --success-soft: rgba(0, 206, 201, 0.15);
-  --warning: #fdcb6e;
-  --warning-soft: rgba(253, 203, 110, 0.15);
-  --danger: #ff6b6b;
+  /* Semantic tokens */
+  --surface-canvas: var(--gray-50);
+  --surface-raised: var(--gray-0);
+  --surface-muted: var(--gray-100);
+  --surface-inverse: var(--gray-900);
 
-  --border: #2a2a3e;
-  --border-light: #3a3a52;
+  --text-primary-sem: var(--gray-900);
+  --text-secondary-sem: var(--gray-700);
+  --text-muted-sem: var(--gray-500);
+
+  --border-subtle-sem: var(--gray-200);
+  --border-strong-sem: var(--gray-300);
+
+  --action-primary-sem: var(--brand-500);
+
+  /* Legacy mappings (component tokens) */
+  --bg-primary: var(--surface-canvas);
+  --bg-secondary: var(--surface-muted);
+  --bg-card: var(--surface-raised);
+  --bg-card-hover: var(--gray-50);
+  --bg-phone: var(--gray-50);
+
+  --text-primary: var(--text-primary-sem);
+  --text-secondary: var(--text-secondary-sem);
+  --text-muted: var(--text-muted-sem);
+
+  --accent: var(--action-primary-sem);
+  --accent-light: var(--brand-400);
+  --accent-glow: rgba(69, 103, 239, 0.16);
+  --accent-gradient: linear-gradient(135deg, var(--brand-500), var(--brand-400));
+
+  --success: var(--success-500);
+  --success-soft: color-mix(in srgb, var(--success-500) 14%, white);
+  --warning: var(--warning-500);
+  --warning-soft: color-mix(in srgb, var(--warning-500) 14%, white);
+  --danger: var(--danger-500);
+
+  --border: var(--border-subtle-sem);
+  --border-light: var(--border-strong-sem);
 
   /* Spacing */
   --space-xs: 0.25rem;
@@ -68,10 +103,32 @@
   --radius-full: 9999px;
 
   /* Shadows */
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
-  --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
-  --shadow-lg: 0 8px 32px rgba(0,0,0,0.5);
-  --shadow-glow: 0 0 40px var(--accent-glow);
+  --shadow-sm: 0 1px 2px rgba(17, 24, 39, 0.08);
+  --shadow-md: 0 12px 24px rgba(17, 24, 39, 0.08);
+  --shadow-lg: 0 24px 48px rgba(17, 24, 39, 0.12);
+  --shadow-glow: 0 0 0 4px rgba(69, 103, 239, 0.15);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --surface-canvas: var(--gray-950);
+    --surface-raised: #121824;
+    --surface-muted: #171f2d;
+    --surface-inverse: var(--gray-0);
+    --text-primary-sem: #eef2f8;
+    --text-secondary-sem: #c4cde0;
+    --text-muted-sem: #8a96ad;
+    --border-subtle-sem: #273246;
+    --border-strong-sem: #324058;
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --border-subtle-sem: currentColor;
+    --border-strong-sem: currentColor;
+    --accent-gradient: linear-gradient(135deg, var(--brand-600), var(--brand-600));
+  }
 }
 
 html {
@@ -229,7 +286,7 @@ img {
 
 .hero-tagline {
   font-size: var(--text-lg);
-  color: var(--accent-primary);
+  color: var(--text-secondary);
   font-style: italic;
   font-weight: 500;
   margin-bottom: var(--space-md);
@@ -737,6 +794,42 @@ img {
   text-transform: uppercase;
 }
 
+
+
+.workflow {
+  padding: var(--space-4xl) 0 var(--space-3xl);
+}
+
+.workflow .section-description {
+  max-width: 760px;
+}
+
+.workflow-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-lg);
+}
+
+.workflow-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
+  box-shadow: var(--shadow-sm);
+}
+
+.workflow-card h3 {
+  font-size: var(--text-lg);
+  margin-bottom: var(--space-sm);
+}
+
+.workflow-card ul {
+  padding-left: 1.1rem;
+  color: var(--text-secondary);
+  display: grid;
+  gap: var(--space-xs);
+}
+
 /* --- Contrast Section --- */
 .contrast {
   padding: var(--space-3xl) 0;
@@ -946,6 +1039,10 @@ img {
     flex-direction: column;
     align-items: center;
     gap: var(--space-2xl);
+  }
+
+  .workflow-grid {
+    grid-template-columns: 1fr;
   }
 
   .waitlist-form {
