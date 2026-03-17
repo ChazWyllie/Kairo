@@ -46,11 +46,7 @@ const GYM_ACCESS = [
 
 const TIERS = [
   { value: "foundation", name: "Foundation", desc: "Templates + async check-ins" },
-  {
-    value: "coaching",
-    name: "Coaching",
-    desc: "Personalized programming + priority support",
-  },
+  { value: "coaching", name: "Coaching", desc: "Personalized programming + priority support" },
   { value: "performance", name: "Performance", desc: "Video reviews + weekly calls" },
   { value: "vip", name: "VIP Elite", desc: "Daily access + priority everything" },
 ] as const;
@@ -66,7 +62,7 @@ function ApplyContent() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [foundingLoading, setFoundingLoading] = useState(false);
   const [foundingError, setFoundingError] = useState<string | null>(null);
-  const [foundingInterval, setFoundingInterval] = useState<"monthly" | "annual">("monthly");
+  const [billingInterval, setBillingInterval] = useState<BillingInterval>("monthly");
 
   // Form fields
   const [email, setEmail] = useState("");
@@ -200,14 +196,14 @@ function ApplyContent() {
 
     track({
       name: "founding_member_cta_click",
-      properties: { tier },
+      properties: { tier, interval: billingInterval },
     });
 
     try {
       const res = await fetch("/api/checkout/founding", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, tier, interval: foundingInterval }),
+        body: JSON.stringify({ email, tier, interval: billingInterval }),
       });
 
       const data = await res.json();
@@ -229,13 +225,12 @@ function ApplyContent() {
     const matchedPlan = preferredTier
       ? PLANS.find((p) => p.tier === (preferredTier as PlanTier))
       : null;
-    const basePrice = matchedPlan
-      ? foundingInterval === "annual"
-        ? matchedPlan.annualPrice
-        : matchedPlan.monthlyPrice
+    const originalPrice = matchedPlan
+      ? billingInterval === "monthly"
+        ? matchedPlan.monthlyPrice
+        : matchedPlan.annualPrice
       : null;
-    const discountedPrice = basePrice !== null ? Math.round(basePrice * 0.9) : null;
-    const priceSuffix = foundingInterval === "annual" ? "/yr" : "/mo";
+    const discountedPrice = originalPrice !== null ? Math.round(originalPrice * 0.9) : null;
 
     return (
       <main className="min-h-screen bg-white text-black">
@@ -269,9 +264,9 @@ function ApplyContent() {
               <div className="inline-flex rounded-lg border border-neutral-200 bg-white p-1 gap-1">
                 <button
                   type="button"
-                  onClick={() => setFoundingInterval("monthly")}
+                  onClick={() => setBillingInterval("monthly")}
                   className={`rounded-md px-4 py-1.5 text-sm font-medium transition-colors ${
-                    foundingInterval === "monthly"
+                    billingInterval === "monthly"
                       ? "bg-black text-white"
                       : "text-neutral-600 hover:text-neutral-900"
                   }`}
@@ -280,9 +275,9 @@ function ApplyContent() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setFoundingInterval("annual")}
+                  onClick={() => setBillingInterval("annual")}
                   className={`rounded-md px-4 py-1.5 text-sm font-medium transition-colors ${
-                    foundingInterval === "annual"
+                    billingInterval === "annual"
                       ? "bg-black text-white"
                       : "text-neutral-600 hover:text-neutral-900"
                   }`}
@@ -294,12 +289,19 @@ function ApplyContent() {
             </div>
 
             {/* Tier-specific pricing */}
-            {matchedPlan && discountedPrice !== null ? (
-              <p className="mt-4 text-center text-lg font-medium">
-                {matchedPlan.name} ·{" "}
-                <span className="line-through text-neutral-400">${basePrice}{priceSuffix}</span>
-                {" "}→ ${discountedPrice}{priceSuffix}
-              </p>
+            {matchedPlan && originalPrice !== null && discountedPrice !== null ? (
+              <div className="mt-4 space-y-1 text-center">
+                <p className="text-lg font-medium">{matchedPlan.name}</p>
+                <p className="text-sm text-neutral-700">
+                  <span className="line-through text-neutral-400">
+                    ${originalPrice}/{billingInterval === "monthly" ? "mo" : "yr"}
+                  </span>
+                  {" "}→ ${discountedPrice}/{billingInterval === "monthly" ? "mo" : "yr"}
+                </p>
+                <p className="text-xs text-neutral-500">
+                  Billed {billingInterval === "monthly" ? "monthly" : "annually"}
+                </p>
+              </div>
             ) : (
               <p className="mt-4 text-center text-sm text-neutral-600">
                 10% off any plan — forever.
