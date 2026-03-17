@@ -194,19 +194,22 @@ function ApplyContent() {
       const res = await fetch("/api/checkout/founding", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, tier, interval: foundingInterval }),
+        body: JSON.stringify({ email: email.trim().toLowerCase(), tier, interval: foundingInterval }),
       });
 
-      const data = await res.json();
+      const data: { url?: string; error?: { message?: string } } = await res.json();
       if (!res.ok) {
         throw new Error(data?.error?.message ?? "Failed to start checkout.");
       }
 
-      if (data.url) {
-        window.location.href = data.url;
+      if (!data.url) {
+        throw new Error("Checkout session was created without a redirect URL. Please try again.");
       }
+
+      window.location.assign(data.url);
     } catch (err: unknown) {
       setFoundingError(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
       setFoundingLoading(false);
     }
   }
