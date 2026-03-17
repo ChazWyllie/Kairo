@@ -14,7 +14,7 @@
     "dev:host": "next dev --hostname 0.0.0.0 --port 3000"
   },
   "dependencies": {
-    "@prisma/adapter-pg": "^7.4.2",
+    "@prisma/adapter-pg": "^7.5.0",
     "@prisma/client": "^7.4.2",
     "@t3-oss/env-nextjs": "^0.13.10",
     "bcryptjs": "^3.0.3",
