@@ -1,23 +1,11 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import Link from "next/link";
 import { track } from "@/lib/analytics";
-import { semantic, components, dashboard } from "@/lib/design-tokens";
-
-/**
- * Coach Dashboard — exception-first design per dashboard_prompt.md
- *
- * Primary question: "Who needs me right now?"
- * Layout: Auth → Portfolio Stats → Attention Queue → Client Health → Today's Ops
- *
- * Key principles:
- * - Exception-driven: surface risk early, flag drops
- * - Sorted by urgency: at_risk → needs_attention → on_track
- * - Color for status only (green/amber/red)
- * - No decoration, command-center density
- * - Protected by COACH_SECRET (shared secret for MVP)
- */
+import Card from "@/components/ui/Card";
+import { SkeletonCard } from "@/components/ui/Skeleton";
+import PageHeader from "@/components/layout/PageHeader";
+import Badge from "@/components/ui/Badge";
 
 interface ClientHealth {
   email: string;
@@ -115,166 +103,61 @@ interface CoachData {
 }
 
 type CoachState =
-  | { phase: "auth" }
   | { phase: "loading" }
   | { phase: "error"; message: string }
   | { phase: "dashboard"; data: CoachData };
 
 export default function CoachPage() {
   const [state, setState] = useState<CoachState>({ phase: "loading" });
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [expandedClient, setExpandedClient] = useState<string | null>(null);
 
   const loadCoachData = useCallback(async () => {
     setState({ phase: "loading" });
-
     try {
       const res = await fetch("/api/coach", { credentials: "include" });
-
       if (!res.ok) {
-        if (res.status === 401) {
-          setState({ phase: "auth" });
-          return;
-        }
         const data = await res.json().catch(() => null);
         throw new Error(data?.error?.message ?? "Failed to load coach data");
       }
-
       const data: CoachData = await res.json();
       setState({ phase: "dashboard", data });
       track({ name: "coach_dashboard_loaded", properties: { clients: data.portfolio.activeClients } });
     } catch (err) {
-      setState({
-        phase: "error",
-        message: err instanceof Error ? err.message : "Something went wrong",
-      });
+      setState({ phase: "error", message: err instanceof Error ? err.message : "Something went wrong" });
     }
   }, []);
 
   useEffect(() => {
     track({ name: "page_view", properties: { path: "/coach" } });
-    // Check if already authenticated via cookie
     loadCoachData();
   }, [loadCoachData]);
 
-  async function onAuth(e: React.FormEvent) {
-    e.preventDefault();
-    if (!email.trim() || !password.trim()) return;
-    setState({ phase: "loading" });
-
-    try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), password: password.trim() }),
-        credentials: "include",
-      });
-
-      const data = await res.json().catch(() => null);
-
-      if (!res.ok) {
-        throw new Error(data?.error?.message ?? "Invalid credentials");
-      }
-
-      if (data?.role !== "coach") {
-        throw new Error("This account does not have coach access.");
-      }
-
-      // Cookie is set by the server; now load the dashboard
-      await loadCoachData();
-    } catch (err) {
-      setState({
-        phase: "error",
-        message: err instanceof Error ? err.message : "Something went wrong",
-      });
-    }
-  }
-
-  // ── Auth screen ──
-  if (state.phase === "auth" || state.phase === "error") {
-    return (
-      <main className="min-h-screen bg-neutral-50 text-black">
-        <div className="mx-auto max-w-md px-6 py-16">
-          <h1 className="text-2xl font-semibold text-center">Coach Portal</h1>
-          <p className="mt-2 text-center text-neutral-500 text-sm">
-            Sign in to access the coach dashboard.
-          </p>
-
-          <form onSubmit={onAuth} className="mt-8 space-y-4">
-            <div>
-              <label htmlFor="coach-email" className="block text-sm font-medium text-neutral-700 mb-1">
-                Email
-              </label>
-              <input
-                id="coach-email"
-                type="email"
-                className={components.input.base}
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                autoComplete="email"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="coach-password" className="block text-sm font-medium text-neutral-700 mb-1">
-                Password
-              </label>
-              <input
-                id="coach-password"
-                type="password"
-                className={components.input.base}
-                placeholder="Coach secret"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                autoComplete="current-password"
-              />
-            </div>
-
-            {state.phase === "error" && (
-              <p className="text-sm text-red-600" role="alert">
-                {state.message}
-              </p>
-            )}
-
-            <button type="submit" className={`w-full ${components.button.primary}`}>
-              Access Dashboard
-            </button>
-          </form>
-
-          <div className="mt-8 text-center">
-            <Link href="/" className={components.button.ghost}>
-              ← Back to home
-            </Link>
-          </div>
-        </div>
-      </main>
-    );
-  }
-
-  // ── Loading ──
   if (state.phase === "loading") {
     return (
-      <main className="min-h-screen bg-neutral-50 text-black">
-        <div className="mx-auto max-w-4xl px-6 py-8">
-          <div className="space-y-4 animate-pulse">
-            <div className="h-8 bg-neutral-200 rounded-xl w-48" />
-            <div className="grid grid-cols-5 gap-4">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="h-24 bg-neutral-200 rounded-2xl" />
-              ))}
-            </div>
-            <div className="h-64 bg-neutral-200 rounded-2xl" />
-          </div>
-        </div>
-      </main>
+      <div>
+        <PageHeader title="Overview" />
+        <SkeletonCard /><br /><SkeletonCard /><br /><SkeletonCard />
+      </div>
     );
   }
 
-  // ── Dashboard ──
+  if (state.phase === "error") {
+    return (
+      <div>
+        <PageHeader title="Overview" />
+        <Card>
+          <p style={{ color: "var(--status-error)", fontSize: "0.875rem", marginBottom: "12px" }}>{state.message}</p>
+          <button
+            onClick={loadCoachData}
+            style={{ padding: "10px 16px", background: "var(--accent-primary)", color: "var(--bg-primary)", border: "none", borderRadius: "8px", fontWeight: 600, cursor: "pointer" }}
+          >
+            Try Again
+          </button>
+        </Card>
+      </div>
+    );
+  }
+
   const { portfolio, clients, applications } = state.data;
   const atRiskClients = clients.filter((c) => c.status === "at_risk");
   const needsAttentionClients = clients.filter((c) => c.status === "needs_attention");
@@ -283,162 +166,118 @@ export default function CoachPage() {
   const processedApps = applications.filter((a) => a.status !== "pending");
 
   return (
-    <main className="min-h-screen bg-neutral-50 text-black">
-      <div className="mx-auto max-w-4xl px-6 py-8 space-y-6">
-
-        {/* ── Header ── */}
-        <header className="flex items-start justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold">Coach Dashboard</h1>
-            <p className="mt-0.5 text-sm text-neutral-500">
-              {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
-            </p>
-          </div>
+    <div>
+      <PageHeader
+        title="Overview"
+        subtitle={new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+        action={
           <button
             onClick={() => loadCoachData()}
-            className={components.button.secondary}
-            aria-label="Refresh data"
+            style={{ padding: "8px 14px", background: "var(--bg-tertiary)", border: "1px solid var(--border-subtle)", borderRadius: "8px", color: "var(--text-secondary)", fontSize: "0.875rem", cursor: "pointer" }}
           >
             ↻ Refresh
           </button>
-        </header>
+        }
+      />
 
-        {/* ── PORTFOLIO STATS ── */}
-        <section className="grid grid-cols-2 sm:grid-cols-5 gap-4">
-          <div className={dashboard.coach.portfolioStat}>
-            <p className={components.stat.value}>{portfolio.activeClients}</p>
-            <p className={components.stat.label}>Active clients</p>
-          </div>
-          <div className={`${dashboard.coach.portfolioStat} ${portfolio.atRiskCount > 0 ? "!border-red-200 !bg-red-50" : ""}`}>
-            <p className={`${components.stat.value} ${portfolio.atRiskCount > 0 ? "text-red-600" : ""}`}>
-              {portfolio.atRiskCount}
-            </p>
-            <p className={components.stat.label}>At risk</p>
-          </div>
-          <div className={`${dashboard.coach.portfolioStat} ${portfolio.needsAttentionCount > 0 ? "!border-amber-200 !bg-amber-50" : ""}`}>
-            <p className={`${components.stat.value} ${portfolio.needsAttentionCount > 0 ? "text-amber-600" : ""}`}>
-              {portfolio.needsAttentionCount}
-            </p>
-            <p className={components.stat.label}>Needs attention</p>
-          </div>
-          <div className={dashboard.coach.portfolioStat}>
-            <p className={components.stat.value}>{portfolio.averageAdherence7d}%</p>
-            <p className={components.stat.label}>Avg adherence (7d)</p>
-          </div>
-          <div className={dashboard.coach.portfolioStat}>
-            <p className={components.stat.value}>{portfolio.totalLeads}</p>
-            <p className={components.stat.label}>Total leads</p>
+      {/* Portfolio stats */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "10px", marginBottom: "20px" }}>
+        <StatCard value={portfolio.activeClients} label="Active clients" />
+        <StatCard value={portfolio.atRiskCount} label="At risk" urgent={portfolio.atRiskCount > 0} />
+        <StatCard value={portfolio.needsAttentionCount} label="Needs attention" warn={portfolio.needsAttentionCount > 0} />
+        <StatCard value={`${portfolio.averageAdherence7d}%`} label="Avg adherence (7d)" />
+        <StatCard value={portfolio.totalLeads} label="Total leads" />
+      </div>
+
+      {/* Attention queue */}
+      {(atRiskClients.length > 0 || needsAttentionClients.length > 0) && (
+        <section style={{ marginBottom: "20px" }}>
+          <p style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "10px" }}>
+            Needs Attention
+          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            {[...atRiskClients, ...needsAttentionClients].map((client) => (
+              <ClientCard
+                key={client.email}
+                client={client}
+                expanded={expandedClient === client.email}
+                onToggle={() => setExpandedClient(expandedClient === client.email ? null : client.email)}
+                onRefresh={loadCoachData}
+              />
+            ))}
           </div>
         </section>
+      )}
 
-        {/* ── ATTENTION QUEUE — exception-first ── */}
-        {(atRiskClients.length > 0 || needsAttentionClients.length > 0) && (
-          <section>
-            <h2 className="text-lg font-semibold mb-3">⚠️ Needs Attention</h2>
-            <div className="space-y-2">
-              {atRiskClients.map((client) => (
-                <ClientCard
-                  key={client.email}
-                  client={client}
-                  expanded={expandedClient === client.email}
-                  onToggle={() =>
-                    setExpandedClient(expandedClient === client.email ? null : client.email)
-                  }
-                  onRefresh={() => loadCoachData()}
-                />
-              ))}
-              {needsAttentionClients.map((client) => (
-                <ClientCard
-                  key={client.email}
-                  client={client}
-                  expanded={expandedClient === client.email}
-                  onToggle={() =>
-                    setExpandedClient(expandedClient === client.email ? null : client.email)
-                  }
-                  onRefresh={() => loadCoachData()}
-                />
-              ))}
-            </div>
-          </section>
-        )}
+      {/* All clear */}
+      {atRiskClients.length === 0 && needsAttentionClients.length === 0 && clients.length > 0 && (
+        <Card style={{ marginBottom: "16px", borderColor: "var(--status-success)" }}>
+          <p style={{ textAlign: "center", color: "var(--status-success)", fontWeight: 500, margin: 0 }}>
+            All clients on track. No interventions needed.
+          </p>
+        </Card>
+      )}
 
-        {/* ── Empty state ── */}
-        {atRiskClients.length === 0 && needsAttentionClients.length === 0 && clients.length > 0 && (
-          <section className={components.card.status.success}>
-            <p className="text-center text-green-800 font-medium">
-              ✅ All clients on track. No interventions needed right now.
-            </p>
-          </section>
-        )}
+      {clients.length === 0 && (
+        <Card style={{ marginBottom: "16px" }}>
+          <p style={{ textAlign: "center", color: "var(--text-tertiary)", fontSize: "0.875rem", margin: 0 }}>
+            No active clients yet. Once members subscribe, they&apos;ll appear here.
+          </p>
+        </Card>
+      )}
 
-        {clients.length === 0 && (
-          <section className={components.card.base}>
-            <p className="text-center text-neutral-500">
-              No active clients yet. Once members subscribe, they&apos;ll appear here.
-            </p>
-          </section>
-        )}
+      {/* On-track clients */}
+      {onTrackClients.length > 0 && (
+        <section style={{ marginBottom: "20px" }}>
+          <p style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "10px" }}>
+            On Track ({onTrackClients.length})
+          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            {onTrackClients.map((client) => (
+              <ClientCard
+                key={client.email}
+                client={client}
+                expanded={expandedClient === client.email}
+                onToggle={() => setExpandedClient(expandedClient === client.email ? null : client.email)}
+                onRefresh={loadCoachData}
+              />
+            ))}
+          </div>
+        </section>
+      )}
 
-        {/* ── ALL CLIENTS — full roster ── */}
-        {onTrackClients.length > 0 && (
-          <section>
-            <h2 className="text-lg font-semibold mb-3">
-              ✅ On Track ({onTrackClients.length})
-            </h2>
-            <div className="space-y-2">
-              {onTrackClients.map((client) => (
-                <ClientCard
-                  key={client.email}
-                  client={client}
-                  expanded={expandedClient === client.email}
-                  onToggle={() =>
-                    setExpandedClient(expandedClient === client.email ? null : client.email)
-                  }
-                  onRefresh={() => loadCoachData()}
-                />
-              ))}
-            </div>
-          </section>
-        )}
+      {/* Applications */}
+      <ApplicationsSection pendingApps={pendingApps} processedApps={processedApps} onRefresh={loadCoachData} />
 
-        {/* ── APPLICATIONS — review & approve/reject ── */}
-        <ApplicationsSection
-          pendingApps={pendingApps}
-          processedApps={processedApps}
-          onRefresh={() => loadCoachData()}
-        />
+      {/* Launch email */}
+      <LaunchEmailSection />
 
-        {/* ── LAUNCH EMAIL — send batch announcement to waitlist ── */}
-        <LaunchEmailSection />
-
-        {/* ── TEMPLATES — quick-access coach scripts ── */}
-        <TemplatesSection />
-
-        {/* ── Navigation ── */}
-        <nav className="flex gap-4 text-sm pb-8">
-          <Link href="/" className={components.button.ghost}>
-            ← Home
-          </Link>
-        </nav>
-      </div>
-    </main>
+      {/* Templates */}
+      <TemplatesSection />
+    </div>
   );
 }
 
-// ── Client Card Component ──
+// ── Stat Card ──
 
-function ClientCard({
-  client,
-  expanded,
-  onToggle,
-  onRefresh,
-}: {
-  client: ClientHealth;
-  expanded: boolean;
-  onToggle: () => void;
-  onRefresh: () => void;
+function StatCard({ value, label, urgent, warn }: { value: string | number; label: string; urgent?: boolean; warn?: boolean }) {
+  return (
+    <div style={{
+      background: urgent ? "rgba(248,113,113,0.08)" : warn ? "rgba(251,191,36,0.08)" : "var(--bg-secondary)",
+      border: `1px solid ${urgent ? "rgba(248,113,113,0.3)" : warn ? "rgba(251,191,36,0.3)" : "var(--border-subtle)"}`,
+      borderRadius: "12px", padding: "14px", textAlign: "center",
+    }}>
+      <p style={{ fontSize: "1.5rem", fontWeight: 700, color: urgent ? "var(--status-error)" : warn ? "var(--status-warning)" : "var(--text-primary)", margin: "0 0 4px" }}>{value}</p>
+      <p style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", margin: 0 }}>{label}</p>
+    </div>
+  );
+}
+
+// ── Client Card ──
+
+function ClientCard({ client, expanded, onToggle, onRefresh }: {
+  client: ClientHealth; expanded: boolean; onToggle: () => void; onRefresh: () => void;
 }) {
-  const statusConfig = getStatusConfig(client.status);
   const [triageLoading, setTriageLoading] = useState(false);
   const [triageMessage, setTriageMessage] = useState<string | null>(null);
   const [responseText, setResponseText] = useState("");
@@ -446,6 +285,14 @@ function ClientCard({
   const [showTemplateHelper, setShowTemplateHelper] = useState(false);
   const [cancelLoading, setCancelLoading] = useState(false);
   const [cancelMsg, setCancelMsg] = useState<string | null>(null);
+
+  const statusDotColor = client.status === "at_risk" ? "var(--status-error)"
+    : client.status === "needs_attention" ? "var(--status-warning)"
+    : "var(--status-success)";
+
+  const adherenceColor = client.adherence7d < 30 ? "var(--status-error)"
+    : client.adherence7d < 60 ? "var(--status-warning)"
+    : "var(--status-success)";
 
   async function handleCancelClient() {
     if (!confirm(`Cancel membership for ${client.email}? They'll keep access until end of billing period.`)) return;
@@ -474,24 +321,17 @@ function ClientCard({
   async function handleTriage(checkInId: string, coachStatus: "green" | "yellow" | "red") {
     setTriageLoading(true);
     setTriageMessage(null);
-
     try {
       const res = await fetch("/api/checkin/respond", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          checkInId,
-          coachStatus,
-          coachResponse: responseText.trim() || undefined,
-        }),
+        body: JSON.stringify({ checkInId, coachStatus, coachResponse: responseText.trim() || undefined }),
         credentials: "include",
       });
-
       if (!res.ok) {
         const data = await res.json().catch(() => null);
         throw new Error(data?.error?.message ?? "Failed to triage");
       }
-
       setTriageMessage(`Triaged as ${coachStatus}`);
       setResponseText("");
       setSelectedCheckIn(null);
@@ -504,119 +344,80 @@ function ClientCard({
   }
 
   return (
-    <div className={`${dashboard.coach.clientHealth} ${statusConfig.borderClass}`}>
-      {/* Summary row — always visible */}
+    <Card style={{
+      borderLeft: `2px solid ${statusDotColor}`,
+    }}>
       <button
         onClick={onToggle}
-        className="w-full flex items-center justify-between text-left"
+        style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: 0 }}
         aria-expanded={expanded}
       >
-        <div className="flex items-center gap-3">
-          <span className={`h-2.5 w-2.5 rounded-full ${statusConfig.dotClass}`} />
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <span style={{ height: "8px", width: "8px", borderRadius: "50%", background: statusDotColor, flexShrink: 0 }} />
           <div>
-            <p className="text-sm font-medium">{client.email}</p>
-            <p className="text-xs text-neutral-500">
-              {client.planTier ?? "…"} · {client.goal ?? "no goal set"}
+            <p style={{ fontSize: "0.875rem", fontWeight: 500, color: "var(--text-primary)", margin: "0 0 2px" }}>{client.email}</p>
+            <p style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", margin: 0 }}>
+              {client.planTier ?? "…"} · {client.goal ?? "no goal"}
               {client.daysPerWeek ? ` · ${client.daysPerWeek}×/wk` : ""}
-              {" · "}
-              <span className="text-neutral-400">
-                since {new Date(client.memberSince).toLocaleDateString("en-US", { month: "short", year: "numeric" })}
-              </span>
             </p>
           </div>
           {client.paymentStatus === "past_due" && (
-            <span className="rounded-full bg-amber-100 text-amber-700 text-[10px] font-medium px-2 py-0.5">
-              ⚠️ Past due
-            </span>
+            <Badge variant="status" value="past_due" />
           )}
         </div>
-
-        <div className="flex items-center gap-4 text-right">
-          <div>
-            <p className="text-xs text-neutral-500">7d</p>
-            <p className={`text-sm font-semibold ${getAdherenceColor(client.adherence7d)}`}>
-              {client.adherence7d}%
+        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+          <div style={{ textAlign: "right" }}>
+            <p style={{ fontSize: "0.625rem", color: "var(--text-tertiary)", margin: "0 0 2px" }}>7d</p>
+            <p style={{ fontSize: "0.875rem", fontWeight: 600, color: adherenceColor, margin: 0 }}>{client.adherence7d}%</p>
+          </div>
+          <div style={{ textAlign: "right" }}>
+            <p style={{ fontSize: "0.625rem", color: "var(--text-tertiary)", margin: "0 0 2px" }}>Last</p>
+            <p style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>
+              {client.daysSinceCheckIn !== null ? (client.daysSinceCheckIn === 0 ? "Today" : `${client.daysSinceCheckIn}d`) : "Never"}
             </p>
           </div>
-          <div>
-            <p className="text-xs text-neutral-500">Streak</p>
-            <p className="text-sm font-semibold">{client.currentStreak}</p>
-          </div>
-          <div>
-            <p className="text-xs text-neutral-500">Last</p>
-            <p className="text-sm font-semibold">
-              {client.daysSinceCheckIn !== null
-                ? client.daysSinceCheckIn === 0
-                  ? "Today"
-                  : `${client.daysSinceCheckIn}d ago`
-                : "Never"}
-            </p>
-          </div>
-          <span className="text-neutral-400 text-xs">{expanded ? "▲" : "▼"}</span>
+          <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)" }}>{expanded ? "▲" : "▼"}</span>
         </div>
       </button>
 
-      {/* Expanded detail */}
       {expanded && (
-        <div className="mt-3 pt-3 border-t border-neutral-200 space-y-3">
-          {/* Status banner */}
-          <div className={`rounded-lg px-3 py-2 ${statusConfig.bgClass}`}>
-            <p className={`text-xs font-medium ${statusConfig.textClass}`}>
-              {statusConfig.label}
-            </p>
+        <div style={{ marginTop: "14px", paddingTop: "14px", borderTop: "1px solid var(--border-subtle)" }}>
+          {/* Metrics */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "10px", marginBottom: "14px" }}>
+            {[
+              { label: "7d", value: `${client.adherence7d}%` },
+              { label: "30d", value: `${client.adherence30d}%` },
+              { label: "Streak", value: `${client.currentStreak}d` },
+              { label: "Since", value: new Date(client.memberSince).toLocaleDateString("en-US", { month: "short", year: "2-digit" }) },
+            ].map(({ label, value }) => (
+              <div key={label} style={{ textAlign: "center", background: "var(--bg-tertiary)", borderRadius: "8px", padding: "8px" }}>
+                <p style={{ fontSize: "0.625rem", color: "var(--text-tertiary)", margin: "0 0 2px" }}>{label}</p>
+                <p style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>{value}</p>
+              </div>
+            ))}
           </div>
 
-          {/* Metrics grid */}
-          <div className="grid grid-cols-4 gap-3">
-            <MetricChip label="7d adherence" value={`${client.adherence7d}%`} />
-            <MetricChip label="30d adherence" value={`${client.adherence30d}%`} />
-            <MetricChip label="Streak" value={`${client.currentStreak} days`} />
-            <MetricChip
-              label="Member since"
-              value={new Date(client.memberSince).toLocaleDateString("en-US", { month: "short", year: "numeric" })}
-            />
-          </div>
-
-          {/* Onboarding status */}
           {!client.onboarded && (
-            <p className="text-xs text-amber-600 font-medium">
-              ⚠ Not yet onboarded
-            </p>
+            <p style={{ fontSize: "0.75rem", color: "var(--status-warning)", marginBottom: "10px" }}>Not yet onboarded</p>
           )}
 
-          {/* Active program + macros summary */}
+          {/* Program + macros */}
           {(client.activeProgram || client.activeMacro) && (
-            <div className="grid grid-cols-2 gap-3">
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "14px" }}>
               {client.activeProgram && (
-                <div className="rounded-lg bg-neutral-50 p-3">
-                  <p className="text-xs font-medium text-neutral-500 mb-1">Program</p>
-                  <p className="text-sm font-medium">{client.activeProgram.name}</p>
-                  <div className="mt-1 text-xs text-neutral-500 space-y-0.5">
-                    {client.activeProgram.primaryGoal && (
-                      <p className="capitalize">{client.activeProgram.primaryGoal.replace("_", " ")}</p>
-                    )}
-                    {client.activeProgram.split && (
-                      <p className="capitalize">{client.activeProgram.split.replace("_", " / ")}</p>
-                    )}
-                    {client.activeProgram.daysPerWeek && (
-                      <p>{client.activeProgram.daysPerWeek}×/week</p>
-                    )}
-                    {client.activeProgram.nextUpdateDate && (
-                      <p>Update: {new Date(client.activeProgram.nextUpdateDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</p>
-                    )}
-                  </div>
+                <div style={{ background: "var(--bg-tertiary)", borderRadius: "8px", padding: "10px" }}>
+                  <p style={{ fontSize: "0.625rem", color: "var(--text-tertiary)", marginBottom: "4px" }}>Program</p>
+                  <p style={{ fontSize: "0.875rem", fontWeight: 500, color: "var(--text-primary)", marginBottom: "4px" }}>{client.activeProgram.name}</p>
+                  <p style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", margin: 0 }}>
+                    {[client.activeProgram.split, client.activeProgram.daysPerWeek ? `${client.activeProgram.daysPerWeek}×/wk` : null].filter(Boolean).join(" · ")}
+                  </p>
                 </div>
               )}
               {client.activeMacro && (
-                <div className="rounded-lg bg-neutral-50 p-3">
-                  <p className="text-xs font-medium text-neutral-500 mb-1">Macros</p>
-                  <p className="text-sm font-medium">{client.activeMacro.calories} cal · {client.activeMacro.protein}g P</p>
-                  <div className="mt-1 text-xs text-neutral-500 space-y-0.5">
-                    {client.activeMacro.fatsMin && <p>{client.activeMacro.fatsMin}g F min</p>}
-                    {client.activeMacro.carbs && <p>{client.activeMacro.carbs}g C</p>}
-                    {client.activeMacro.stepsTarget && <p>{client.activeMacro.stepsTarget.toLocaleString()} steps</p>}
-                    <p className="text-neutral-400">Since {new Date(client.activeMacro.effectiveDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</p>
-                  </div>
+                <div style={{ background: "var(--bg-tertiary)", borderRadius: "8px", padding: "10px" }}>
+                  <p style={{ fontSize: "0.625rem", color: "var(--text-tertiary)", marginBottom: "4px" }}>Macros</p>
+                  <p style={{ fontSize: "0.875rem", fontWeight: 500, color: "var(--text-primary)", marginBottom: "4px" }}>{client.activeMacro.calories} cal · {client.activeMacro.protein}g P</p>
+                  {client.activeMacro.fatsMin && <p style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", margin: 0 }}>{client.activeMacro.fatsMin}g F min</p>}
                 </div>
               )}
             </div>
@@ -624,145 +425,92 @@ function ClientCard({
 
           {/* Recent check-ins with triage */}
           {client.recentCheckIns.length > 0 && (
-            <div>
-              <p className="text-xs text-neutral-500 mb-2 font-medium">Recent check-ins:</p>
-              <div className="space-y-2">
+            <div style={{ marginBottom: "14px" }}>
+              <p style={{ fontSize: "0.625rem", color: "var(--text-tertiary)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "8px" }}>Recent check-ins</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                 {client.recentCheckIns.map((ci) => (
-                  <div
-                    key={ci.id}
-                    className={`rounded-lg border p-3 text-sm ${
-                      ci.coachStatus === "green"
-                        ? "border-green-200 bg-green-50"
-                        : ci.coachStatus === "yellow"
-                          ? "border-amber-200 bg-amber-50"
-                          : ci.coachStatus === "red"
-                            ? "border-red-200 bg-red-50"
-                            : "border-neutral-200 bg-neutral-50"
-                    }`}
-                  >
-                    {/* Check-in header */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-medium">
-                          {new Date(ci.date).toLocaleDateString("en-US", {
-                            weekday: "short",
-                            month: "short",
-                            day: "numeric",
-                          })}
+                  <div key={ci.id} style={{
+                    border: "1px solid var(--border-subtle)", borderRadius: "8px", padding: "10px",
+                    background: ci.coachStatus === "green" ? "rgba(74,222,128,0.06)"
+                      : ci.coachStatus === "yellow" ? "rgba(251,191,36,0.06)"
+                      : ci.coachStatus === "red" ? "rgba(248,113,113,0.06)"
+                      : "var(--bg-tertiary)",
+                  }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      <div>
+                        <span style={{ fontSize: "0.8125rem", fontWeight: 500, color: "var(--text-primary)" }}>
+                          {new Date(ci.date).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
                         </span>
-                        <div className="flex gap-1 text-xs">
-                          {ci.workout && <span>💪</span>}
-                          {ci.meals > 0 && <span>🍽️{ci.meals}</span>}
-                          {ci.water && <span>💧</span>}
-                          {ci.steps && <span>🚶</span>}
-                        </div>
+                        <span style={{ marginLeft: "8px", fontSize: "0.75rem", color: "var(--text-tertiary)" }}>
+                          {ci.workout ? "💪" : ""}{ci.meals > 0 ? `🍽️${ci.meals}` : ""}{ci.water ? "💧" : ""}{ci.steps ? "🚶" : ""}
+                        </span>
                       </div>
                       {ci.coachStatus ? (
-                        <span className={`text-xs font-medium ${
-                          ci.coachStatus === "green" ? "text-green-700"
-                            : ci.coachStatus === "yellow" ? "text-amber-700"
-                              : "text-red-700"
-                        }`}>
+                        <span style={{ fontSize: "0.75rem", fontWeight: 600, color: ci.coachStatus === "green" ? "var(--status-success)" : ci.coachStatus === "yellow" ? "var(--status-warning)" : "var(--status-error)" }}>
                           {ci.coachStatus.toUpperCase()}
                         </span>
                       ) : (
                         <button
                           onClick={() => setSelectedCheckIn(selectedCheckIn === ci.id ? null : ci.id)}
-                          className="text-xs text-neutral-500 hover:text-black underline"
+                          style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}
                         >
                           Triage
                         </button>
                       )}
                     </div>
 
-                    {/* Enhanced data row */}
-                    {(ci.avgWeight || ci.sleepAverage || ci.energyScore || ci.recoveryScore) && (
-                      <div className="mt-1 flex flex-wrap gap-3 text-xs text-neutral-500">
-                        {ci.avgWeight && <span>⚖️ {ci.avgWeight} lbs</span>}
-                        {ci.sleepAverage && <span>😴 {ci.sleepAverage}h</span>}
-                        {ci.energyScore && <span>⚡ Energy: {ci.energyScore}/10</span>}
-                        {ci.recoveryScore && <span>💤 Recovery: {ci.recoveryScore}/10</span>}
-                        {ci.stressScore && <span>🧠 Stress: {ci.stressScore}/10</span>}
-                        {ci.calorieAdherence && <span>🔥 Cal: {ci.calorieAdherence}/10</span>}
-                        {ci.proteinAdherence && <span>🥩 Pro: {ci.proteinAdherence}/10</span>}
-                      </div>
-                    )}
-
-                    {/* Reflection */}
                     {(ci.biggestWin || ci.biggestStruggle || ci.helpNeeded) && (
-                      <div className="mt-1 space-y-0.5 text-xs">
-                        {ci.biggestWin && (
-                          <p className="text-green-700">🏆 {ci.biggestWin}</p>
-                        )}
-                        {ci.biggestStruggle && (
-                          <p className="text-amber-700">⚡ {ci.biggestStruggle}</p>
-                        )}
-                        {ci.helpNeeded && (
-                          <p className="text-neutral-700">❓ {ci.helpNeeded}</p>
-                        )}
+                      <div style={{ marginTop: "6px", fontSize: "0.75rem" }}>
+                        {ci.biggestWin && <p style={{ color: "var(--status-success)", margin: "0 0 2px" }}>🏆 {ci.biggestWin}</p>}
+                        {ci.biggestStruggle && <p style={{ color: "var(--status-warning)", margin: "0 0 2px" }}>⚡ {ci.biggestStruggle}</p>}
+                        {ci.helpNeeded && <p style={{ color: "var(--text-secondary)", margin: 0 }}>❓ {ci.helpNeeded}</p>}
                       </div>
                     )}
 
-                    {/* Coach response (if already triaged) */}
                     {ci.coachResponse && (
-                      <div className="mt-2 rounded bg-white px-2 py-1 border border-neutral-200">
-                        <p className="text-xs text-neutral-500">Your response:</p>
-                        <p className="text-xs text-neutral-700">{ci.coachResponse}</p>
+                      <div style={{ marginTop: "6px", background: "var(--bg-secondary)", borderRadius: "6px", padding: "6px 8px" }}>
+                        <p style={{ fontSize: "0.625rem", color: "var(--text-tertiary)", marginBottom: "2px" }}>Your response:</p>
+                        <p style={{ fontSize: "0.75rem", color: "var(--text-secondary)", margin: 0 }}>{ci.coachResponse}</p>
                       </div>
                     )}
 
-                    {/* Triage controls */}
                     {selectedCheckIn === ci.id && !ci.coachStatus && (
-                      <div className="mt-2 space-y-2 pt-2 border-t border-neutral-200">
-                        <div className="flex items-center justify-between">
-                          <button
-                            onClick={() => {
-                              if (!showTemplateHelper) {
-                                setResponseText(
-                                  `Win: \n\nData: \n\nDecision: \n\nFocus: `
-                                );
-                              }
-                              setShowTemplateHelper(!showTemplateHelper);
-                            }}
-                            className="text-xs text-neutral-400 hover:text-black underline"
-                          >
-                            {showTemplateHelper ? "Free-form" : "Use template (Win/Data/Decision/Focus)"}
-                          </button>
-                        </div>
+                      <div style={{ marginTop: "8px", paddingTop: "8px", borderTop: "1px solid var(--border-subtle)" }}>
+                        <button
+                          onClick={() => {
+                            if (!showTemplateHelper) setResponseText("Win: \n\nData: \n\nDecision: \n\nFocus: ");
+                            setShowTemplateHelper(!showTemplateHelper);
+                          }}
+                          style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", background: "none", border: "none", cursor: "pointer", marginBottom: "6px", textDecoration: "underline" }}
+                        >
+                          {showTemplateHelper ? "Free-form" : "Use template"}
+                        </button>
                         <textarea
-                          className="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-xs outline-none focus:border-black"
                           placeholder="Coach response (optional)…"
                           rows={2}
                           value={responseText}
                           onChange={(e) => setResponseText(e.target.value)}
                           maxLength={5000}
+                          style={{ width: "100%", background: "var(--bg-secondary)", border: "1px solid var(--border-hover)", borderRadius: "8px", padding: "8px 10px", color: "var(--text-primary)", fontSize: "14px", boxSizing: "border-box", resize: "vertical", outline: "none", marginBottom: "8px" }}
                         />
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handleTriage(ci.id, "green")}
-                            disabled={triageLoading}
-                            className="flex-1 rounded-lg bg-green-600 px-3 py-1.5 text-xs text-white font-medium hover:bg-green-700 disabled:opacity-50"
-                          >
-                            ✅ Green
-                          </button>
-                          <button
-                            onClick={() => handleTriage(ci.id, "yellow")}
-                            disabled={triageLoading}
-                            className="flex-1 rounded-lg bg-amber-500 px-3 py-1.5 text-xs text-white font-medium hover:bg-amber-600 disabled:opacity-50"
-                          >
-                            ⚠️ Yellow
-                          </button>
-                          <button
-                            onClick={() => handleTriage(ci.id, "red")}
-                            disabled={triageLoading}
-                            className="flex-1 rounded-lg bg-red-600 px-3 py-1.5 text-xs text-white font-medium hover:bg-red-700 disabled:opacity-50"
-                          >
-                            🔴 Red
-                          </button>
+                        <div style={{ display: "flex", gap: "6px" }}>
+                          {(["green", "yellow", "red"] as const).map((status) => (
+                            <button
+                              key={status}
+                              onClick={() => handleTriage(ci.id, status)}
+                              disabled={triageLoading}
+                              style={{
+                                flex: 1, padding: "8px", borderRadius: "8px", border: "none", cursor: triageLoading ? "not-allowed" : "pointer",
+                                background: status === "green" ? "rgba(74,222,128,0.15)" : status === "yellow" ? "rgba(251,191,36,0.15)" : "rgba(248,113,113,0.15)",
+                                color: status === "green" ? "var(--status-success)" : status === "yellow" ? "var(--status-warning)" : "var(--status-error)",
+                                fontWeight: 600, fontSize: "0.8125rem", opacity: triageLoading ? 0.7 : 1,
+                              }}
+                            >
+                              {status === "green" ? "Green" : status === "yellow" ? "Yellow" : "Red"}
+                            </button>
+                          ))}
                         </div>
-                        {triageMessage && (
-                          <p className="text-xs text-neutral-500">{triageMessage}</p>
-                        )}
+                        {triageMessage && <p style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", marginTop: "6px" }}>{triageMessage}</p>}
                       </div>
                     )}
                   </div>
@@ -771,110 +519,27 @@ function ClientCard({
             </div>
           )}
 
-          {/* Cancel membership action */}
-          <div className="pt-3 border-t border-neutral-200">
-            {cancelMsg && (
-              <p className={`text-xs mb-2 ${cancelMsg.includes("Cancelled") ? "text-green-600" : "text-red-600"}`}>
-                {cancelMsg}
-              </p>
-            )}
+          {/* Cancel action */}
+          <div style={{ paddingTop: "10px", borderTop: "1px solid var(--border-subtle)" }}>
+            {cancelMsg && <p style={{ fontSize: "0.75rem", color: cancelMsg.includes("Cancelled") ? "var(--status-success)" : "var(--status-error)", marginBottom: "6px" }}>{cancelMsg}</p>}
             <button
               onClick={handleCancelClient}
               disabled={cancelLoading}
-              className="w-full rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
+              style={{ width: "100%", padding: "8px", background: "none", border: "1px solid rgba(248,113,113,0.4)", borderRadius: "8px", color: "var(--status-error)", fontSize: "0.8125rem", cursor: cancelLoading ? "not-allowed" : "pointer", opacity: cancelLoading ? 0.7 : 1 }}
             >
               {cancelLoading ? "Cancelling…" : "Cancel membership"}
             </button>
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-// ── Metric Chip ──
-
-function MetricChip({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="text-center">
-      <p className="text-xs text-neutral-500">{label}</p>
-      <p className="text-sm font-semibold">{value}</p>
-    </div>
-  );
-}
-
-// ── Status Helpers ──
-
-function getStatusConfig(status: ClientHealth["status"]) {
-  switch (status) {
-    case "at_risk":
-      return {
-        dotClass: semantic.status.urgent.dot,
-        bgClass: `${semantic.status.urgent.bg}`,
-        borderClass: `!border-red-200`,
-        textClass: semantic.status.urgent.text,
-        label: "At risk — low adherence or 7+ days since last check-in",
-      };
-    case "needs_attention":
-      return {
-        dotClass: semantic.status.needsReview.dot,
-        bgClass: `${semantic.status.needsReview.bg}`,
-        borderClass: `!border-amber-200`,
-        textClass: semantic.status.needsReview.text,
-        label: "Needs attention — 3+ days since last check-in or new member",
-      };
-    case "on_track":
-    default:
-      return {
-        dotClass: semantic.status.onTrack.dot,
-        bgClass: `${semantic.status.onTrack.bg}`,
-        borderClass: "",
-        textClass: semantic.status.onTrack.text,
-        label: "On track",
-      };
-  }
-}
-
-function getAdherenceColor(adherence: number): string {
-  if (adherence < 30) return "text-red-600";
-  if (adherence < 60) return "text-amber-600";
-  return "text-green-600";
-}
-
-// ── Detail Field — reusable row for structured application display ──
-
-function DetailField({
-  label,
-  value,
-  capitalize,
-  full,
-  className,
-}: {
-  label: string;
-  value: string | null | undefined;
-  capitalize?: boolean;
-  full?: boolean;
-  className?: string;
-}) {
-  if (!value) return null;
-  return (
-    <div className={`${full ? "col-span-2" : ""} ${className ?? ""} text-sm`}>
-      <p className="text-xs text-neutral-500">{label}</p>
-      <p className={capitalize ? "capitalize" : ""}>{value}</p>
-    </div>
+    </Card>
   );
 }
 
 // ── Applications Section ──
 
-function ApplicationsSection({
-  pendingApps,
-  processedApps,
-  onRefresh,
-}: {
-  pendingApps: ApplicationInfo[];
-  processedApps: ApplicationInfo[];
-  onRefresh: () => void;
+function ApplicationsSection({ pendingApps, processedApps, onRefresh }: {
+  pendingApps: ApplicationInfo[]; processedApps: ApplicationInfo[]; onRefresh: () => void;
 }) {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
@@ -904,185 +569,114 @@ function ApplicationsSection({
     }
   }
 
-  const goalLabels: Record<string, string> = {
-    fat_loss: "Fat Loss",
-    muscle: "Muscle Gain",
-    maintenance: "Maintenance",
-  };
-  const tierLabels: Record<string, string> = {
-    foundation: "Foundation ($49)",
-    coaching: "Coaching ($129)",
-    performance: "Performance ($229)",
-    vip: "VIP Elite ($349)",
-  };
+  const goalLabels: Record<string, string> = { fat_loss: "Fat Loss", muscle: "Muscle Gain", maintenance: "Maintenance" };
+  const tierLabels: Record<string, string> = { foundation: "Foundation ($49)", coaching: "Coaching ($129)", performance: "Performance ($229)", vip: "VIP Elite ($349)" };
 
   return (
-    <section className="space-y-3">
-      <h2 className="text-lg font-semibold">
-        📋 Applications{pendingApps.length > 0 && (
-          <span className="ml-2 inline-flex items-center justify-center rounded-full bg-amber-100 text-amber-700 text-xs font-medium px-2 py-0.5">
-            {pendingApps.length} pending
-          </span>
-        )}
-      </h2>
+    <section style={{ marginBottom: "20px" }}>
+      <p style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "10px" }}>
+        Applications{pendingApps.length > 0 && ` · ${pendingApps.length} pending`}
+      </p>
 
       {actionMessage && (
-        <p className="text-sm text-neutral-600 bg-neutral-100 rounded-lg px-3 py-2">
-          {actionMessage}
-        </p>
+        <p style={{ fontSize: "0.875rem", color: "var(--text-secondary)", background: "var(--bg-tertiary)", borderRadius: "8px", padding: "8px 12px", marginBottom: "10px" }}>{actionMessage}</p>
       )}
 
       {pendingApps.length === 0 && processedApps.length === 0 && (
-        <div className={components.card.base}>
-          <p className="text-center text-neutral-500 text-sm">
-            No applications yet. Share your /apply page to start receiving leads.
-          </p>
-        </div>
+        <Card><p style={{ textAlign: "center", color: "var(--text-tertiary)", fontSize: "0.875rem", margin: 0 }}>No applications yet.</p></Card>
       )}
 
-      {/* Pending applications */}
-      {pendingApps.map((app) => (
-        <div
-          key={app.id}
-          className="rounded-2xl border-2 border-amber-200 bg-white p-4"
-        >
-          <button
-            onClick={() => setExpandedApp(expandedApp === app.id ? null : app.id)}
-            className="w-full flex items-center justify-between text-left"
-          >
-            <div className="flex items-center gap-3">
-              <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
+      <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+        {pendingApps.map((app) => (
+          <Card key={app.id} accentBorder style={{ borderLeft: "2px solid var(--status-warning)" }}>
+            <button
+              onClick={() => setExpandedApp(expandedApp === app.id ? null : app.id)}
+              style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: 0 }}
+            >
               <div>
-                <p className="text-sm font-medium">{app.fullName}</p>
-                <p className="text-xs text-neutral-500">
+                <p style={{ fontWeight: 500, color: "var(--text-primary)", margin: "0 0 2px" }}>{app.fullName}</p>
+                <p style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", margin: 0 }}>
                   {app.email} · {goalLabels[app.goal] ?? app.goal}
                   {app.preferredTier ? ` · ${tierLabels[app.preferredTier] ?? app.preferredTier}` : ""}
                 </p>
               </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="text-xs text-neutral-400">
-                {new Date(app.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-              </span>
-              <span className="text-neutral-400 text-xs">{expandedApp === app.id ? "▲" : "▼"}</span>
-            </div>
-          </button>
+              <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)" }}>{expandedApp === app.id ? "▲" : "▼"}</span>
+            </button>
 
-          {expandedApp === app.id && (
-            <div className="mt-3 pt-3 border-t border-neutral-200 space-y-4">
-              {/* ── Personal Info ── */}
-              <div>
-                <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wide mb-2">Personal</p>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                  <DetailField label="Email" value={app.email} />
-                  <DetailField label="Phone" value={app.phone} />
-                  <DetailField label="Age" value={app.age != null ? String(app.age) : null} />
-                  <DetailField label="Height" value={app.height} />
-                  <DetailField label="Weight" value={app.currentWeight} />
+            {expandedApp === app.id && (
+              <div style={{ marginTop: "12px", paddingTop: "12px", borderTop: "1px solid var(--border-subtle)" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "12px" }}>
+                  <AppField label="Phone" value={app.phone} />
+                  <AppField label="Age" value={app.age != null ? String(app.age) : null} />
+                  <AppField label="Height" value={app.height} />
+                  <AppField label="Weight" value={app.currentWeight} />
+                  <AppField label="Experience" value={app.trainingExperience} />
+                  <AppField label="Frequency" value={app.trainingFrequency} />
+                </div>
+                {app.whyNow && <AppField label="Why now" value={app.whyNow} full />}
+                {app.biggestObstacle && <AppField label="Biggest obstacle" value={app.biggestObstacle} full />}
+                {app.injuryHistory && <AppField label="Injuries" value={app.injuryHistory} full />}
+
+                <div style={{ display: "flex", gap: "8px", marginTop: "12px" }}>
+                  <button
+                    onClick={() => handleAction(app.email, "approved")}
+                    disabled={actionLoading === app.email}
+                    style={{ flex: 1, padding: "10px", background: "rgba(74,222,128,0.15)", border: "none", borderRadius: "8px", color: "var(--status-success)", fontWeight: 600, cursor: actionLoading === app.email ? "not-allowed" : "pointer", opacity: actionLoading === app.email ? 0.7 : 1 }}
+                  >
+                    Approve
+                  </button>
+                  <button
+                    onClick={() => handleAction(app.email, "rejected")}
+                    disabled={actionLoading === app.email}
+                    style={{ flex: 1, padding: "10px", background: "none", border: "1px solid var(--border-hover)", borderRadius: "8px", color: "var(--text-secondary)", fontWeight: 500, cursor: actionLoading === app.email ? "not-allowed" : "pointer", opacity: actionLoading === app.email ? 0.7 : 1 }}
+                  >
+                    Reject
+                  </button>
                 </div>
               </div>
+            )}
+          </Card>
+        ))}
+      </div>
 
-              {/* ── Training ── */}
-              <div>
-                <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wide mb-2">Training</p>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                  <DetailField label="Experience" value={app.trainingExperience} capitalize />
-                  <DetailField label="Frequency" value={app.trainingFrequency} />
-                  <DetailField label="Gym access" value={app.gymAccess?.replace(/_/g, " ")} capitalize />
-                </div>
-                <DetailField label="Injury history" value={app.injuryHistory} full className="mt-2" />
-              </div>
-
-              {/* ── Goals & Mindset ── */}
-              <div>
-                <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wide mb-2">Goals &amp; Mindset</p>
-                <DetailField label="Primary goal" value={goalLabels[app.goal] ?? app.goal} full />
-                <DetailField label="Why now" value={app.whyNow} full className="mt-2" />
-                <DetailField label="Nutrition struggles" value={app.nutritionStruggles} full className="mt-2" />
-                <DetailField label="Biggest obstacle" value={app.biggestObstacle} full className="mt-2" />
-                <DetailField label="Wants help with" value={app.helpWithMost} full className="mt-2" />
-              </div>
-
-              {/* ── Plan Preference ── */}
-              <div>
-                <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wide mb-2">Plan Preference</p>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                  <DetailField label="Preferred tier" value={app.preferredTier ? (tierLabels[app.preferredTier] ?? app.preferredTier) : null} />
-                  <DetailField label="Budget comfort" value={app.budgetComfort} />
-                  <DetailField label="Ready for structure" value={app.readyForStructure ? "Yes ✓" : "Not confirmed"} />
-                </div>
-              </div>
-
-              {/* Approve / Reject buttons */}
-              <div className="flex gap-2 pt-2">
-                <button
-                  onClick={() => handleAction(app.email, "approved")}
-                  disabled={actionLoading === app.email}
-                  className="flex-1 rounded-lg bg-green-600 px-4 py-2 text-sm text-white font-medium hover:bg-green-700 disabled:opacity-50"
-                >
-                  {actionLoading === app.email ? "…" : "✅ Approve"}
-                </button>
-                <button
-                  onClick={() => handleAction(app.email, "rejected")}
-                  disabled={actionLoading === app.email}
-                  className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm text-white font-medium hover:bg-red-700 disabled:opacity-50"
-                >
-                  {actionLoading === app.email ? "…" : "❌ Reject"}
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      ))}
-
-      {/* Processed applications (collapsible) */}
       {processedApps.length > 0 && (
-        <div>
+        <div style={{ marginTop: "10px" }}>
           <button
             onClick={() => setShowProcessed(!showProcessed)}
-            className="text-xs text-neutral-500 hover:text-black underline"
+            style={{ fontSize: "0.8125rem", color: "var(--text-tertiary)", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}
           >
-            {showProcessed ? "Hide" : "Show"} {processedApps.length} processed application{processedApps.length !== 1 ? "s" : ""}
+            {showProcessed ? "Hide" : "Show"} {processedApps.length} processed
           </button>
           {showProcessed && (
-            <div className="mt-2 space-y-2">
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "8px" }}>
               {processedApps.map((app) => (
-                <div
-                  key={app.id}
-                  className={`rounded-xl border p-3 ${
-                    app.status === "approved"
-                      ? "border-green-200 bg-green-50"
-                      : "border-red-200 bg-red-50"
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
+                <Card key={app.id}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                     <div>
-                      <p className="text-sm font-medium">{app.fullName}</p>
-                      <p className="text-xs text-neutral-500">{app.email}</p>
+                      <p style={{ fontWeight: 500, color: "var(--text-secondary)", margin: "0 0 2px" }}>{app.fullName}</p>
+                      <p style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", margin: 0 }}>{app.email}</p>
                     </div>
-                    <span className={`text-xs font-medium ${
-                      app.status === "approved" ? "text-green-700" : "text-red-700"
-                    }`}>
-                      {app.status === "approved" ? "✅ Approved" : "❌ Rejected"}
-                      {app.status === "approved" && (
-                        <span className={`ml-1 ${app.convertedToMember ? "text-green-600" : "text-amber-500"}`}>
-                          {app.convertedToMember ? "· Subscribed ✓" : "· Awaiting payment ⏳"}
-                        </span>
-                      )}
-                      {app.approvedAt && (
-                        <span className="text-neutral-400 ml-1">
-                          {new Date(app.approvedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                        </span>
-                      )}
+                    <span style={{ fontSize: "0.75rem", color: app.status === "approved" ? "var(--status-success)" : "var(--status-error)" }}>
+                      {app.status === "approved" ? "Approved" : "Rejected"}
                     </span>
                   </div>
-                </div>
+                </Card>
               ))}
             </div>
           )}
         </div>
       )}
     </section>
+  );
+}
+
+function AppField({ label, value, full }: { label: string; value: string | null | undefined; full?: boolean }) {
+  if (!value) return null;
+  return (
+    <div style={full ? { gridColumn: "1 / -1" } : {}}>
+      <p style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", margin: "0 0 2px" }}>{label}</p>
+      <p style={{ fontSize: "0.875rem", color: "var(--text-primary)", margin: 0 }}>{value}</p>
+    </div>
   );
 }
 
@@ -1104,97 +698,55 @@ function TemplatesSection() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   async function loadTemplates() {
-    if (templates.length > 0) {
-      setExpanded(!expanded);
-      return;
-    }
+    if (templates.length > 0) { setExpanded(!expanded); return; }
     setLoading(true);
     try {
       const res = await fetch("/api/templates", { credentials: "include" });
-      if (res.ok) {
-        const data = await res.json();
-        setTemplates(data.templates ?? []);
-        setExpanded(true);
-      }
-    } catch {
-      // Non-fatal
-    } finally {
-      setLoading(false);
-    }
+      if (res.ok) { const data = await res.json(); setTemplates(data.templates ?? []); setExpanded(true); }
+    } catch { /* non-fatal */ } finally { setLoading(false); }
   }
 
   function copyToClipboard(text: string, id: string) {
-    navigator.clipboard.writeText(text).then(() => {
-      setCopiedId(id);
-      setTimeout(() => setCopiedId(null), 2000);
-    });
+    navigator.clipboard.writeText(text).then(() => { setCopiedId(id); setTimeout(() => setCopiedId(null), 2000); });
   }
 
-  const categoryLabels: Record<string, string> = {
-    lead: "Lead Management",
-    onboarding: "Onboarding",
-    checkin: "Check-In",
-    review: "Reviews",
-    retention: "Retention",
-  };
+  const categoryLabels: Record<string, string> = { lead: "Lead Management", onboarding: "Onboarding", checkin: "Check-In", review: "Reviews", retention: "Retention" };
 
   return (
-    <section className="pb-8">
+    <Card style={{ marginBottom: "16px" }}>
       <button
         onClick={loadTemplates}
-        className="w-full text-left flex items-center justify-between rounded-2xl border border-neutral-200 bg-white p-4 hover:border-neutral-400 transition-colors"
+        style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", background: "none", border: "none", cursor: "pointer", padding: 0 }}
       >
         <div>
-          <h2 className="text-lg font-semibold">📝 Message Templates</h2>
-          <p className="text-xs text-neutral-500 mt-0.5">
-            Pre-built scripts for leads, reviews, check-ins, and retention
-          </p>
+          <p style={{ fontWeight: 600, color: "var(--text-primary)", margin: "0 0 2px" }}>Message Templates</p>
+          <p style={{ fontSize: "0.8125rem", color: "var(--text-tertiary)", margin: 0 }}>Pre-built scripts for leads, reviews, check-ins, and retention</p>
         </div>
-        <span className="text-neutral-400 text-sm">
-          {loading ? "Loading…" : expanded ? "▲" : "▼"}
-        </span>
+        <span style={{ fontSize: "0.875rem", color: "var(--text-tertiary)", marginLeft: "12px" }}>{loading ? "…" : expanded ? "▲" : "▼"}</span>
       </button>
 
       {expanded && templates.length > 0 && (
-        <div className="mt-3 space-y-4">
+        <div style={{ marginTop: "14px", paddingTop: "14px", borderTop: "1px solid var(--border-subtle)" }}>
           {Object.entries(categoryLabels).map(([cat, label]) => {
             const catTemplates = templates.filter((t) => t.category === cat);
             if (catTemplates.length === 0) return null;
             return (
-              <div key={cat}>
-                <h3 className="text-xs font-medium text-neutral-500 uppercase tracking-wide mb-2">
-                  {label}
-                </h3>
-                <div className="space-y-2">
+              <div key={cat} style={{ marginBottom: "14px" }}>
+                <p style={{ fontSize: "0.625rem", color: "var(--text-tertiary)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "8px" }}>{label}</p>
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                   {catTemplates.map((t) => (
-                    <div
-                      key={t.id}
-                      className="rounded-xl border border-neutral-200 bg-white p-4"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-medium">{t.name}</p>
-                          {t.subject && (
-                            <p className="text-xs text-neutral-500 mt-0.5">
-                              Subject: {t.subject}
-                            </p>
-                          )}
-                        </div>
+                    <div key={t.id} style={{ border: "1px solid var(--border-subtle)", borderRadius: "8px", padding: "12px" }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
+                        <p style={{ fontWeight: 500, color: "var(--text-primary)", margin: 0 }}>{t.name}</p>
                         <button
                           onClick={() => copyToClipboard(t.body, t.id)}
-                          className="text-xs text-neutral-500 hover:text-black border border-neutral-200 rounded-lg px-2 py-1 transition-colors"
+                          style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", border: "1px solid var(--border-subtle)", borderRadius: "6px", padding: "4px 8px", background: "none", cursor: "pointer" }}
                         >
-                          {copiedId === t.id ? "✅ Copied" : "📋 Copy"}
+                          {copiedId === t.id ? "Copied!" : "Copy"}
                         </button>
                       </div>
-                      <p className="mt-2 text-sm text-neutral-700 whitespace-pre-line bg-neutral-50 rounded-lg p-3">
-                        {t.body}
-                      </p>
-                      {t.variables.length > 0 && (
-                        <p className="mt-2 text-xs text-neutral-400">
-                          Variables: {t.variables.join(", ")}
-                        </p>
-                      )}
+                      <p style={{ fontSize: "0.8125rem", color: "var(--text-secondary)", background: "var(--bg-tertiary)", borderRadius: "6px", padding: "8px", whiteSpace: "pre-line", margin: 0 }}>{t.body}</p>
+                      {t.variables.length > 0 && <p style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", marginTop: "6px", marginBottom: 0 }}>Variables: {t.variables.join(", ")}</p>}
                     </div>
                   ))}
                 </div>
@@ -1203,7 +755,7 @@ function TemplatesSection() {
           })}
         </div>
       )}
-    </section>
+    </Card>
   );
 }
 
@@ -1220,69 +772,40 @@ function LaunchEmailSection() {
   const [state, setState] = useState<LaunchEmailState>({ phase: "idle" });
 
   async function handleSend() {
-    if (
-      !confirm(
-        "Send launch announcement to all waitlist signups? This cannot be undone."
-      )
-    )
-      return;
-
+    if (!confirm("Send launch announcement to all waitlist signups? This cannot be undone.")) return;
     setState({ phase: "loading" });
-
     try {
-      const res = await fetch("/api/coach/launch-email", {
-        method: "POST",
-        credentials: "include",
-      });
+      const res = await fetch("/api/coach/launch-email", { method: "POST", credentials: "include" });
       const data = await res.json().catch(() => null);
-
-      if (!res.ok) {
-        throw new Error(
-          data?.error?.message ?? "Failed to send launch emails"
-        );
-      }
-
+      if (!res.ok) throw new Error(data?.error?.message ?? "Failed to send launch emails");
       setState({ phase: "success", result: data as LaunchEmailResult });
     } catch (err) {
-      setState({
-        phase: "error",
-        message:
-          err instanceof Error ? err.message : "Something went wrong",
-      });
+      setState({ phase: "error", message: err instanceof Error ? err.message : "Something went wrong" });
     }
   }
 
   return (
-    <section className={components.card.base}>
-      <h2 className="text-lg font-semibold mb-1">Launch Email</h2>
-      <p className="text-sm text-neutral-500 mb-4">
-        Send the Kairo launch announcement to all waitlist signups (Applications
-        + Leads, deduplicated). Founding members receive a reminder that their
-        10% discount is active.
+    <Card style={{ marginBottom: "16px" }}>
+      <p style={{ fontWeight: 600, color: "var(--text-primary)", marginBottom: "6px" }}>Launch Email</p>
+      <p style={{ fontSize: "0.875rem", color: "var(--text-secondary)", marginBottom: "14px" }}>
+        Send the Kairo launch announcement to all waitlist signups (Applications + Leads, deduplicated). Founding members receive a reminder that their 10% discount is active.
       </p>
-
       {state.phase === "success" && (
-        <p className="text-sm text-green-700 mb-3">
+        <p style={{ fontSize: "0.875rem", color: "var(--status-success)", marginBottom: "10px" }}>
           Sent {state.result.sent} email{state.result.sent !== 1 ? "s" : ""}.
-          {state.result.skipped > 0
-            ? ` ${state.result.skipped} skipped due to errors.`
-            : ""}
+          {state.result.skipped > 0 ? ` ${state.result.skipped} skipped.` : ""}
         </p>
       )}
-
       {state.phase === "error" && (
-        <p className="text-sm text-red-600 mb-3" role="alert">
-          {state.message}
-        </p>
+        <p style={{ fontSize: "0.875rem", color: "var(--status-error)", marginBottom: "10px" }} role="alert">{state.message}</p>
       )}
-
       <button
         onClick={handleSend}
         disabled={state.phase === "loading"}
-        className={components.button.primary}
+        style={{ padding: "10px 20px", background: "var(--accent-primary)", color: "var(--bg-primary)", border: "none", borderRadius: "8px", fontWeight: 700, cursor: state.phase === "loading" ? "not-allowed" : "pointer", opacity: state.phase === "loading" ? 0.7 : 1 }}
       >
         {state.phase === "loading" ? "Sending…" : "Send Launch Email"}
       </button>
-    </section>
+    </Card>
   );
 }

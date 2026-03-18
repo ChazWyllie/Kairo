@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import {
   verifySessionToken,
   getSessionFromRequest,
+  requireCoachAuth,
 } from "@/lib/auth";
 
 /**
@@ -17,6 +18,11 @@ import {
  * - No PII logged
  */
 export async function GET(request: NextRequest) {
+  // Coach session: return role without a member record lookup
+  if (requireCoachAuth(request)) {
+    return NextResponse.json({ role: "coach", member: null });
+  }
+
   const cookieHeader = request.headers.get("cookie");
   const token = getSessionFromRequest(cookieHeader);
 
@@ -53,8 +59,11 @@ export async function GET(request: NextRequest) {
       status: true,
       planTier: true,
       billingInterval: true,
+      isFoundingMember: true,
       goal: true,
       daysPerWeek: true,
+      minutesPerSession: true,
+      injuries: true,
       fullName: true,
       onboardedAt: true,
       createdAt: true,
@@ -73,5 +82,5 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  return NextResponse.json({ member });
+  return NextResponse.json({ role: "member", member });
 }
