@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { track } from "@/lib/analytics";
@@ -17,7 +17,7 @@ import { PLANS, type BillingInterval, type PlanTier } from "@/lib/stripe-prices"
 /**
  * Application form — pre-payment screening.
  *
- * Flow: /apply → submit → pending review → coach approves → payment link sent
+ * Flow: /apply -> submit -> pending review -> coach approves -> payment link sent
  *
  * Required: email, fullName, goal
  * Everything else is optional but helps coach qualify the lead.
@@ -45,17 +45,91 @@ const GYM_ACCESS = [
 ] as const;
 
 const TIERS = [
-  { value: "foundation", name: "Foundation", desc: "Templates + async check-ins" },
-  {
-    value: "coaching",
-    name: "Coaching",
-    desc: "Personalized programming + priority support",
-  },
-  { value: "performance", name: "Performance", desc: "Video reviews + weekly calls" },
-  { value: "vip", name: "VIP Elite", desc: "Daily access + priority everything" },
+  { value: "foundation", name: "Foundation", desc: "Training and nutrition templates plus async check-ins" },
+  { value: "coaching", name: "Coaching", desc: "Personalized 1-on-1 programming and priority support" },
+  { value: "performance", name: "Performance", desc: "Video reviews and weekly calls" },
+  { value: "vip", name: "VIP Elite", desc: "Daily access and priority everything" },
 ] as const;
 
 const VALID_APPLY_TIERS = ["foundation", "coaching", "performance", "vip"] as const;
+
+const STEP_LABELS: Record<ApplyStep, string> = {
+  info: "Info",
+  training: "Training",
+  goals: "Goals",
+  review: "Review",
+};
+
+// Shared dark input class used across all form fields
+const inputClass = [
+  "w-full rounded-[var(--radius-md)] border px-4 py-3 text-base outline-none",
+  "transition-all duration-150",
+  "placeholder:text-[var(--text-tertiary)]",
+].join(" ");
+
+const inputStyle = {
+  background: "var(--bg-tertiary)",
+  color: "var(--text-primary)",
+  borderColor: "var(--border-hover)",
+  fontSize: "16px", // prevents iOS zoom
+} as const;
+
+const inputFocusStyle = {
+  borderColor: "var(--accent-primary)",
+  boxShadow: "0 0 0 3px var(--accent-glow)",
+} as const;
+
+function FormInput({
+  id, label, required, optional, error, children,
+}: {
+  id: string;
+  label: string;
+  required?: boolean;
+  optional?: boolean;
+  error?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <label
+        htmlFor={id}
+        className="block text-sm font-medium"
+        style={{ color: error ? "#f87171" : "var(--text-primary)" }}
+      >
+        {label}
+        {required && <span className="ml-1" style={{ color: "var(--accent-primary)" }}>*</span>}
+        {optional && <span className="ml-1 text-xs" style={{ color: "var(--text-tertiary)" }}>(optional)</span>}
+      </label>
+      {children}
+      {error && (
+        <p className="text-xs" style={{ color: "#f87171" }}>{error}</p>
+      )}
+    </div>
+  );
+}
+
+function ChoiceButton({
+  selected, onClick, children,
+}: {
+  selected: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="rounded-[var(--radius-sm)] border px-4 py-2.5 text-sm font-medium transition-all duration-150"
+      style={{
+        borderColor: selected ? "var(--accent-primary)" : "var(--border-hover)",
+        background: selected ? "rgba(224,255,79,0.08)" : "var(--bg-tertiary)",
+        color: selected ? "var(--accent-primary)" : "var(--text-secondary)",
+      }}
+    >
+      {children}
+    </button>
+  );
+}
 
 function ApplyContent() {
   const searchParams = useSearchParams();
@@ -66,9 +140,8 @@ function ApplyContent() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [foundingLoading, setFoundingLoading] = useState(false);
   const [foundingError, setFoundingError] = useState<string | null>(null);
-  const [foundingInterval, setFoundingInterval] = useState<"monthly" | "annual">("monthly");
+  const [billingInterval, setBillingInterval] = useState<BillingInterval>("monthly");
 
-  // Form fields
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
@@ -83,14 +156,12 @@ function ApplyContent() {
   const [biggestObstacle, setBiggestObstacle] = useState("");
   const [helpWithMost, setHelpWithMost] = useState("");
   const [preferredTier, setPreferredTier] = useState("");
-  const [billingInterval, setBillingInterval] = useState<BillingInterval>("monthly");
   const [readyForStructure, setReadyForStructure] = useState(false);
 
   useEffect(() => {
     track({ name: "page_view", properties: { path: "/apply" } });
   }, []);
 
-  // Pre-select tier from URL param (e.g. coming from /quiz/result?tier=coaching)
   useEffect(() => {
     const tierParam = searchParams.get("tier");
     if (tierParam && (VALID_APPLY_TIERS as readonly string[]).includes(tierParam)) {
@@ -99,7 +170,6 @@ function ApplyContent() {
   }, [searchParams]);
 
   const currentIdx = APPLY_STEPS.indexOf(step);
-  const progress = ((currentIdx + 1) / APPLY_STEPS.length) * 100;
 
   function getTierLabel(tier: (typeof TIERS)[number]) {
     const plan = PLANS.find((p) => p.tier === tier.value);
@@ -116,21 +186,16 @@ function ApplyContent() {
       setError("Please correct the highlighted fields before continuing.");
       return;
     }
-
     setError(null);
     const nextStep = getNextApplyStep(step);
-    if (nextStep) {
-      setStep(nextStep);
-    }
+    if (nextStep) setStep(nextStep);
   }
 
   function goBack() {
     setFieldErrors({});
     setError(null);
     const previousStep = getPreviousApplyStep(step);
-    if (previousStep) {
-      setStep(previousStep);
-    }
+    if (previousStep) setStep(previousStep);
   }
 
   async function onSubmit(e: React.FormEvent) {
@@ -152,13 +217,7 @@ function ApplyContent() {
 
     setLoading(true);
     try {
-      const body: Record<string, unknown> = {
-        email,
-        fullName: fullName.trim(),
-        goal,
-      };
-
-      // Only include optional fields if filled
+      const body: Record<string, unknown> = { email, fullName: fullName.trim(), goal };
       if (phone.trim()) body.phone = phone.trim();
       if (age) body.age = parseInt(age, 10);
       if (whyNow.trim()) body.whyNow = whyNow.trim();
@@ -177,11 +236,8 @@ function ApplyContent() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-
       const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data?.error?.message ?? "Failed to submit application.");
-      }
+      if (!res.ok) throw new Error(data?.error?.message ?? "Failed to submit application.");
 
       track({ name: "application_submitted", properties: { goal, tier: preferredTier || "none" } });
       setDone(true);
@@ -195,29 +251,19 @@ function ApplyContent() {
   async function handleFoundingCheckout() {
     setFoundingError(null);
     setFoundingLoading(true);
-
     const tier = preferredTier || "foundation";
 
-    track({
-      name: "founding_member_cta_click",
-      properties: { tier },
-    });
+    track({ name: "founding_member_cta_click", properties: { tier, interval: billingInterval } });
 
     try {
       const res = await fetch("/api/checkout/founding", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, tier, interval: foundingInterval }),
+        body: JSON.stringify({ email, tier, interval: billingInterval }),
       });
-
       const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data?.error?.message ?? "Failed to start checkout.");
-      }
-
-      if (data.url) {
-        window.location.href = data.url;
-      }
+      if (!res.ok) throw new Error(data?.error?.message ?? "Failed to start checkout.");
+      if (data.url) window.location.href = data.url;
     } catch (err: unknown) {
       setFoundingError(err instanceof Error ? err.message : "Something went wrong.");
       setFoundingLoading(false);
@@ -229,116 +275,158 @@ function ApplyContent() {
     const matchedPlan = preferredTier
       ? PLANS.find((p) => p.tier === (preferredTier as PlanTier))
       : null;
-    const basePrice = matchedPlan
-      ? foundingInterval === "annual"
-        ? matchedPlan.annualPrice
-        : matchedPlan.monthlyPrice
+    const originalPrice = matchedPlan
+      ? billingInterval === "monthly" ? matchedPlan.monthlyPrice : matchedPlan.annualPrice
       : null;
-    const discountedPrice = basePrice !== null ? Math.round(basePrice * 0.9) : null;
-    const priceSuffix = foundingInterval === "annual" ? "/yr" : "/mo";
+    const discountedPrice = originalPrice !== null ? Math.round(originalPrice * 0.9) : null;
 
     return (
-      <main className="min-h-screen bg-white text-black">
-        <div className="mx-auto max-w-2xl px-6 py-16 text-center">
-          {/* Confirmation */}
-          <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-3xl mb-4">
-            ✅
+      <main
+        className="min-h-screen flex flex-col items-center justify-center px-5 py-16"
+        style={{ background: "var(--bg-primary)" }}
+      >
+        <div className="w-full max-w-lg text-center">
+          {/* Confirmation mark */}
+          <div
+            className="inline-flex h-16 w-16 items-center justify-center rounded-2xl text-2xl font-bold mb-6 animate-scale-in"
+            style={{ background: "var(--accent-primary)", color: "var(--bg-primary)" }}
+          >
+            ✓
           </div>
-          <h1 className="text-3xl font-semibold">Application Received</h1>
-          <p className="mt-4 text-neutral-600 max-w-md mx-auto">
-            Thanks for applying, {fullName.split(" ")[0]}! We&apos;ll review your
-            application and get back to you with the next steps.
+          <h1
+            className="font-display font-black text-3xl mb-3"
+            style={{ color: "var(--text-primary)", letterSpacing: "-0.03em" }}
+          >
+            Application Received
+          </h1>
+          <p className="text-base mb-10" style={{ color: "var(--text-secondary)" }}>
+            Thanks {fullName.split(" ")[0]}! We will review your application and reach out with next steps within 24 to 48 hours.
           </p>
 
           {/* Divider */}
-          <div className="my-10 flex items-center gap-4">
-            <div className="flex-1 h-px bg-neutral-200" />
-            <span className="text-xs text-neutral-400 uppercase tracking-wide">or</span>
-            <div className="flex-1 h-px bg-neutral-200" />
+          <div className="flex items-center gap-4 mb-10">
+            <div className="flex-1 h-px" style={{ background: "var(--border-subtle)" }} />
+            <span className="text-xs uppercase tracking-widest" style={{ color: "var(--text-tertiary)" }}>
+              or
+            </span>
+            <div className="flex-1 h-px" style={{ background: "var(--border-subtle)" }} />
           </div>
 
-          {/* Founding Member upsell */}
-          <div className="bg-neutral-50 border border-neutral-200 rounded-xl p-6 text-left">
-            <h2 className="text-xl font-semibold text-center">Become a Founding Member</h2>
-            <p className="mt-2 text-sm text-neutral-600 text-center">
-              Pay now and lock in 10% off forever — plus priority onboarding and direct coach access.
-            </p>
-
-            {/* Billing interval toggle */}
-            <div className="mt-4 flex justify-center">
-              <div className="inline-flex rounded-lg border border-neutral-200 bg-white p-1 gap-1">
-                <button
-                  type="button"
-                  onClick={() => setFoundingInterval("monthly")}
-                  className={`rounded-md px-4 py-1.5 text-sm font-medium transition-colors ${
-                    foundingInterval === "monthly"
-                      ? "bg-black text-white"
-                      : "text-neutral-600 hover:text-neutral-900"
-                  }`}
-                >
-                  Monthly
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setFoundingInterval("annual")}
-                  className={`rounded-md px-4 py-1.5 text-sm font-medium transition-colors ${
-                    foundingInterval === "annual"
-                      ? "bg-black text-white"
-                      : "text-neutral-600 hover:text-neutral-900"
-                  }`}
-                >
-                  Annual
-                  <span className="ml-1.5 text-xs text-green-600 font-semibold">Save ~17%</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Tier-specific pricing */}
-            {matchedPlan && discountedPrice !== null ? (
-              <p className="mt-4 text-center text-lg font-medium">
-                {matchedPlan.name} ·{" "}
-                <span className="line-through text-neutral-400">${basePrice}{priceSuffix}</span>
-                {" "}→ ${discountedPrice}{priceSuffix}
-              </p>
-            ) : (
-              <p className="mt-4 text-center text-sm text-neutral-600">
-                10% off any plan — forever.
-              </p>
-            )}
-
-            {/* Perks list */}
-            <ul className="mt-5 space-y-2">
-              {[
-                "10% off your subscription — forever",
-                "Locked-in rate — price never increases",
-                "Priority onboarding — first in line",
-                "Direct coach access via WhatsApp",
-              ].map((perk) => (
-                <li key={perk} className="flex items-start gap-2 text-sm text-neutral-700">
-                  <span className="text-green-600 font-bold mt-0.5">✓</span>
-                  {perk}
-                </li>
-              ))}
-            </ul>
-
-            {foundingError && (
-              <p className="mt-4 text-sm text-red-600 text-center" role="alert">
-                {foundingError}
-              </p>
-            )}
-
-            {/* CTAs */}
-            <div className="mt-6 flex flex-col items-center gap-3">
-              <button
-                onClick={handleFoundingCheckout}
-                disabled={foundingLoading}
-                className="bg-black text-white rounded-xl px-6 py-3 font-medium transition-opacity disabled:opacity-60"
+          {/* Founding member upsell — gradient border card */}
+          <div
+            className="p-px rounded-[var(--radius-lg)] text-left"
+            style={{
+              background: "linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%)",
+            }}
+          >
+            <div
+              className="rounded-[calc(var(--radius-lg)-1px)] p-6"
+              style={{ background: "var(--bg-secondary)" }}
+            >
+              <h2
+                className="font-display font-bold text-xl text-center mb-1"
+                style={{ color: "var(--text-primary)", letterSpacing: "-0.02em" }}
               >
-                {foundingLoading ? "Redirecting to checkout…" : "Secure My Spot"}
-              </button>
-              <Link href="/" className="text-sm text-neutral-500 hover:text-neutral-800">
-                No thanks, I&apos;ll wait
-              </Link>
+                Become a Founding Member
+              </h2>
+              <p className="text-sm text-center mb-5" style={{ color: "var(--text-secondary)" }}>
+                Lock in 10% off forever plus priority onboarding and direct coach access.
+              </p>
+
+              {/* Billing toggle */}
+              <div className="flex justify-center mb-5">
+                <div
+                  className="inline-flex rounded-[var(--radius-sm)] p-1 gap-1"
+                  style={{ background: "var(--bg-tertiary)", border: "1px solid var(--border-subtle)" }}
+                >
+                  {(["monthly", "annual"] as const).map((iv) => (
+                    <button
+                      key={iv}
+                      type="button"
+                      onClick={() => setBillingInterval(iv)}
+                      className="rounded-[calc(var(--radius-sm)-2px)] px-4 py-1.5 text-sm font-medium transition-colors duration-150 capitalize"
+                      style={{
+                        background: billingInterval === iv ? "var(--accent-primary)" : "transparent",
+                        color: billingInterval === iv ? "var(--bg-primary)" : "var(--text-secondary)",
+                      }}
+                    >
+                      {iv}
+                      {iv === "annual" && (
+                        <span className="ml-1.5 text-xs font-semibold" style={{ color: billingInterval === "annual" ? "var(--bg-primary)" : "var(--accent-primary)" }}>
+                          Save ~17%
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Pricing */}
+              {matchedPlan && originalPrice !== null && discountedPrice !== null ? (
+                <div className="text-center mb-5">
+                  <p className="text-base font-semibold" style={{ color: "var(--text-primary)" }}>
+                    {matchedPlan.name}
+                  </p>
+                  <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>
+                    <span style={{ textDecoration: "line-through", color: "var(--text-tertiary)" }}>
+                      ${originalPrice}/{billingInterval === "monthly" ? "mo" : "yr"}
+                    </span>
+                    {" "}
+                    <span style={{ color: "var(--accent-primary)", fontWeight: 600 }}>
+                      ${discountedPrice}/{billingInterval === "monthly" ? "mo" : "yr"}
+                    </span>
+                  </p>
+                </div>
+              ) : (
+                <p className="text-center text-sm mb-5" style={{ color: "var(--text-secondary)" }}>
+                  10% off any plan, forever.
+                </p>
+              )}
+
+              {/* Perks */}
+              <ul className="space-y-2.5 mb-6">
+                {[
+                  "10% off your subscription, locked in forever",
+                  "Rate never increases as long as you stay subscribed",
+                  "Priority onboarding, first in line",
+                  "Direct coach access via WhatsApp",
+                ].map((perk) => (
+                  <li key={perk} className="flex items-start gap-2.5 text-sm" style={{ color: "var(--text-secondary)" }}>
+                    <span
+                      className="shrink-0 mt-0.5 font-bold"
+                      style={{ color: "var(--accent-primary)" }}
+                      aria-hidden="true"
+                    >
+                      ✓
+                    </span>
+                    {perk}
+                  </li>
+                ))}
+              </ul>
+
+              {foundingError && (
+                <p className="text-sm text-center mb-4" style={{ color: "#f87171" }} role="alert">
+                  {foundingError}
+                </p>
+              )}
+
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={handleFoundingCheckout}
+                  disabled={foundingLoading}
+                  className="w-full rounded-[var(--radius-md)] py-4 text-base font-semibold transition-all duration-200 hover:-translate-y-px btn-glow disabled:opacity-60"
+                  style={{ background: "var(--accent-primary)", color: "var(--bg-primary)" }}
+                >
+                  {foundingLoading ? "Redirecting to checkout..." : "Secure My Spot"}
+                </button>
+                <Link
+                  href="/"
+                  className="text-sm text-center transition-colors duration-150"
+                  style={{ color: "var(--text-tertiary)" }}
+                >
+                  No thanks, I will wait
+                </Link>
+              </div>
             </div>
           </div>
         </div>
@@ -346,49 +434,94 @@ function ApplyContent() {
     );
   }
 
+  // ── Multi-step form ──
   return (
-    <main className="min-h-screen bg-white text-black">
-      <div className="mx-auto max-w-2xl px-6 py-12">
+    <main
+      className="min-h-screen"
+      style={{ background: "var(--bg-primary)" }}
+    >
+      {/* Back to home */}
+      <div className="px-5 md:px-10 pt-6">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 text-sm transition-colors duration-150"
+          style={{ color: "var(--text-tertiary)" }}
+        >
+          <span aria-hidden="true">←</span> Back to home
+        </Link>
+      </div>
+
+      <div className="mx-auto max-w-lg px-5 py-10">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-semibold">Apply for Coaching</h1>
-          <p className="mt-2 text-neutral-600">
+        <div className="text-center mb-10 animate-fade-in">
+          <h1
+            className="font-display font-black text-3xl sm:text-4xl"
+            style={{ color: "var(--text-primary)", letterSpacing: "-0.03em" }}
+          >
+            Apply for Coaching
+          </h1>
+          <p className="mt-2 text-base" style={{ color: "var(--text-secondary)" }}>
             Tell us about yourself so we can build the right plan for you.
           </p>
         </div>
 
-        {/* Progress bar */}
-        <div className="mb-8">
-          <div className="flex justify-between text-xs text-neutral-500 mb-1">
-            <span>Step {currentIdx + 1} of {APPLY_STEPS.length}</span>
-            <span>{Math.round(progress)}%</span>
-          </div>
-          <div className="h-2 rounded-full bg-neutral-200 overflow-hidden">
-            <div
-              className="h-full rounded-full bg-black transition-all duration-300"
-              style={{ width: `${progress}%` }}
-            />
+        {/* Step indicator */}
+        <div className="mb-10">
+          <div className="flex items-center justify-between gap-2">
+            {APPLY_STEPS.map((s, i) => (
+              <React.Fragment key={s}>
+                <div className="flex flex-col items-center gap-1.5 min-w-0">
+                  <div
+                    className="rounded-full transition-all duration-300"
+                    style={{
+                      width: i === currentIdx ? "10px" : "8px",
+                      height: i === currentIdx ? "10px" : "8px",
+                      background: i <= currentIdx ? "var(--accent-primary)" : "var(--border-hover)",
+                      boxShadow: i === currentIdx ? "0 0 8px var(--accent-glow)" : "none",
+                    }}
+                  />
+                  <span
+                    className="text-[10px] font-medium uppercase truncate transition-colors duration-200"
+                    style={{
+                      letterSpacing: "0.06em",
+                      color: i <= currentIdx ? "var(--text-primary)" : "var(--text-tertiary)",
+                    }}
+                  >
+                    {STEP_LABELS[s as ApplyStep]}
+                  </span>
+                </div>
+                {i < APPLY_STEPS.length - 1 && (
+                  <div
+                    className="flex-1 h-px mb-4 transition-colors duration-500"
+                    style={{
+                      background: i < currentIdx ? "var(--accent-primary)" : "var(--border-subtle)",
+                    }}
+                  />
+                )}
+              </React.Fragment>
+            ))}
           </div>
         </div>
 
         <form onSubmit={onSubmit}>
           {/* ── Step 1: Basic Info ── */}
           {step === "info" && (
-            <div className="space-y-5 animate-fade-in">
-              <h2 className="text-lg font-semibold">Basic Information</h2>
+            <div className="space-y-5 animate-slide-up">
+              <h2 className="text-lg font-semibold" style={{ color: "var(--text-primary)" }}>
+                Basic Information
+              </h2>
 
-              <div className="space-y-1">
-                <label htmlFor="apply-name" className={`block text-sm font-medium ${fieldErrors.fullName ? "text-red-600" : ""}`}>
-                  Full name <span className="text-red-500">*</span>
-                </label>
+              <FormInput id="apply-name" label="Full name" required error={fieldErrors.fullName}>
                 <input
                   id="apply-name"
                   type="text"
-                  className={`w-full rounded-xl border px-4 py-3 outline-none ${
-                    fieldErrors.fullName
-                      ? "border-red-500 bg-red-50 focus:border-red-600"
-                      : "border-neutral-300 focus:border-neutral-900"
-                  }`}
+                  className={inputClass}
+                  style={{
+                    ...inputStyle,
+                    borderColor: fieldErrors.fullName ? "#f87171" : "var(--border-hover)",
+                  }}
+                  onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
+                  onBlur={(e) => { e.target.style.borderColor = fieldErrors.fullName ? "#f87171" : "var(--border-hover)"; e.target.style.boxShadow = "none"; }}
                   placeholder="Your full name"
                   value={fullName}
                   onChange={(e) => {
@@ -399,25 +532,20 @@ function ApplyContent() {
                   required
                   autoComplete="name"
                   aria-invalid={!!fieldErrors.fullName}
-                  aria-describedby={fieldErrors.fullName ? "apply-name-error" : undefined}
                 />
-                {fieldErrors.fullName && (
-                  <p id="apply-name-error" className="text-xs text-red-600 mt-1">{fieldErrors.fullName}</p>
-                )}
-              </div>
+              </FormInput>
 
-              <div className="space-y-1">
-                <label htmlFor="apply-email" className={`block text-sm font-medium ${fieldErrors.email ? "text-red-600" : ""}`}>
-                  Email <span className="text-red-500">*</span>
-                </label>
+              <FormInput id="apply-email" label="Email" required error={fieldErrors.email}>
                 <input
                   id="apply-email"
                   type="email"
-                  className={`w-full rounded-xl border px-4 py-3 outline-none ${
-                    fieldErrors.email
-                      ? "border-red-500 bg-red-50 focus:border-red-600"
-                      : "border-neutral-300 focus:border-neutral-900"
-                  }`}
+                  className={inputClass}
+                  style={{
+                    ...inputStyle,
+                    borderColor: fieldErrors.email ? "#f87171" : "var(--border-hover)",
+                  }}
+                  onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
+                  onBlur={(e) => { e.target.style.borderColor = fieldErrors.email ? "#f87171" : "var(--border-hover)"; e.target.style.boxShadow = "none"; }}
                   placeholder="you@example.com"
                   value={email}
                   onChange={(e) => {
@@ -428,410 +556,398 @@ function ApplyContent() {
                   required
                   autoComplete="email"
                   aria-invalid={!!fieldErrors.email}
-                  aria-describedby={fieldErrors.email ? "apply-email-error" : undefined}
                 />
-                {fieldErrors.email && (
-                  <p id="apply-email-error" className="text-xs text-red-600 mt-1">{fieldErrors.email}</p>
-                )}
-              </div>
+              </FormInput>
 
-              <div className="space-y-1">
-                <label htmlFor="apply-phone" className="block text-sm font-medium">
-                  Phone <span className="text-neutral-400">(optional)</span>
-                </label>
+              <FormInput id="apply-phone" label="Phone" optional>
                 <input
                   id="apply-phone"
                   type="tel"
-                  className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-900"
+                  className={inputClass}
+                  style={inputStyle}
+                  onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
+                  onBlur={(e) => { e.target.style.borderColor = "var(--border-hover)"; e.target.style.boxShadow = "none"; }}
                   placeholder="+1 (555) 000-0000"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   autoComplete="tel"
                 />
-              </div>
+              </FormInput>
 
-              <div className="space-y-1">
-                <label htmlFor="apply-age" className="block text-sm font-medium">
-                  Age <span className="text-neutral-400">(optional)</span>
-                </label>
+              <FormInput id="apply-age" label="Age" optional>
                 <input
                   id="apply-age"
                   type="number"
                   min={13}
                   max={120}
-                  className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-900"
+                  className={inputClass}
+                  style={inputStyle}
+                  onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
+                  onBlur={(e) => { e.target.style.borderColor = "var(--border-hover)"; e.target.style.boxShadow = "none"; }}
                   placeholder="28"
                   value={age}
                   onChange={(e) => setAge(e.target.value)}
                 />
-              </div>
+              </FormInput>
 
-              {error && (
-                <p className="text-sm text-red-600" role="alert">
-                  {error}
-                </p>
-              )}
+              {error && <p className="text-sm" style={{ color: "#f87171" }} role="alert">{error}</p>}
 
               <button
                 type="submit"
-                className="w-full rounded-xl bg-black px-4 py-3 text-white font-medium"
+                className="w-full rounded-[var(--radius-md)] py-4 text-base font-semibold transition-all duration-200 hover:-translate-y-px btn-glow"
+                style={{ background: "var(--accent-primary)", color: "var(--bg-primary)" }}
               >
-                Continue →
+                Continue
               </button>
             </div>
           )}
 
           {/* ── Step 2: Training Background ── */}
           {step === "training" && (
-            <div className="space-y-5 animate-fade-in">
-              <h2 className="text-lg font-semibold">Training Background</h2>
+            <div className="space-y-5 animate-slide-up">
+              <h2 className="text-lg font-semibold" style={{ color: "var(--text-primary)" }}>
+                Training Background
+              </h2>
 
               <fieldset className="space-y-2">
-                <legend className="text-sm font-medium">Training experience</legend>
+                <legend className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
+                  Training experience
+                </legend>
                 <div className="flex flex-wrap gap-2">
                   {EXPERIENCE_LEVELS.map((exp) => (
-                    <button
+                    <ChoiceButton
                       key={exp.value}
-                      type="button"
+                      selected={trainingExperience === exp.value}
                       onClick={() => setTrainingExperience(exp.value)}
-                      className={`rounded-xl border px-4 py-2 text-sm font-medium transition-colors ${
-                        trainingExperience === exp.value
-                          ? "border-black bg-black text-white"
-                          : "border-neutral-300 bg-white text-neutral-700 hover:border-neutral-500"
-                      }`}
                     >
                       {exp.label}
-                    </button>
+                    </ChoiceButton>
                   ))}
                 </div>
               </fieldset>
 
-              <div className="space-y-1">
-                <label htmlFor="apply-freq" className="block text-sm font-medium">
-                  Current training frequency
-                </label>
+              <FormInput id="apply-freq" label="Current training frequency">
                 <input
                   id="apply-freq"
                   type="text"
-                  className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-900"
-                  placeholder="e.g., 3x per week, inconsistent"
+                  className={inputClass}
+                  style={inputStyle}
+                  onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
+                  onBlur={(e) => { e.target.style.borderColor = "var(--border-hover)"; e.target.style.boxShadow = "none"; }}
+                  placeholder="e.g. 3x per week, inconsistent"
                   value={trainingFrequency}
-                  onChange={(e) => {
-                    setTrainingFrequency(e.target.value);
-                    setError(null);
-                  }}
+                  onChange={(e) => { setTrainingFrequency(e.target.value); setError(null); }}
                 />
-              </div>
+              </FormInput>
 
               <fieldset className="space-y-2">
-                <legend className="text-sm font-medium">Gym access</legend>
+                <legend className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
+                  Gym access
+                </legend>
                 <div className="flex flex-wrap gap-2">
                   {GYM_ACCESS.map((g) => (
-                    <button
+                    <ChoiceButton
                       key={g.value}
-                      type="button"
+                      selected={gymAccess === g.value}
                       onClick={() => setGymAccess(g.value)}
-                      className={`rounded-xl border px-4 py-2 text-sm font-medium transition-colors ${
-                        gymAccess === g.value
-                          ? "border-black bg-black text-white"
-                          : "border-neutral-300 bg-white text-neutral-700 hover:border-neutral-500"
-                      }`}
                     >
                       {g.label}
-                    </button>
+                    </ChoiceButton>
                   ))}
                 </div>
               </fieldset>
 
-              <div className="space-y-1">
-                <label htmlFor="apply-injuries" className="block text-sm font-medium">
-                  Injury history
-                </label>
+              <FormInput id="apply-injuries" label="Injury history">
                 <textarea
                   id="apply-injuries"
-                  className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-900"
+                  className={inputClass}
+                  style={{ ...inputStyle, resize: "none" }}
+                  onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
+                  onBlur={(e) => { e.target.style.borderColor = "var(--border-hover)"; e.target.style.boxShadow = "none"; }}
                   rows={2}
-                  placeholder="e.g., ACL tear 2024, chronic lower back pain"
+                  placeholder="e.g. ACL tear 2024, chronic lower back pain"
                   value={injuryHistory}
-                  onChange={(e) => {
-                    setInjuryHistory(e.target.value);
-                    setError(null);
-                  }}
+                  onChange={(e) => { setInjuryHistory(e.target.value); setError(null); }}
                   maxLength={1000}
                 />
-              </div>
+              </FormInput>
 
-              {error && (
-                <p className="text-sm text-red-600" role="alert">
-                  {error}
-                </p>
-              )}
+              {error && <p className="text-sm" style={{ color: "#f87171" }} role="alert">{error}</p>}
 
               <div className="flex gap-3">
                 <button
                   type="button"
                   onClick={goBack}
-                  className="flex-1 rounded-xl border border-neutral-300 px-4 py-3 text-neutral-700 font-medium"
+                  className="flex-1 rounded-[var(--radius-md)] border py-3.5 text-base font-medium transition-all duration-150"
+                  style={{ borderColor: "var(--border-hover)", color: "var(--text-secondary)", background: "transparent" }}
                 >
-                  ← Back
+                  Back
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 rounded-xl bg-black px-4 py-3 text-white font-medium"
+                  className="flex-1 rounded-[var(--radius-md)] py-3.5 text-base font-semibold transition-all duration-200 hover:-translate-y-px btn-glow"
+                  style={{ background: "var(--accent-primary)", color: "var(--bg-primary)" }}
                 >
-                  Continue →
+                  Continue
                 </button>
               </div>
             </div>
           )}
 
-          {/* ── Step 3: Goals & Struggles ── */}
+          {/* ── Step 3: Goals ── */}
           {step === "goals" && (
-            <div className="space-y-5 animate-fade-in">
-              <h2 className="text-lg font-semibold">Goals & Motivation</h2>
+            <div className="space-y-5 animate-slide-up">
+              <h2 className="text-lg font-semibold" style={{ color: "var(--text-primary)" }}>
+                Goals and Motivation
+              </h2>
 
-              <fieldset className={`space-y-2 ${fieldErrors.goal ? "rounded-xl border-2 border-red-400 p-3" : ""}`}>
-                <legend className={`text-sm font-medium ${fieldErrors.goal ? "text-red-600" : ""}`}>
-                  Primary goal <span className="text-red-500">*</span>
+              <fieldset
+                className="space-y-2"
+                style={fieldErrors.goal ? { borderRadius: "var(--radius-sm)", border: "1px solid #f87171", padding: "12px" } : {}}
+              >
+                <legend
+                  className="text-sm font-medium"
+                  style={{ color: fieldErrors.goal ? "#f87171" : "var(--text-primary)" }}
+                >
+                  Primary goal <span style={{ color: "var(--accent-primary)" }}>*</span>
                 </legend>
                 <div className="flex flex-wrap gap-2">
                   {GOALS.map((g) => (
-                    <button
+                    <ChoiceButton
                       key={g.value}
-                      type="button"
+                      selected={goal === g.value}
                       onClick={() => {
                         setGoal(g.value);
                         setError(null);
                         setFieldErrors((prev) => { const { goal: _, ...rest } = prev; return rest; });
                       }}
-                      className={`rounded-xl border px-4 py-2 text-sm font-medium transition-colors ${
-                        goal === g.value
-                          ? "border-black bg-black text-white"
-                          : "border-neutral-300 bg-white text-neutral-700 hover:border-neutral-500"
-                      }`}
                     >
                       {g.label}
-                    </button>
+                    </ChoiceButton>
                   ))}
                 </div>
-                {fieldErrors.goal && (
-                  <p className="text-xs text-red-600">{fieldErrors.goal}</p>
-                )}
+                {fieldErrors.goal && <p className="text-xs" style={{ color: "#f87171" }}>{fieldErrors.goal}</p>}
               </fieldset>
 
-              <div className="space-y-1">
-                <label htmlFor="apply-whynow" className="block text-sm font-medium">
-                  Why now? What made you decide to seek coaching?
-                </label>
+              <FormInput id="apply-whynow" label="Why now? What made you decide to seek coaching?">
                 <textarea
                   id="apply-whynow"
-                  className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-900"
+                  className={inputClass}
+                  style={{ ...inputStyle, resize: "none" }}
+                  onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
+                  onBlur={(e) => { e.target.style.borderColor = "var(--border-hover)"; e.target.style.boxShadow = "none"; }}
                   rows={3}
-                  placeholder="What's driving you to make a change right now?"
+                  placeholder="What is driving you to make a change right now?"
                   value={whyNow}
-                  onChange={(e) => {
-                    setWhyNow(e.target.value);
-                    setError(null);
-                  }}
+                  onChange={(e) => { setWhyNow(e.target.value); setError(null); }}
                   maxLength={1000}
                 />
-              </div>
+              </FormInput>
 
-              <div className="space-y-1">
-                <label htmlFor="apply-nutrition" className="block text-sm font-medium">
-                  Nutrition struggles
-                </label>
+              <FormInput id="apply-nutrition" label="Nutrition struggles">
                 <textarea
                   id="apply-nutrition"
-                  className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-900"
+                  className={inputClass}
+                  style={{ ...inputStyle, resize: "none" }}
+                  onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
+                  onBlur={(e) => { e.target.style.borderColor = "var(--border-hover)"; e.target.style.boxShadow = "none"; }}
                   rows={2}
-                  placeholder="e.g., late night snacking, meal prep, eating out"
+                  placeholder="e.g. late night snacking, meal prep, eating out"
                   value={nutritionStruggles}
-                  onChange={(e) => {
-                    setNutritionStruggles(e.target.value);
-                    setError(null);
-                  }}
+                  onChange={(e) => { setNutritionStruggles(e.target.value); setError(null); }}
                   maxLength={1000}
                 />
-              </div>
+              </FormInput>
 
-              <div className="space-y-1">
-                <label htmlFor="apply-obstacle" className="block text-sm font-medium">
-                  Biggest obstacle to consistency
-                </label>
+              <FormInput id="apply-obstacle" label="Biggest obstacle to consistency">
                 <input
                   id="apply-obstacle"
                   type="text"
-                  className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-900"
-                  placeholder="e.g., time, motivation, knowledge"
+                  className={inputClass}
+                  style={inputStyle}
+                  onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
+                  onBlur={(e) => { e.target.style.borderColor = "var(--border-hover)"; e.target.style.boxShadow = "none"; }}
+                  placeholder="e.g. time, motivation, knowledge"
                   value={biggestObstacle}
-                  onChange={(e) => {
-                    setBiggestObstacle(e.target.value);
-                    setError(null);
-                  }}
+                  onChange={(e) => { setBiggestObstacle(e.target.value); setError(null); }}
                 />
-              </div>
+              </FormInput>
 
-              <div className="space-y-1">
-                <label htmlFor="apply-help" className="block text-sm font-medium">
-                  What do you want help with most?
-                </label>
+              <FormInput id="apply-help" label="What do you want help with most?">
                 <input
                   id="apply-help"
                   type="text"
-                  className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-900"
-                  placeholder="e.g., programming, nutrition, accountability"
+                  className={inputClass}
+                  style={inputStyle}
+                  onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
+                  onBlur={(e) => { e.target.style.borderColor = "var(--border-hover)"; e.target.style.boxShadow = "none"; }}
+                  placeholder="e.g. training structure, nutrition, accountability"
                   value={helpWithMost}
-                  onChange={(e) => {
-                    setHelpWithMost(e.target.value);
-                    setError(null);
-                  }}
+                  onChange={(e) => { setHelpWithMost(e.target.value); setError(null); }}
                 />
-              </div>
+              </FormInput>
 
-              {error && (
-                <p className="text-sm text-red-600" role="alert">
-                  {error}
-                </p>
-              )}
+              {error && <p className="text-sm" style={{ color: "#f87171" }} role="alert">{error}</p>}
 
               <div className="flex gap-3">
                 <button
                   type="button"
                   onClick={goBack}
-                  className="flex-1 rounded-xl border border-neutral-300 px-4 py-3 text-neutral-700 font-medium"
+                  className="flex-1 rounded-[var(--radius-md)] border py-3.5 text-base font-medium transition-all duration-150"
+                  style={{ borderColor: "var(--border-hover)", color: "var(--text-secondary)", background: "transparent" }}
                 >
-                  ← Back
+                  Back
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 rounded-xl bg-black px-4 py-3 text-white font-medium"
+                  className="flex-1 rounded-[var(--radius-md)] py-3.5 text-base font-semibold transition-all duration-200 hover:-translate-y-px btn-glow"
+                  style={{ background: "var(--accent-primary)", color: "var(--bg-primary)" }}
                 >
-                  Continue →
+                  Continue
                 </button>
               </div>
             </div>
           )}
 
-          {/* ── Step 4: Review & Tier Selection ── */}
+          {/* ── Step 4: Review ── */}
           {step === "review" && (
-            <div className="space-y-5 animate-fade-in">
-              <h2 className="text-lg font-semibold">Choose Your Plan & Submit</h2>
+            <div className="space-y-5 animate-slide-up">
+              <h2 className="text-lg font-semibold" style={{ color: "var(--text-primary)" }}>
+                Choose Your Plan
+              </h2>
 
+              {/* Billing toggle */}
               <div className="flex items-center justify-center gap-3" role="group" aria-label="Billing interval">
-                <button
-                  type="button"
-                  onClick={() => setBillingInterval("monthly")}
-                  aria-pressed={billingInterval === "monthly"}
-                  className={`text-sm font-medium transition-colors ${billingInterval === "monthly" ? "text-black" : "text-neutral-400 hover:text-neutral-700"}`}
-                >
-                  Monthly
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setBillingInterval("annual")}
-                  aria-pressed={billingInterval === "annual"}
-                  className={`text-sm font-medium transition-colors ${billingInterval === "annual" ? "text-black" : "text-neutral-400 hover:text-neutral-700"}`}
-                >
-                  Annual
-                </button>
-              </div>
-
-              <fieldset className="space-y-3">
-                <legend className="text-sm font-medium">
-                  Preferred tier <span className="text-neutral-400">(optional)</span>
-                </legend>
-                {TIERS.map((t) => (
+                {(["monthly", "annual"] as const).map((iv) => (
                   <button
-                    key={t.value}
+                    key={iv}
                     type="button"
-                    onClick={() => {
-                      setPreferredTier(t.value);
-                      setError(null);
-                    }}
-                    className={`w-full text-left rounded-xl border px-4 py-3 transition-colors ${
-                      preferredTier === t.value
-                        ? "border-black bg-neutral-50"
-                        : "border-neutral-200 hover:border-neutral-400"
-                    }`}
+                    onClick={() => setBillingInterval(iv)}
+                    aria-pressed={billingInterval === iv}
+                    className="text-sm font-medium transition-colors duration-150 capitalize"
+                    style={{ color: billingInterval === iv ? "var(--text-primary)" : "var(--text-tertiary)" }}
                   >
-                    <p className="font-medium text-sm">{getTierLabel(t)}</p>
-                    <p className="text-xs text-neutral-500">{t.desc}</p>
+                    {iv}
                   </button>
                 ))}
+              </div>
+
+              {/* Tier selection */}
+              <fieldset className="space-y-3">
+                <legend className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
+                  Preferred plan <span className="text-xs" style={{ color: "var(--text-tertiary)" }}>(optional)</span>
+                </legend>
+                {TIERS.map((t) => {
+                  const plan = PLANS.find((p) => p.tier === t.value);
+                  const price = plan
+                    ? billingInterval === "monthly" ? plan.monthlyPrice : plan.annualPrice
+                    : null;
+                  const isSelected = preferredTier === t.value;
+
+                  return (
+                    <button
+                      key={t.value}
+                      type="button"
+                      onClick={() => { setPreferredTier(t.value); setError(null); }}
+                      className="w-full text-left rounded-[var(--radius-md)] border px-4 py-3.5 transition-all duration-150"
+                      style={{
+                        borderColor: isSelected ? "var(--accent-primary)" : "var(--border-hover)",
+                        background: isSelected ? "rgba(224,255,79,0.05)" : "var(--bg-secondary)",
+                      }}
+                    >
+                      <div className="flex items-center justify-between">
+                        <p
+                          className="font-medium text-sm"
+                          style={{ color: isSelected ? "var(--accent-primary)" : "var(--text-primary)" }}
+                        >
+                          {t.name}
+                          {price !== null && (
+                            <span className="ml-2 font-normal" style={{ color: "var(--text-tertiary)" }}>
+                              ${price}/{billingInterval === "monthly" ? "mo" : "yr"}
+                            </span>
+                          )}
+                        </p>
+                        {isSelected && (
+                          <span className="text-xs font-bold" style={{ color: "var(--accent-primary)" }}>
+                            Selected
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs mt-0.5" style={{ color: "var(--text-tertiary)" }}>
+                        {t.desc}
+                      </p>
+                    </button>
+                  );
+                })}
               </fieldset>
 
-              <label className="flex items-start gap-3 cursor-pointer">
+              {/* Commitment checkbox */}
+              <label
+                className="flex items-start gap-3 cursor-pointer"
+                style={{ color: "var(--text-secondary)" }}
+              >
                 <input
                   type="checkbox"
                   checked={readyForStructure}
-                  onChange={(e) => {
-                    setReadyForStructure(e.target.checked);
-                    setError(null);
-                  }}
-                  className="mt-1 h-4 w-4 accent-black"
+                  onChange={(e) => { setReadyForStructure(e.target.checked); setError(null); }}
+                  className="mt-1 h-4 w-4 shrink-0"
+                  style={{ accentColor: "var(--accent-primary)" }}
                 />
                 <span className="text-sm">
-                  I&apos;m ready to follow a structured plan and commit to the process.
+                  I am ready to follow a structured plan and commit to the process.
                 </span>
               </label>
 
               {/* Summary */}
-              <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-4 text-sm space-y-1">
-                <p className="font-medium">Application Summary</p>
-                <p className="text-neutral-600">
-                  {fullName || "…"} · {email || "…"}
+              <div
+                className="rounded-[var(--radius-md)] p-4 text-sm space-y-1"
+                style={{ background: "var(--bg-secondary)", border: "1px solid var(--border-subtle)" }}
+              >
+                <p className="font-medium" style={{ color: "var(--text-primary)" }}>
+                  Application Summary
                 </p>
-                <p className="text-neutral-600">
+                <p style={{ color: "var(--text-secondary)" }}>
+                  {fullName || "..."} · {email || "..."}
+                </p>
+                <p style={{ color: "var(--text-secondary)" }}>
                   Goal: {GOALS.find((g) => g.value === goal)?.label || "Not selected"}
-                  {trainingExperience && ` · ${EXPERIENCE_LEVELS.find((e) => e.value === trainingExperience)?.label}`}
+                  {trainingExperience &&
+                    ` · ${EXPERIENCE_LEVELS.find((e) => e.value === trainingExperience)?.label}`}
                 </p>
                 {preferredTier && (
-                  <p className="text-neutral-600">
-                    Tier: {(() => {
-                      const selectedTier = TIERS.find((t) => t.value === preferredTier);
-                      return selectedTier ? getTierLabel(selectedTier) : "Not selected";
-                    })()}
+                  <p style={{ color: "var(--text-secondary)" }}>
+                    Plan: {getTierLabel(TIERS.find((t) => t.value === preferredTier)!)}
                   </p>
                 )}
               </div>
 
-              {error && (
-                <p className="text-sm text-red-600" role="alert">
-                  {error}
-                </p>
-              )}
+              {error && <p className="text-sm" style={{ color: "#f87171" }} role="alert">{error}</p>}
 
               <div className="flex gap-3">
                 <button
                   type="button"
                   onClick={goBack}
-                  className="flex-1 rounded-xl border border-neutral-300 px-4 py-3 text-neutral-700 font-medium"
+                  className="flex-1 rounded-[var(--radius-md)] border py-3.5 text-base font-medium transition-all duration-150"
+                  style={{ borderColor: "var(--border-hover)", color: "var(--text-secondary)", background: "transparent" }}
                 >
-                  ← Back
+                  Back
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 rounded-xl bg-black px-4 py-3 text-white font-medium transition-opacity disabled:opacity-60"
+                  className="flex-1 rounded-[var(--radius-md)] py-3.5 text-base font-semibold transition-all duration-200 hover:-translate-y-px btn-glow disabled:opacity-60"
+                  style={{ background: "var(--accent-primary)", color: "var(--bg-primary)" }}
                 >
-                  {loading ? "Submitting…" : "Submit Application"}
+                  {loading ? "Submitting..." : "Submit Application"}
                 </button>
               </div>
 
-              <p className="text-xs text-neutral-500 text-center">
-                We&apos;ll review your application and reach out within 24-48 hours.
+              <p className="text-xs text-center" style={{ color: "var(--text-tertiary)" }}>
+                We will review your application and reach out within 24 to 48 hours.
               </p>
             </div>
           )}
         </form>
-
-        {/* Navigation */}
-        <div className="mt-8 text-center">
-          <Link href="/" className="text-sm text-neutral-500 hover:text-neutral-800">
-            ← Back to home
-          </Link>
-        </div>
       </div>
     </main>
   );
@@ -841,8 +957,11 @@ export default function ApplyPage() {
   return (
     <Suspense
       fallback={
-        <main className="min-h-screen bg-white flex items-center justify-center">
-          <p className="text-neutral-400">Loading application…</p>
+        <main
+          className="min-h-screen flex items-center justify-center"
+          style={{ background: "var(--bg-primary)" }}
+        >
+          <p style={{ color: "var(--text-tertiary)" }}>Loading...</p>
         </main>
       }
     >

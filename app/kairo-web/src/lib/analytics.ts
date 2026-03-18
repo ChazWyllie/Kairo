@@ -26,7 +26,7 @@ export type AnalyticsEvent =
   | { name: "member_registered"; properties: Record<string, never> }
   | { name: "member_logout"; properties: Record<string, never> }
   | { name: "membership_cancelled"; properties: Record<string, never> }
-  | { name: "founding_member_cta_click"; properties: { tier: string } };
+  | { name: "founding_member_cta_click"; properties: { tier: string; interval: string } };
 
 /**
  * Track an analytics event.

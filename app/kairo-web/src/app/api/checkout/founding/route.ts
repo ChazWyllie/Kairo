@@ -10,7 +10,7 @@ import type { PlanTier, BillingInterval } from "@/lib/stripe-prices";
  * POST /api/checkout/founding
  *
  * Creates a Stripe Checkout Session for founding members.
- * Applies the FOUNDING_COUPON_ID coupon (10% off forever).
+ * Applies the FOUNDING_MEMBER_COUPON_ID coupon (10% off forever).
  *
  * Expects: { email, tier, interval }
  * Returns: { url } for redirect to Stripe hosted checkout
@@ -18,7 +18,7 @@ import type { PlanTier, BillingInterval } from "@/lib/stripe-prices";
  * Security:
  * - Zod validation on all inputs
  * - Rate limited (5/60s per IP)
- * - Requires FOUNDING_COUPON_ID to be configured
+ * - Requires FOUNDING_MEMBER_COUPON_ID to be configured
  * - Price ID resolved server-side (never sent by client)
  */
 
@@ -42,8 +42,8 @@ export async function POST(request: NextRequest) {
   }
 
   // Founding checkout must apply discount while waitlist offer is active
-  if (!env.FOUNDING_COUPON_ID) {
-    console.error("[founding-checkout] FOUNDING_COUPON_ID not configured");
+  if (!env.FOUNDING_MEMBER_COUPON_ID) {
+    console.error("[founding-checkout] FOUNDING_MEMBER_COUPON_ID not configured");
     return NextResponse.json(
       {
         error: {
@@ -92,12 +92,12 @@ export async function POST(request: NextRequest) {
       mode: "subscription",
       customer_email: email,
       line_items: [{ price: stripePriceId, quantity: 1 }],
-      discounts: [{ coupon: env.FOUNDING_COUPON_ID }],
+      discounts: [{ coupon: env.FOUNDING_MEMBER_COUPON_ID }],
       metadata: {
         planTier: tier,
         billingInterval: interval,
         isFoundingMember: "true",
-        foundingCouponId: env.FOUNDING_COUPON_ID,
+        foundingCouponId: env.FOUNDING_MEMBER_COUPON_ID,
       },
       success_url: `${env.APP_URL}/success?session_id={CHECKOUT_SESSION_ID}&founding=true`,
       cancel_url: `${env.APP_URL}/apply`,

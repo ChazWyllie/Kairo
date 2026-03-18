@@ -1,38 +1,206 @@
 @import "tailwindcss";
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   DESIGN TOKENS
+   All CSS custom properties. Registered in @theme inline as Tailwind utilities.
+───────────────────────────────────────────────────────────────────────────── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Colors */
+  --bg-primary:       #0A0A0A;
+  --bg-secondary:     #111111;
+  --bg-tertiary:      #1A1A1A;
+  --border-subtle:    #222222;
+  --border-hover:     #333333;
+  --text-primary:     #F5F5F5;
+  --text-secondary:   #A0A0A0;
+  --text-tertiary:    #666666;
+  --accent-primary:   #E0FF4F;
+  --accent-glow:      rgba(224, 255, 79, 0.15);
+  --accent-secondary: #4FFFE0;
+
+  /* Spacing — 8px base grid */
+  --space-1:  0.25rem;   /* 4px  */
+  --space-2:  0.5rem;    /* 8px  */
+  --space-3:  0.75rem;   /* 12px */
+  --space-4:  1rem;      /* 16px */
+  --space-5:  1.5rem;    /* 24px */
+  --space-6:  2rem;      /* 32px */
+  --space-7:  3rem;      /* 48px */
+  --space-8:  4rem;      /* 64px */
+  --space-9:  6rem;      /* 96px */
+  --space-10: 8rem;      /* 128px */
+
+  /* Border radius */
+  --radius-sm:   8px;
+  --radius-md:   12px;
+  --radius-lg:   16px;
+  --radius-full: 9999px;
+
+  /* Easing */
+  --ease-spring:    cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out-expo:  cubic-bezier(0.19, 1, 0.22, 1);
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-smooth:    cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   TAILWIND 4 THEME EXTENSION
+   --color-* prefix → bg-*, text-*, border-* utility classes
+   --font-* prefix  → font-* utility classes
+   --animate-*      → animate-* utility classes
+───────────────────────────────────────────────────────────────────────────── */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  --animate-fade-in: fade-in 0.3s ease-out;
+  /* Color utilities */
+  --color-bg-primary:       var(--bg-primary);
+  --color-bg-secondary:     var(--bg-secondary);
+  --color-bg-tertiary:      var(--bg-tertiary);
+  --color-border-subtle:    var(--border-subtle);
+  --color-border-hover:     var(--border-hover);
+  --color-text-primary:     var(--text-primary);
+  --color-text-secondary:   var(--text-secondary);
+  --color-text-tertiary:    var(--text-tertiary);
+  --color-accent-primary:   var(--accent-primary);
+  --color-accent-secondary: var(--accent-secondary);
+
+  /* Font utilities */
+  --font-display: "Cabinet Grotesk", system-ui, sans-serif;
+  --font-body:    var(--font-inter), system-ui, sans-serif;
+
+  /* Animation utilities */
+  --animate-fade-in:   fade-in 0.4s var(--ease-out-quart) both;
+  --animate-slide-up:  slide-up 0.6s var(--ease-out-expo) both;
+  --animate-scale-in:  scale-in 0.35s var(--ease-spring) both;
+  --animate-float:     float 6s ease-in-out infinite;
+  --animate-shimmer:   shimmer 2.4s linear infinite;
+  --animate-orb-pulse: orb-pulse 10s ease-in-out infinite;
 }
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   KEYFRAMES
+───────────────────────────────────────────────────────────────────────────── */
 @keyframes fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(30px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.85); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-8px); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+
+@keyframes orb-pulse {
+  0%   { transform: scale(1)   translate(0px, 0px);   opacity: 0.5; }
+  33%  { transform: scale(1.1) translate(25px, -35px); opacity: 0.35; }
+  66%  { transform: scale(0.9) translate(-20px, 25px); opacity: 0.45; }
+  100% { transform: scale(1)   translate(0px, 0px);   opacity: 0.5; }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   BASE STYLES
+───────────────────────────────────────────────────────────────────────────── */
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-inter), system-ui, sans-serif;
+  font-feature-settings: "ss01", "cv01", "kern";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   SCROLL REVEAL SYSTEM
+   Elements with [data-reveal] start hidden; JS adds .revealed when in viewport.
+   The @media rule ensures instant visibility for motion-sensitive users.
+───────────────────────────────────────────────────────────────────────────── */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(24px);
+  transition:
+    opacity  0.6s var(--ease-smooth),
+    transform 0.6s var(--ease-smooth);
+}
+
+[data-reveal].revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   UTILITY CLASSES
+───────────────────────────────────────────────────────────────────────────── */
+
+/* Gradient border technique — wrap element with this class */
+.gradient-border {
+  background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+  padding: 1px;
+  border-radius: var(--radius-lg);
+}
+
+/* Button glow effect — applied to primary CTA buttons */
+.btn-glow:hover {
+  box-shadow: 0 0 30px var(--accent-glow), 0 0 60px var(--accent-glow);
+}
+
+/* Smooth underline animation for links */
+.link-underline {
+  background-image: linear-gradient(currentColor, currentColor);
+  background-size: 0% 1px;
+  background-repeat: no-repeat;
+  background-position: left bottom;
+  transition: background-size 0.3s var(--ease-out-quart);
+}
+.link-underline:hover {
+  background-size: 100% 1px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   GRAIN OVERLAY
+   Adds editorial texture; pointer-events: none so it never blocks interaction.
+───────────────────────────────────────────────────────────────────────────── */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+  opacity: 0.025;
+  pointer-events: none;
+  z-index: 9999;
+  mix-blend-mode: overlay;
 }

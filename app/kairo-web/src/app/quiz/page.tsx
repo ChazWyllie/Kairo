@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { track } from "@/lib/analytics";
 import { isValidEmail } from "@/lib/validation";
@@ -35,8 +35,6 @@ export default function QuizPage() {
   useEffect(() => {
     track({ name: "quiz_started", properties: { source: "direct" } });
   }, []);
-
-  const progress = Math.round(((step + 1) / TOTAL_STEPS) * 100);
 
   const selectAnswer = useCallback(
     (key: keyof QuizAnswers, value: string | number) => {
@@ -81,22 +79,42 @@ export default function QuizPage() {
   }
 
   return (
-    <main className="min-h-screen bg-white text-black flex flex-col">
-      {/* Progress Bar */}
-      <div className="w-full bg-neutral-100 h-1.5">
+    <main className="min-h-screen text-black flex flex-col" style={{ background: "#FAFAF9" }}>
+      {/* Segmented dot progress indicator */}
+      <div className="w-full px-6 pt-6 pb-2 flex justify-center">
         <div
-          className="h-1.5 bg-black transition-all duration-300"
-          style={{ width: `${progress}%` }}
-        />
+          className="flex items-center gap-2"
+          role="progressbar"
+          aria-valuenow={step + 1}
+          aria-valuemin={1}
+          aria-valuemax={TOTAL_STEPS}
+          aria-label={`Step ${step + 1} of ${TOTAL_STEPS}`}
+        >
+          {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
+            <React.Fragment key={i}>
+              <div
+                className={`rounded-full transition-all duration-300 ${
+                  i < step
+                    ? "h-2 w-2 bg-black"
+                    : i === step
+                    ? "h-2.5 w-2.5 bg-black ring-2 ring-black ring-offset-2"
+                    : "h-2 w-2 bg-neutral-200"
+                }`}
+              />
+              {i < TOTAL_STEPS - 1 && (
+                <div
+                  className={`h-px w-6 transition-colors duration-300 ${
+                    i < step ? "bg-black" : "bg-neutral-200"
+                  }`}
+                />
+              )}
+            </React.Fragment>
+          ))}
+        </div>
       </div>
 
       <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
         <div className="w-full max-w-md">
-          {/* Step indicator */}
-          <p className="text-xs text-neutral-400 mb-6 text-center">
-            {step + 1} of {TOTAL_STEPS}
-          </p>
-
           {/* ─── Step 0: Goal ─── */}
           {step === 0 && (
             <QuizStep
@@ -172,10 +190,15 @@ export default function QuizPage() {
 
           {/* ─── Step 5: Email capture ─── */}
           {step === 5 && (
-            <div className="space-y-6">
-              <div className="text-center">
-                <h2 className="text-2xl font-bold">Your plan is ready! 🎯</h2>
-                <p className="mt-2 text-neutral-600">
+            <div className="space-y-6 animate-slide-up">
+              <div className="flex flex-col items-center gap-3 text-center">
+                <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-black text-2xl animate-scale-in">
+                  🎯
+                </div>
+                <h2 className="text-2xl font-bold" style={{ letterSpacing: "-0.02em" }}>
+                  Your plan is ready
+                </h2>
+                <p className="text-neutral-500 text-base">
                   Enter your email to see your personalized recommendation.
                 </p>
               </div>
@@ -185,7 +208,7 @@ export default function QuizPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
-                  className="w-full rounded-xl border border-neutral-300 px-4 py-3 text-base outline-none focus:border-black focus:ring-1 focus:ring-black"
+                  className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-3 text-base outline-none transition-all focus:border-black focus:ring-2 focus:ring-black/10"
                   inputMode="email"
                   autoComplete="email"
                   autoFocus
@@ -199,9 +222,12 @@ export default function QuizPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full rounded-xl bg-black px-6 py-3.5 text-white font-semibold text-base transition-opacity disabled:opacity-60"
+                  className="group w-full flex items-center justify-center gap-2 rounded-2xl bg-black px-6 py-4 text-white font-semibold text-base transition-all hover:bg-neutral-800 hover:gap-3 active:scale-[0.98] disabled:opacity-60"
                 >
-                  {loading ? "Loading…" : "See My Recommendation →"}
+                  <span>{loading ? "Loading…" : "See My Recommendation"}</span>
+                  {!loading && (
+                    <span className="transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true">→</span>
+                  )}
                 </button>
                 <p className="text-xs text-neutral-400 text-center">
                   No spam. Unsubscribe anytime.
@@ -215,9 +241,10 @@ export default function QuizPage() {
             <button
               type="button"
               onClick={() => setStep((s) => s - 1)}
-              className="mt-6 text-sm text-neutral-400 hover:text-black transition-colors mx-auto block"
+              className="group mt-8 flex items-center gap-1 text-sm text-neutral-400 hover:text-neutral-800 transition-colors mx-auto"
             >
-              ← Back
+              <span className="transition-transform duration-200 group-hover:-translate-x-0.5" aria-hidden="true">←</span>
+              <span>Back</span>
             </button>
           )}
         </div>
@@ -240,22 +267,40 @@ function QuizStep({
   selected?: string;
 }) {
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-center">{question}</h2>
+    <div className="space-y-6 animate-slide-up">
+      <h2
+        className="text-2xl sm:text-3xl font-bold text-center"
+        style={{ letterSpacing: "-0.02em" }}
+      >
+        {question}
+      </h2>
       <div className="space-y-3">
         {options.map((opt) => (
           <button
             key={opt.value}
             type="button"
             onClick={() => onSelect(opt.value)}
-            className={`w-full flex items-center gap-3 rounded-xl border px-4 py-3.5 text-left text-base font-medium transition-all ${
+            className={`group w-full flex items-center gap-4 rounded-2xl border-2 px-5 py-4 text-left transition-all duration-200 ${
               selected === opt.value
-                ? "border-black bg-neutral-50 ring-1 ring-black"
-                : "border-neutral-200 hover:border-neutral-400"
+                ? "border-black bg-black text-white shadow-lg"
+                : "border-neutral-200 bg-white hover:border-neutral-400 hover:bg-neutral-50"
             }`}
           >
-            <span className="text-xl">{opt.emoji}</span>
-            <span>{opt.label}</span>
+            <span
+              className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-2xl transition-all duration-200 ${
+                selected === opt.value
+                  ? "bg-white/15"
+                  : "bg-neutral-100 group-hover:bg-neutral-200"
+              }`}
+            >
+              {opt.emoji}
+            </span>
+            <span className="text-base font-medium">{opt.label}</span>
+            {selected === opt.value && (
+              <span className="ml-auto animate-scale-in" aria-hidden="true">
+                ✓
+              </span>
+            )}
           </button>
         ))}
       </div>

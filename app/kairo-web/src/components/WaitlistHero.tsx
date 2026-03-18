@@ -40,7 +40,7 @@ export default function WaitlistHero() {
       <CardNav
         logoText="Kairo"
         items={NAV_ITEMS}
-        baseColor="#000"
+        baseColor="rgba(0,0,0,0.75)"
         menuColor="#fff"
         buttonBgColor="#fff"
         buttonTextColor="#000"
@@ -48,28 +48,95 @@ export default function WaitlistHero() {
         ctaLabel="Join Waitlist"
       />
 
-      <section className="mx-auto max-w-3xl px-6 pt-32 pb-20 text-center">
-        <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight leading-tight text-white">
-          Coaching that adapts to your real life.
+      <section className="relative z-10 mx-auto max-w-3xl px-6 pt-36 pb-24 text-center">
+        {/* Floating keyword badges — desktop only, purely decorative */}
+        <span
+          aria-hidden="true"
+          className="hidden sm:flex absolute left-[2%] top-1/3 -translate-y-1/2 items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-neutral-400 backdrop-blur-sm animate-float"
+          style={{ animationDelay: "0s" }}
+        >
+          <span className="h-1.5 w-1.5 rounded-full bg-neutral-500" />
+          Accountability
+        </span>
+        <span
+          aria-hidden="true"
+          className="hidden sm:flex absolute right-[2%] top-2/5 -translate-y-1/2 items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-neutral-400 backdrop-blur-sm animate-float"
+          style={{ animationDelay: "2s" }}
+        >
+          <span className="h-1.5 w-1.5 rounded-full bg-neutral-500" />
+          Structure
+        </span>
+        <span
+          aria-hidden="true"
+          className="hidden sm:flex absolute left-[4%] bottom-1/3 items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-neutral-400 backdrop-blur-sm animate-float"
+          style={{ animationDelay: "4s" }}
+        >
+          <span className="h-1.5 w-1.5 rounded-full bg-neutral-500" />
+          Results
+        </span>
+
+        {/* Headline — weight contrast within one typographic unit */}
+        <h1
+          className="text-5xl sm:text-6xl md:text-7xl font-bold leading-[0.95] text-white"
+          style={{ letterSpacing: "-0.04em" }}
+        >
+          <span className="block">Coaching that</span>
+          <span className="block font-light text-neutral-400">
+            adapts to your real life.
+          </span>
         </h1>
-        <p className="mt-6 text-lg sm:text-xl text-neutral-400 max-w-2xl mx-auto leading-relaxed">
+
+        {/* Subtitle */}
+        <p
+          className="mt-8 text-base sm:text-lg text-neutral-500 max-w-xl mx-auto leading-relaxed animate-slide-up"
+          style={{ animationDelay: "150ms" }}
+        >
           Expert fitness coaching is coming. Get early access + founding member
           pricing.
         </p>
-        <div className="mt-10">
+
+        {/* CTA — arrow slides in on hover via gap transition */}
+        <div
+          className="mt-12 flex flex-col items-center gap-4 animate-slide-up"
+          style={{ animationDelay: "250ms" }}
+        >
           <Link
             href="/apply"
             onClick={() =>
               track({ name: "cta_click", properties: { location: "waitlist_hero" } })
             }
-            className="inline-block rounded-xl bg-white px-10 py-4 text-lg font-semibold text-black shadow-lg hover:bg-neutral-200 transition-colors"
+            className="group inline-flex items-center gap-2 overflow-hidden rounded-2xl bg-white px-10 py-4 text-base font-semibold text-black transition-all duration-300 hover:gap-3 hover:pr-9"
           >
-            Join the Waitlist
+            <span>Join the Waitlist</span>
+            <span
+              className="inline-block transition-transform duration-300 group-hover:translate-x-1"
+              aria-hidden="true"
+            >
+              →
+            </span>
           </Link>
+          <p
+            className="text-xs text-neutral-600 uppercase"
+            style={{ letterSpacing: "0.08em" }}
+          >
+            No commitment &middot; Early access
+          </p>
         </div>
-        <p className="mt-6 text-sm text-neutral-500">
-          No commitment required &middot; Early access benefits
-        </p>
+
+        {/* Scroll indicator */}
+        <div
+          aria-hidden="true"
+          className="mt-16 flex flex-col items-center gap-2 opacity-30 animate-float"
+          style={{ animationDelay: "1s" }}
+        >
+          <span
+            className="text-[10px] text-neutral-500 uppercase"
+            style={{ letterSpacing: "0.2em" }}
+          >
+            Scroll
+          </span>
+          <div className="h-10 w-px bg-gradient-to-b from-neutral-500 to-transparent" />
+        </div>
       </section>
     </>
   );
