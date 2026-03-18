@@ -85,8 +85,21 @@ export default function Navigation() {
             ))}
           </nav>
 
-          {/* Desktop CTA */}
-          <div className="hidden md:flex items-center gap-4">
+          {/* Desktop CTAs */}
+          <div className="hidden md:flex items-center gap-3">
+            <Link
+              href="/login"
+              className="text-sm font-medium transition-colors duration-150 px-4 py-2 rounded-[var(--radius-sm)]"
+              style={{ color: "var(--text-secondary)" }}
+              onMouseEnter={(e) =>
+                ((e.currentTarget as HTMLElement).style.color = "var(--text-primary)")
+              }
+              onMouseLeave={(e) =>
+                ((e.currentTarget as HTMLElement).style.color = "var(--text-secondary)")
+              }
+            >
+              Sign In
+            </Link>
             <Link
               href="/apply"
               onClick={() =>
@@ -168,20 +181,33 @@ export default function Navigation() {
           ))}
         </nav>
 
-        <Link
-          href="/apply"
-          onClick={() => {
-            track({ name: "cta_click", properties: { location: "nav_mobile" } });
-            closeMenu();
-          }}
-          className="block w-full text-center rounded-[var(--radius-md)] py-4 text-base font-semibold mt-8"
-          style={{
-            background: "var(--accent-primary)",
-            color: "var(--bg-primary)",
-          }}
-        >
-          Apply Now
-        </Link>
+        <div className="flex flex-col gap-3 mt-8">
+          <Link
+            href="/apply"
+            onClick={() => {
+              track({ name: "cta_click", properties: { location: "nav_mobile" } });
+              closeMenu();
+            }}
+            className="block w-full text-center rounded-[var(--radius-md)] py-4 text-base font-semibold"
+            style={{
+              background: "var(--accent-primary)",
+              color: "var(--bg-primary)",
+            }}
+          >
+            Apply Now
+          </Link>
+          <Link
+            href="/login"
+            onClick={closeMenu}
+            className="block w-full text-center rounded-[var(--radius-md)] py-4 text-base font-semibold"
+            style={{
+              border: "1px solid var(--border-hover)",
+              color: "var(--text-secondary)",
+            }}
+          >
+            Sign In
+          </Link>
+        </div>
       </div>
     </>
   );
