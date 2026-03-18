@@ -11,6 +11,15 @@ import type { NextConfig } from "next";
  */
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "chazwyllie.com",
+        pathname: "/assets/images/**",
+      },
+    ],
+  },
   async headers() {
     return [
       {

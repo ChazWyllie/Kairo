@@ -1,16 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  display: "swap",
 });
 
 export const viewport: Viewport = {
@@ -19,16 +15,16 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Kairo Coaching — Simple, Structured Fitness Coaching",
+  title: "Kairo Coaching — Coaching That Adapts to Your Real Life",
   description:
-    "Personalized training plans, nutrition coaching, and expert accountability. Apply now to get started.",
+    "Expert fitness and nutrition coaching that flexes with your schedule, stress, and energy — so you actually stay consistent. Join the waitlist for founding member pricing.",
   metadataBase: new URL(
     process.env.APP_URL ?? "https://kairo-delta-sand.vercel.app"
   ),
   openGraph: {
-    title: "Kairo Coaching — Simple, Structured Fitness Coaching",
+    title: "Kairo Coaching — Coaching That Adapts to Your Real Life",
     description:
-      "Personalized training plans, nutrition coaching, and expert accountability.",
+      "Expert fitness and nutrition coaching that flexes with your schedule, stress, and energy — so you actually stay consistent.",
     type: "website",
     siteName: "Kairo Coaching",
   },
@@ -43,10 +39,21 @@ export default async function RootLayout({
 
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        nonce={nonce}
-      >
+      <head>
+        {/* Cabinet Grotesk — from Fontshare (not available on Google Fonts) */}
+        <link
+          rel="preconnect"
+          href="https://api.fontshare.com"
+          crossOrigin="anonymous"
+          nonce={nonce}
+        />
+        <link
+          rel="stylesheet"
+          href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@700,800,900&display=swap"
+          nonce={nonce}
+        />
+      </head>
+      <body className={`${inter.variable} antialiased`} nonce={nonce}>
         {children}
       </body>
     </html>
