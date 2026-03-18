@@ -44,7 +44,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
     return new NextResponse(
       `<html>
-        <head><title>Unsubscribed — Kairo Coaching</title></head>
+        <head><title>Unsubscribed — Kairo Fitness</title></head>
         <body style="font-family: system-ui, sans-serif; max-width: 480px; margin: 80px auto; text-align: center;">
           <h2>You've been unsubscribed</h2>
           <p>You won't receive any more coaching tips from us.</p>

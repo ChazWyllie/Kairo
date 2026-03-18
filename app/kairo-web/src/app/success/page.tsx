@@ -3,7 +3,7 @@ import { Suspense } from "react";
 
 export const metadata: Metadata = {
   title: "Payment Successful | Kairo",
-  description: "Your Kairo Coaching membership is being activated. Check your email for next steps.",
+  description: "Your Kairo Fitness membership is being activated. Check your email for next steps.",
 };
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -50,7 +50,7 @@ function SuccessContent() {
       <div className="mx-auto max-w-2xl px-6 py-16">
         <h1 className="text-3xl font-semibold">You&apos;re in ✅</h1>
         <p className="mt-4 text-neutral-700">
-          Thanks for joining Kairo Coaching. Your membership will activate
+          Thanks for joining Kairo Fitness. Your membership will activate
           automatically once payment is confirmed.
         </p>
         <p className="mt-2 text-neutral-700">

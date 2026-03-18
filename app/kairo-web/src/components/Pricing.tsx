@@ -92,18 +92,18 @@ export default function Pricing() {
             Annual
           </button>
 
-          {isAnnual && (
-            <span
-              className="rounded-full px-2.5 py-0.5 text-xs font-medium"
-              style={{
-                background: "rgba(224,255,79,0.1)",
-                color: "var(--accent-primary)",
-                border: "1px solid rgba(224,255,79,0.2)",
-              }}
-            >
-              Save ~17%
-            </span>
-          )}
+          <span
+            className="rounded-full px-2.5 py-0.5 text-xs font-medium transition-opacity duration-200"
+            style={{
+              background: "rgba(224,255,79,0.1)",
+              color: "var(--accent-primary)",
+              border: "1px solid rgba(224,255,79,0.2)",
+              opacity: isAnnual ? 1 : 0,
+              pointerEvents: "none",
+            }}
+          >
+            Save ~17%
+          </span>
         </ScrollReveal>
 
         {/* Tier grid */}

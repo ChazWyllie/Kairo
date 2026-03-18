@@ -9,9 +9,9 @@ const CREDENTIALS = [
 ] as const;
 
 /**
- * About / Coach section — real content from chazwyllie.com.
+ * About / Coach section. Real content from chazwyllie.com.
  * Photo: https://chazwyllie.com/assets/images/profile-photo.jpg
- * Server component — no state or effects.
+ * Server component, no state or effects.
  */
 export default function About() {
   return (
@@ -34,7 +34,7 @@ export default function About() {
             >
               <Image
                 src="https://chazwyllie.com/assets/images/profile-photo.jpg"
-                alt="Chaz Wyllie — founder of Kairo Coaching"
+                alt="Chaz Wyllie, founder of Kairo Fitness"
                 fill
                 sizes="(max-width: 1024px) 80vw, 384px"
                 className="object-cover object-top"
@@ -94,7 +94,7 @@ export default function About() {
                 className="text-base leading-relaxed"
                 style={{ color: "var(--text-secondary)" }}
               >
-                I&apos;m Chaz — I built Kairo because I lived the problem. Balancing
+                I&apos;m Chaz. I built Kairo because I lived the problem. Balancing
                 a full CS degree at ASU with consistent training taught me that the
                 plans that actually work aren&apos;t the rigid ones. They&apos;re the
                 ones that bend without breaking.
@@ -104,10 +104,10 @@ export default function About() {
                 style={{ color: "var(--text-secondary)" }}
               >
                 I spent years at Powerhouse Fitness watching people start strong
-                and fall off — not because they lacked motivation, but because their
+                and fall off, not because they lacked motivation, but because their
                 plan couldn&apos;t handle a real week. Kairo is the system I wish
                 existed: daily adaptation, 30-second logging, and coaching that
-                treats consistency as the goal — not perfection.
+                treats consistency as the goal, not perfection.
               </p>
               <p
                 className="mt-4 text-base leading-relaxed"

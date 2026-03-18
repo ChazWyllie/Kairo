@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Your Dashboard | Kairo Coaching",
+  title: "Your Dashboard | Kairo Fitness",
   description:
     "Track your check-ins, view your training plan, and stay connected with your coach.",
 };

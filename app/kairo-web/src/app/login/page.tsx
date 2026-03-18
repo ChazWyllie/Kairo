@@ -70,7 +70,7 @@ export default function LoginPage() {
       <div className="mx-auto max-w-md px-6 py-16">
         <h1 className="text-2xl font-semibold text-center">Sign In</h1>
         <p className="mt-2 text-center text-neutral-500 text-sm">
-          Access your Kairo Coaching dashboard.
+          Access your Kairo Fitness dashboard.
         </p>
 
         <form onSubmit={onSubmit} className="mt-8 space-y-4">

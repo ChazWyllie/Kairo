@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { verifySessionToken } from "@/lib/auth";
 
 export const metadata: Metadata = {
-  title: "Complete Your Profile | Kairo Coaching",
+  title: "Complete Your Profile | Kairo Fitness",
   description:
     "Tell us about your goals, training history, and lifestyle so we can build your personalised plan.",
 };
