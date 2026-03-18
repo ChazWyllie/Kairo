@@ -15,18 +15,18 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Kairo Coaching — Coaching That Adapts to Your Real Life",
+  title: "Kairo Fitness — Coaching That Adapts to Your Real Life",
   description:
     "Expert fitness and nutrition coaching that flexes with your schedule, stress, and energy — so you actually stay consistent. Join the waitlist for founding member pricing.",
   metadataBase: new URL(
     process.env.APP_URL ?? "https://kairo-delta-sand.vercel.app"
   ),
   openGraph: {
-    title: "Kairo Coaching — Coaching That Adapts to Your Real Life",
+    title: "Kairo Fitness — Coaching That Adapts to Your Real Life",
     description:
       "Expert fitness and nutrition coaching that flexes with your schedule, stress, and energy — so you actually stay consistent.",
     type: "website",
-    siteName: "Kairo Coaching",
+    siteName: "Kairo Fitness",
   },
 };
 

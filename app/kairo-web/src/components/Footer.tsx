@@ -45,7 +45,7 @@ export default function Footer() {
 
         {/* Copyright */}
         <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>
-          &copy; {new Date().getFullYear()} Kairo Coaching. All rights reserved.
+          &copy; {new Date().getFullYear()} Kairo Fitness. All rights reserved.
         </p>
       </div>
     </footer>

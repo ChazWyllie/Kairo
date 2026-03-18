@@ -27,7 +27,7 @@ const NAV_ITEMS = [
 ];
 
 /**
- * Waitlist hero — client component handling CardNav + analytics.
+ * Waitlist hero: client component handling CardNav + analytics.
  * Used by the waitlist landing page (page.tsx).
  */
 export default function WaitlistHero() {
@@ -49,7 +49,7 @@ export default function WaitlistHero() {
       />
 
       <section className="relative z-10 mx-auto max-w-3xl px-6 pt-36 pb-24 text-center">
-        {/* Floating keyword badges — desktop only, purely decorative */}
+        {/* Floating keyword badges, desktop only, purely decorative */}
         <span
           aria-hidden="true"
           className="hidden sm:flex absolute left-[2%] top-1/3 -translate-y-1/2 items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-neutral-400 backdrop-blur-sm animate-float"
@@ -75,7 +75,7 @@ export default function WaitlistHero() {
           Results
         </span>
 
-        {/* Headline — weight contrast within one typographic unit */}
+        {/* Headline: weight contrast within one typographic unit */}
         <h1
           className="text-5xl sm:text-6xl md:text-7xl font-bold leading-[0.95] text-white"
           style={{ letterSpacing: "-0.04em" }}
@@ -95,7 +95,7 @@ export default function WaitlistHero() {
           pricing.
         </p>
 
-        {/* CTA — arrow slides in on hover via gap transition */}
+        {/* CTA: arrow slides in on hover via gap transition */}
         <div
           className="mt-12 flex flex-col items-center gap-4 animate-slide-up"
           style={{ animationDelay: "250ms" }}

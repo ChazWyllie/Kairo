@@ -218,7 +218,7 @@ export default function FullHomePage() {
           <p>This is fitness coaching and general nutrition guidance, not medical advice.</p>
         </div>
         <div className="mt-6 text-center text-sm text-neutral-500">
-          <p>&copy; {new Date().getFullYear()} Kairo Coaching. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Kairo Fitness. All rights reserved.</p>
         </div>
       </div>
     </main>

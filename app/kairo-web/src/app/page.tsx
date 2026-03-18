@@ -10,11 +10,11 @@ import ApplyCTA from "@/components/ApplyCTA";
 import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
-  title: "Kairo Coaching — Coaching That Adapts to Your Real Life",
+  title: "Kairo Fitness — Coaching That Adapts to Your Real Life",
   description:
     "Expert fitness and nutrition coaching that flexes with your schedule, stress, and energy — so you actually stay consistent. Join the waitlist for founding member pricing.",
   openGraph: {
-    title: "Kairo Coaching — Coaching That Adapts to Your Real Life",
+    title: "Kairo Fitness — Coaching That Adapts to Your Real Life",
     description:
       "Expert fitness and nutrition coaching that flexes with your schedule, stress, and energy — so you actually stay consistent.",
     type: "website",
