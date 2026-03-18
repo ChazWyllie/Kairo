@@ -156,7 +156,6 @@ function ApplyContent() {
   const [biggestObstacle, setBiggestObstacle] = useState("");
   const [helpWithMost, setHelpWithMost] = useState("");
   const [preferredTier, setPreferredTier] = useState("");
-  const [billingInterval, setBillingInterval] = useState<BillingInterval>("monthly");
   const [readyForStructure, setReadyForStructure] = useState(false);
 
   useEffect(() => {
