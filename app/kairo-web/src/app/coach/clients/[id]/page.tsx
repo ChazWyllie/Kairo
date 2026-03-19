@@ -24,6 +24,7 @@ interface CheckIn {
 
 interface ClientDetail {
   email: string;
+  phone?: string | null;
   planTier?: string;
   status: string;
   paymentStatus?: string;
@@ -164,9 +165,11 @@ export default function ClientDetailPage() {
 
       {/* WhatsApp */}
       <a
-        href={`https://wa.me/`}
+        href={client.phone ? `https://wa.me/${client.phone.replace(/\D/g, "")}` : undefined}
+        onClick={!client.phone ? (e) => e.preventDefault() : undefined}
         target="_blank"
         rel="noopener noreferrer"
+        aria-disabled={!client.phone}
         style={{
           display: "flex",
           alignItems: "center",
@@ -175,15 +178,17 @@ export default function ClientDetailPage() {
           background: "var(--bg-secondary)",
           border: "1px solid var(--border-subtle)",
           borderRadius: "8px",
-          color: "var(--accent-secondary)",
+          color: client.phone ? "var(--accent-secondary)" : "var(--text-tertiary)",
           textDecoration: "none",
           fontSize: "0.9375rem",
           fontWeight: 500,
           marginBottom: "24px",
+          opacity: client.phone ? 1 : 0.5,
+          cursor: client.phone ? "pointer" : "not-allowed",
         }}
       >
         <MessageCircle size={18} />
-        Open WhatsApp Chat
+        {client.phone ? "Open WhatsApp Chat" : "WhatsApp (no phone number)"}
       </a>
 
       {/* Recent check-ins with triage */}
