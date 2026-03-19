@@ -5,9 +5,8 @@ import { track } from "@/lib/analytics";
 import ScrollReveal from "@/components/ui/ScrollReveal";
 
 /**
- * Bottom CTA section — the final conversion moment on the page.
- * Accent primary background makes it feel like a distinct "destination".
- * Links to /apply rather than embedding a form (avoids duplication with apply/page.tsx).
+ * Bottom CTA section with dual paths: coaching (primary) and templates (coming soon).
+ * Accent primary background. Two side-by-side cards on desktop, stacked on mobile.
  */
 export default function ApplyCTA() {
   return (
@@ -16,7 +15,7 @@ export default function ApplyCTA() {
       className="relative py-24 md:py-32 px-5 md:px-10 overflow-hidden"
       style={{ background: "var(--accent-primary)" }}
     >
-      {/* Faint grid pattern — same as hero but inverted for the light bg */}
+      {/* Faint grid pattern — inverted for the light background */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0"
@@ -29,13 +28,13 @@ export default function ApplyCTA() {
         }}
       />
 
-      <div className="relative mx-auto max-w-3xl text-center">
-        <ScrollReveal>
+      <div className="relative mx-auto max-w-4xl">
+        <ScrollReveal className="text-center mb-12">
           <p
             className="text-xs font-medium uppercase tracking-[0.15em] mb-6 opacity-60"
             style={{ color: "var(--bg-primary)" }}
           >
-            Limited founding spots
+            Take the next step
           </p>
           <h2
             className="font-display font-black leading-none"
@@ -51,54 +50,112 @@ export default function ApplyCTA() {
           </h2>
         </ScrollReveal>
 
-        <ScrollReveal delay={100}>
-          <p
-            className="mt-6 mx-auto max-w-md text-base leading-relaxed"
-            style={{ color: "rgba(10,10,10,0.65)" }}
-          >
-            Your plan is waiting. Join the waitlist for early access and lock in
-            founding member pricing before it&apos;s gone.
-          </p>
-        </ScrollReveal>
-
-        <ScrollReveal delay={200}>
-          <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link
-              href="/apply"
-              onClick={() =>
-                track({
-                  name: "cta_click",
-                  properties: { location: "apply_cta_bottom" },
-                })
-              }
-              className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-[var(--radius-md)] px-8 py-4 text-base font-semibold transition-all duration-200 hover:-translate-y-px"
+        {/* Dual-path cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Coaching path — primary */}
+          <ScrollReveal delay={100}>
+            <div
               style={{
                 background: "var(--bg-primary)",
-                color: "var(--text-primary)",
-                minWidth: "260px",
+                borderRadius: "var(--radius-lg)",
+                padding: "28px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "16px",
+                height: "100%",
               }}
             >
-              <span>Join the Waitlist — Limited Founding Spots</span>
-              <span
-                className="inline-block transition-transform duration-300 group-hover:translate-x-1"
-                aria-hidden="true"
+              <div>
+                <p
+                  className="text-xs font-medium uppercase tracking-[0.1em] mb-2"
+                  style={{ color: "var(--accent-primary)" }}
+                >
+                  Coaching
+                </p>
+                <p
+                  className="text-lg font-display font-bold"
+                  style={{ color: "var(--text-primary)", letterSpacing: "-0.02em" }}
+                >
+                  Get a plan built for your life.
+                </p>
+              </div>
+              <Link
+                href="/apply"
+                onClick={() =>
+                  track({ name: "cta_click", properties: { location: "apply_cta_coaching" } })
+                }
+                className="group inline-flex items-center justify-center gap-2 w-full rounded-[var(--radius-sm)] py-3.5 text-base font-semibold transition-all duration-200 hover:-translate-y-px"
+                style={{
+                  background: "var(--accent-primary)",
+                  color: "var(--bg-primary)",
+                }}
               >
-                →
-              </span>
-            </Link>
-          </div>
-        </ScrollReveal>
+                Apply for Coaching
+                <span
+                  className="inline-block transition-transform duration-300 group-hover:translate-x-1"
+                  aria-hidden="true"
+                >
+                  →
+                </span>
+              </Link>
+              <p className="text-xs text-center" style={{ color: "var(--text-tertiary)" }}>
+                Founding spots available. Cancel anytime.
+              </p>
+            </div>
+          </ScrollReveal>
 
+          {/* Templates path — coming soon */}
+          <ScrollReveal delay={180}>
+            <div
+              style={{
+                background: "rgba(10,10,10,0.08)",
+                border: "1px solid rgba(10,10,10,0.12)",
+                borderRadius: "var(--radius-lg)",
+                padding: "28px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "16px",
+                height: "100%",
+              }}
+            >
+              <div>
+                <p
+                  className="text-xs font-medium uppercase tracking-[0.1em] mb-2"
+                  style={{ color: "rgba(10,10,10,0.5)" }}
+                >
+                  Guides
+                </p>
+                <p
+                  className="text-lg font-display font-bold"
+                  style={{ color: "var(--bg-primary)", letterSpacing: "-0.02em" }}
+                >
+                  Start with a guide on your own.
+                </p>
+              </div>
+              <a
+                href="#templates"
+                className="inline-flex items-center justify-center w-full rounded-[var(--radius-sm)] py-3.5 text-base font-semibold"
+                style={{
+                  background: "rgba(10,10,10,0.1)",
+                  color: "rgba(10,10,10,0.5)",
+                  cursor: "default",
+                  pointerEvents: "none",
+                }}
+                aria-disabled="true"
+              >
+                Coming Soon
+              </a>
+              <p className="text-xs text-center" style={{ color: "rgba(10,10,10,0.45)" }}>
+                Training, nutrition, and supplement guides dropping soon.
+              </p>
+            </div>
+          </ScrollReveal>
+        </div>
+
+        {/* Disclaimer */}
         <ScrollReveal delay={280}>
           <p
-            className="mt-6 text-xs"
-            style={{ color: "rgba(10,10,10,0.5)" }}
-          >
-            No commitment required · No spam · Just early access + founding member pricing.
-          </p>
-
-          <p
-            className="mt-8 mx-auto max-w-sm text-xs leading-relaxed"
+            className="mt-10 text-center mx-auto max-w-sm text-xs leading-relaxed"
             style={{ color: "rgba(10,10,10,0.4)" }}
           >
             This is fitness coaching and general nutrition guidance, not medical advice.

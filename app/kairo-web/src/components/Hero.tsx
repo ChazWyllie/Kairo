@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect } from "react";
-import Link from "next/link";
 import { track } from "@/lib/analytics";
 
 /**
@@ -141,8 +140,8 @@ export default function Hero() {
             animationDelay: "160ms",
           }}
         >
-          Expert fitness and nutrition coaching that flexes with your schedule,
-          stress, and energy so you actually stay consistent.
+          Personalized fitness and nutrition coaching that flexes with your schedule,
+          stress, and energy. Plus training guides you can start on your own.
         </p>
 
         {/* CTAs */}
@@ -150,8 +149,8 @@ export default function Hero() {
           className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 animate-slide-up"
           style={{ animationDelay: "260ms" }}
         >
-          <Link
-            href="/apply"
+          <a
+            href="#coaching"
             onClick={() =>
               track({ name: "cta_click", properties: { location: "hero_primary" } })
             }
@@ -162,24 +161,24 @@ export default function Hero() {
               minWidth: "220px",
             }}
           >
-            <span>Start Your Transformation</span>
+            <span>Apply for Coaching</span>
             <span
               className="inline-block transition-transform duration-300 group-hover:translate-x-1"
               aria-hidden="true"
             >
-            
+
             </span>
-          </Link>
+          </a>
 
           <a
-            href="#how-it-works"
+            href="#templates"
             className="text-sm font-medium transition-colors duration-200 link-underline"
             style={{ color: "var(--text-secondary)" }}
             onClick={() =>
               track({ name: "cta_click", properties: { location: "hero_secondary" } })
             }
           >
-            See how it works ↓
+            Or browse our guides
           </a>
         </div>
 
@@ -191,11 +190,11 @@ export default function Hero() {
         >
           <span aria-hidden="true">✦</span> Personalized Plans
           {"  "}
-          <span aria-hidden="true">✦</span> Adapts Daily
+          <span aria-hidden="true">✦</span> Adapts Weekly
           {"  "}
-          <span aria-hidden="true">✦</span> From $49/month
+          <span aria-hidden="true">✦</span> From $149/month
           {"  "}
-          <span aria-hidden="true">✦</span> No Commitment Required
+          <span aria-hidden="true">✦</span> Cancel Anytime
         </p>
 
         {/* Scroll indicator */}

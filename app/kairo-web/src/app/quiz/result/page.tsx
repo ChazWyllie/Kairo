@@ -199,10 +199,10 @@ function ResultContent() {
           {/* Secondary CTAs */}
           <div className="text-center space-y-3">
             <Link
-              href="/#pricing"
+              href="/#coaching"
               className="text-sm font-medium text-neutral-500 hover:text-black transition-colors"
             >
-              Compare all plans ↓
+              See coaching plans ↓
             </Link>
             <p className="text-xs text-neutral-400">
               30-day satisfaction guarantee · Cancel anytime

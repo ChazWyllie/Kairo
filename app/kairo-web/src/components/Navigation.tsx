@@ -5,9 +5,10 @@ import Link from "next/link";
 import { track } from "@/lib/analytics";
 
 const NAV_LINKS = [
-  { label: "How It Works", href: "#how-it-works" },
+  { label: "Coaching", href: "#coaching" },
+  { label: "Templates", href: "#templates" },
   { label: "Results", href: "#testimonials" },
-  { label: "Pricing", href: "#pricing" },
+  { label: "About", href: "#about" },
   { label: "FAQ", href: "#faq" },
 ] as const;
 

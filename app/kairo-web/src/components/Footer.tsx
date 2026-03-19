@@ -1,14 +1,16 @@
 import Link from "next/link";
+import { Instagram } from "lucide-react";
 
 const NAV_LINKS = [
-  { label: "How It Works", href: "#how-it-works" },
-  { label: "Pricing", href: "#pricing" },
+  { label: "Coaching", href: "#coaching" },
+  { label: "Templates", href: "#templates" },
+  { label: "About", href: "#about" },
   { label: "FAQ", href: "#faq" },
   { label: "Apply", href: "/apply" },
 ] as const;
 
 /**
- * Minimal footer — wordmark, navigation links, copyright.
+ * Minimal footer — wordmark, navigation links, Instagram icon, copyright.
  * Server component.
  */
 export default function Footer() {
@@ -40,6 +42,18 @@ export default function Footer() {
                 </Link>
               </li>
             ))}
+            <li>
+              <a
+                href="https://instagram.com/kairo.fitness"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Kairo on Instagram"
+                className="transition-colors duration-150"
+                style={{ color: "var(--text-tertiary)" }}
+              >
+                <Instagram size={14} />
+              </a>
+            </li>
           </ul>
         </nav>
 
