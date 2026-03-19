@@ -7,12 +7,13 @@ import PageHeader from "@/components/layout/PageHeader";
 import Card from "@/components/ui/Card";
 
 export default function CoachSettingsPage() {
-  const { member } = useAuth();
+  const { coachEmail } = useAuth();
   const router = useRouter();
   const [whatsapp, setWhatsapp] = useState("");
   const [signOutLoading, setSignOutLoading] = useState(false);
 
-  // TODO: Persist whatsapp to coach profile endpoint when built
+  // WhatsApp number is UI-only until a coach profile persistence endpoint is built.
+  // The field is intentionally read-only to avoid misleading the coach into thinking it saves.
 
   async function signOut() {
     setSignOutLoading(true);
@@ -32,7 +33,7 @@ export default function CoachSettingsPage() {
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
             <div>
               <p style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", marginBottom: "4px" }}>Email</p>
-              <p style={{ color: "var(--text-primary)", margin: 0 }}>{member?.email ?? "coach"}</p>
+              <p style={{ color: "var(--text-primary)", margin: 0 }}>{coachEmail ?? "—"}</p>
             </div>
             <div>
               <label style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", display: "block", marginBottom: "6px" }}>
@@ -44,20 +45,23 @@ export default function CoachSettingsPage() {
                 value={whatsapp}
                 onChange={(e) => setWhatsapp(e.target.value)}
                 placeholder="+1 234 567 8900"
+                disabled
                 style={{
                   width: "100%",
                   background: "var(--bg-tertiary)",
-                  border: "1px solid var(--border-hover)",
+                  border: "1px solid var(--border-subtle)",
                   borderRadius: "8px",
                   padding: "10px 12px",
-                  color: "var(--text-primary)",
+                  color: "var(--text-tertiary)",
                   fontSize: "16px",
                   boxSizing: "border-box",
                   outline: "none",
+                  cursor: "not-allowed",
+                  opacity: 0.6,
                 }}
               />
               <p style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", marginTop: "4px" }}>
-                Used to pre-fill WhatsApp links on client profiles.
+                Saving coming soon. Used to pre-fill WhatsApp links on client profiles.
               </p>
             </div>
           </div>
