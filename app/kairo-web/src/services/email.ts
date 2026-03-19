@@ -119,8 +119,10 @@ export async function sendWelcomeEmail(data: WelcomeEmail): Promise<void> {
     html: `
       <h2>Welcome to Kairo Fitness!</h2>
       <p>Thanks for joining. Your membership is now active.</p>
+      <p><a href="${env.APP_URL}/register" style="display:inline-block;background:#000;color:#fff;padding:12px 24px;border-radius:12px;text-decoration:none;font-weight:600;">Set up your account →</a></p>
       <h3>What happens next:</h3>
       <ol>
+        <li><strong>Set up your account</strong> using the link above to access your coaching dashboard.</li>
         <li><strong>Fill out your onboarding form</strong>, tell us your goals, schedule, and any limitations so we can build your plan.</li>
         <li><strong>Receive your first plan</strong>, with personalized training + nutrition targets within 48 hours.</li>
         <li><strong>Weekly check-in</strong>, every week send a quick update and we'll adjust your plan.</li>
@@ -480,10 +482,13 @@ export async function sendFoundingMemberWelcome(
 
       <h3>What happens next:</h3>
       <ol>
+        <li><strong>Set up your account</strong> using the link below to access your coaching dashboard</li>
         <li><strong>Onboarding form</strong>, tell us your goals, schedule, and limitations</li>
         <li><strong>Your first plan</strong>, personalized training + nutrition within 48 hours</li>
         <li><strong>Weekly check-ins</strong>, send updates and we'll adjust your plan</li>
       </ol>
+
+      <p><a href="${env.APP_URL}/register" style="display:inline-block;background:#000;color:#fff;padding:12px 24px;border-radius:12px;text-decoration:none;font-weight:600;">Set up your account →</a></p>
 
       <p>Questions? Just reply to this email.</p>
       <p>The Kairo Fitness team</p>
