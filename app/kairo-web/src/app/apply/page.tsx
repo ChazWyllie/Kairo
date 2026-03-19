@@ -12,7 +12,8 @@ import {
   validateApplySubmission,
   type ApplyStep,
 } from "@/lib/apply-flow";
-import { PLANS, type BillingInterval, type PlanTier } from "@/lib/stripe-prices";
+import { type BillingInterval } from "@/lib/stripe-prices";
+import { COACHING_TIERS } from "@/lib/products";
 
 /**
  * Application form — pre-payment screening.
@@ -45,13 +46,11 @@ const GYM_ACCESS = [
 ] as const;
 
 const TIERS = [
-  { value: "foundation", name: "Foundation", desc: "Training and nutrition templates plus async check-ins" },
-  { value: "coaching", name: "Coaching", desc: "Personalized 1-on-1 programming and priority support" },
-  { value: "performance", name: "Performance", desc: "Video reviews and weekly calls" },
-  { value: "vip", name: "VIP Elite", desc: "Daily access and priority everything" },
+  { value: "standard", name: COACHING_TIERS.standard.name, desc: COACHING_TIERS.standard.tagline },
+  { value: "premium", name: COACHING_TIERS.premium.name, desc: COACHING_TIERS.premium.tagline },
 ] as const;
 
-const VALID_APPLY_TIERS = ["foundation", "coaching", "performance", "vip"] as const;
+const VALID_APPLY_TIERS = ["standard", "premium"] as const;
 
 const STEP_LABELS: Record<ApplyStep, string> = {
   info: "Info",
@@ -172,11 +171,9 @@ function ApplyContent() {
   const currentIdx = APPLY_STEPS.indexOf(step);
 
   function getTierLabel(tier: (typeof TIERS)[number]) {
-    const plan = PLANS.find((p) => p.tier === tier.value);
-    if (!plan) return tier.name;
-    const amount = billingInterval === "monthly" ? plan.monthlyPrice : plan.annualPrice;
-    const suffix = billingInterval === "monthly" ? "/mo" : "/yr";
-    return `${tier.name} · $${amount}${suffix}`;
+    const coachingTier = COACHING_TIERS[tier.value as keyof typeof COACHING_TIERS];
+    if (!coachingTier) return tier.name;
+    return `${tier.name} · $${coachingTier.price}/mo`;
   }
 
   function goNext() {
@@ -251,7 +248,7 @@ function ApplyContent() {
   async function handleFoundingCheckout() {
     setFoundingError(null);
     setFoundingLoading(true);
-    const tier = preferredTier || "foundation";
+    const tier = preferredTier || "standard";
 
     track({ name: "founding_member_cta_click", properties: { tier, interval: billingInterval } });
 
@@ -272,12 +269,8 @@ function ApplyContent() {
 
   // ── Done state ──
   if (done) {
-    const matchedPlan = preferredTier
-      ? PLANS.find((p) => p.tier === (preferredTier as PlanTier))
-      : null;
-    const originalPrice = matchedPlan
-      ? billingInterval === "monthly" ? matchedPlan.monthlyPrice : matchedPlan.annualPrice
-      : null;
+    const matchedTier = preferredTier ? COACHING_TIERS[preferredTier as keyof typeof COACHING_TIERS] : null;
+    const originalPrice = matchedTier ? matchedTier.price : null;
     const discountedPrice = originalPrice !== null ? Math.round(originalPrice * 0.9) : null;
 
     return (
@@ -362,18 +355,18 @@ function ApplyContent() {
               </div>
 
               {/* Pricing */}
-              {matchedPlan && originalPrice !== null && discountedPrice !== null ? (
+              {matchedTier && originalPrice !== null && discountedPrice !== null ? (
                 <div className="text-center mb-5">
                   <p className="text-base font-semibold" style={{ color: "var(--text-primary)" }}>
-                    {matchedPlan.name}
+                    {matchedTier.name}
                   </p>
                   <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>
                     <span style={{ textDecoration: "line-through", color: "var(--text-tertiary)" }}>
-                      ${originalPrice}/{billingInterval === "monthly" ? "mo" : "yr"}
+                      ${originalPrice}/mo
                     </span>
                     {" "}
                     <span style={{ color: "var(--accent-primary)", fontWeight: 600 }}>
-                      ${discountedPrice}/{billingInterval === "monthly" ? "mo" : "yr"}
+                      ${discountedPrice}/mo
                     </span>
                   </p>
                 </div>
@@ -838,10 +831,8 @@ function ApplyContent() {
                   Preferred plan <span className="text-xs" style={{ color: "var(--text-tertiary)" }}>(optional)</span>
                 </legend>
                 {TIERS.map((t) => {
-                  const plan = PLANS.find((p) => p.tier === t.value);
-                  const price = plan
-                    ? billingInterval === "monthly" ? plan.monthlyPrice : plan.annualPrice
-                    : null;
+                  const coachingTier = COACHING_TIERS[t.value as keyof typeof COACHING_TIERS];
+                  const price = coachingTier ? coachingTier.price : null;
                   const isSelected = preferredTier === t.value;
 
                   return (
@@ -863,7 +854,7 @@ function ApplyContent() {
                           {t.name}
                           {price !== null && (
                             <span className="ml-2 font-normal" style={{ color: "var(--text-tertiary)" }}>
-                              ${price}/{billingInterval === "monthly" ? "mo" : "yr"}
+                              ${price}/mo
                             </span>
                           )}
                         </p>

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getStripe } from "@/services/stripe";
 import { env } from "@/lib/env";
 import { requireMemberOrCoachAuth } from "@/lib/auth";
+import { checkoutLimiter } from "@/lib/rate-limit";
 
 const bodySchema = z.object({
   email: z.string().email(),
@@ -20,6 +21,16 @@ const bodySchema = z.object({
  * customer list lookup on every request.
  */
 export async function POST(request: NextRequest) {
+  const ip =
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  const limit = checkoutLimiter.check(ip);
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: { code: "RATE_LIMIT_EXCEEDED", message: "Too many requests." } },
+      { status: 429, headers: { "Retry-After": String(limit.retryAfter) } }
+    );
+  }
+
   let body: unknown;
   try {
     body = await request.json();

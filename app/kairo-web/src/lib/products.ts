@@ -100,8 +100,6 @@ export const COACHING_TIERS = {
       "Weekly video check-ins with your coach",
       "Daily WhatsApp messaging (unlimited text and video)",
       "Detailed form reviews and technique feedback",
-      "Advanced programming and peaking protocols",
-      "Competition and photoshoot prep",
       "Priority scheduling (book any time)",
     ],
   },

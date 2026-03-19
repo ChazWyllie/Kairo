@@ -1,41 +1,33 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { track } from "@/lib/analytics";
-import { PLANS, type PlanDisplay, type PlanTier } from "@/lib/stripe-prices";
+import { COACHING_TIERS } from "@/lib/products";
+import type { PlanTier } from "@/lib/stripe-prices";
 
 /**
  * /quiz/result — Shows the recommended tier after quiz completion.
  *
  * Reads `tier` from query params (set by /quiz form).
  * Displays the recommended plan, its features, and CTA to /apply?tier={tier}.
- * Falls back to "coaching" if tier is invalid.
+ * Falls back to "standard" if tier is invalid.
  *
  * Fires `quiz_result_viewed` analytics event on mount.
  */
 
-const VALID_TIERS: PlanTier[] = ["foundation", "coaching", "performance", "vip"];
+const VALID_TIERS: PlanTier[] = ["standard", "premium"];
 
 function ResultContent() {
   const searchParams = useSearchParams();
-  const tierParam = searchParams.get("tier") ?? "coaching";
+  const tierParam = searchParams.get("tier") ?? "standard";
 
   const tier: PlanTier = VALID_TIERS.includes(tierParam as PlanTier)
     ? (tierParam as PlanTier)
-    : "coaching";
+    : "standard";
 
-  const plan: PlanDisplay = PLANS.find((p) => p.tier === tier) ?? PLANS[1]; // fallback to coaching
-
-  const [billingInterval, setBillingInterval] = useState<"monthly" | "annual">("monthly");
-
-  const perMonth =
-    billingInterval === "annual"
-      ? Math.round(plan.annualPrice / 12)
-      : plan.monthlyPrice;
-  const totalPrice =
-    billingInterval === "monthly" ? plan.monthlyPrice : plan.annualPrice;
+  const plan = COACHING_TIERS[tier as keyof typeof COACHING_TIERS] ?? COACHING_TIERS.standard;
 
   useEffect(() => {
     track({ name: "quiz_result_viewed", properties: { tier } });
@@ -75,79 +67,15 @@ function ResultContent() {
 
           {/* Plan card — shimmer gradient border */}
           <div
-            className="p-px rounded-2xl mb-6 animate-slide-up"
+            className="p-px rounded-2xl mb-6"
             style={{
-              animationDelay: "100ms",
               background: "linear-gradient(135deg, #000 0%, #555 50%, #000 100%)",
               backgroundSize: "200% 200%",
               animation: "shimmer 3s linear infinite, slide-up 0.5s cubic-bezier(0.19, 1, 0.22, 1) 100ms both",
             }}
           >
             <div className="rounded-[calc(1rem-1px)] bg-white p-6">
-              {/* Billing toggle */}
-              <div
-                className="flex items-center justify-center gap-3 mb-6"
-                role="group"
-                aria-label="Billing interval"
-              >
-                <button
-                  type="button"
-                  onClick={() => setBillingInterval("monthly")}
-                  aria-pressed={billingInterval === "monthly"}
-                  className={`text-sm font-medium transition-colors ${
-                    billingInterval === "monthly"
-                      ? "text-black"
-                      : "text-neutral-400 hover:text-neutral-700"
-                  }`}
-                >
-                  Monthly
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setBillingInterval((prev) =>
-                      prev === "monthly" ? "annual" : "monthly"
-                    )
-                  }
-                  className="relative inline-flex h-6 w-11 items-center rounded-full border border-neutral-300 transition-colors duration-200"
-                  style={{
-                    backgroundColor:
-                      billingInterval === "annual" ? "#000" : "#f5f5f5",
-                  }}
-                  aria-label="Toggle annual billing"
-                  aria-pressed={billingInterval === "annual"}
-                >
-                  <span
-                    className="inline-block h-4 w-4 rounded-full bg-white transition-transform duration-200"
-                    style={{
-                      transform:
-                        billingInterval === "annual"
-                          ? "translateX(22px)"
-                          : "translateX(2px)",
-                      boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
-                    }}
-                  />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setBillingInterval("annual")}
-                  aria-pressed={billingInterval === "annual"}
-                  className={`text-sm font-medium transition-colors ${
-                    billingInterval === "annual"
-                      ? "text-black"
-                      : "text-neutral-400 hover:text-neutral-700"
-                  }`}
-                >
-                  Annual
-                </button>
-                {billingInterval === "annual" && (
-                  <span className="ml-2 rounded-full bg-black px-2.5 py-0.5 text-xs font-medium text-white">
-                    Save ~17%
-                  </span>
-                )}
-              </div>
-
-              {/* Price — typographic scale trick: $ small, number dominant */}
+              {/* Price */}
               <div className="text-center mb-6">
                 <div className="flex items-baseline justify-center gap-1">
                   <span className="text-2xl font-light text-neutral-400">$</span>
@@ -155,15 +83,10 @@ function ResultContent() {
                     className="text-6xl font-bold"
                     style={{ letterSpacing: "-0.04em" }}
                   >
-                    {perMonth}
+                    {plan.price}
                   </span>
                   <span className="text-base text-neutral-400 self-end mb-2">/mo</span>
                 </div>
-                {billingInterval === "annual" && (
-                  <p className="mt-1 text-xs text-neutral-400">
-                    ${totalPrice}/yr, billed annually
-                  </p>
-                )}
               </div>
 
               {/* Features — black circle checkmarks */}
@@ -186,7 +109,7 @@ function ResultContent() {
                 href={`/apply?tier=${tier}`}
                 className="block w-full rounded-2xl bg-black px-6 py-4 text-white font-semibold text-base text-center transition-all hover:bg-neutral-800 hover:shadow-lg"
               >
-                Join the Waitlist →
+                Apply Now →
               </Link>
             </div>
           </div>

@@ -160,13 +160,11 @@ export async function sendQuizWelcomeEmail(
   const resend = await getResend();
 
   const tierNames: Record<string, string> = {
-    foundation: "Foundation",
-    coaching: "Coaching",
-    performance: "Performance",
-    vip: "VIP Elite",
+    standard: "1:1 Standard",
+    premium: "1:1 Premium",
   };
 
-  const tierName = tierNames[recommendedTier] ?? "Foundation";
+  const tierName = tierNames[recommendedTier] ?? "1:1 Standard";
 
   await resend.emails.send({
     from: env.EMAIL_FROM,
@@ -320,10 +318,8 @@ export async function sendApplicationApproved(
   const firstName = fullName.split(" ")[0] || "there";
 
   const tierNames: Record<string, string> = {
-    foundation: "Foundation",
-    coaching: "Coaching",
-    performance: "Performance",
-    vip: "VIP Elite",
+    standard: "1:1 Standard",
+    premium: "1:1 Premium",
   };
 
   const tierNote = preferredTier && tierNames[preferredTier]
@@ -348,7 +344,7 @@ export async function sendApplicationApproved(
       <h2>Hey ${escapeHtml(firstName)},</h2>
       <p>Great news, your application has been approved! We're excited to work with you.</p>
       ${tierNote}
-      <p><a href="${env.APP_URL}/#pricing" style="display:inline-block;background:#000;color:#fff;padding:12px 24px;border-radius:12px;text-decoration:none;font-weight:600;">Choose your plan →</a></p>
+      <p><a href="${env.APP_URL}/#coaching" style="display:inline-block;background:#000;color:#fff;padding:12px 24px;border-radius:12px;text-decoration:none;font-weight:600;">Choose your plan →</a></p>
       <p>Once you sign up, you'll get a welcome email with next steps and your onboarding form.</p>
       <p>Questions? Just reply to this email.</p>
       <p>The Kairo Fitness team</p>
@@ -375,7 +371,7 @@ export async function notifyAdminNewApplication(
   const resend = await getResend();
 
   const goalLabels: Record<string, string> = { fat_loss: "Fat Loss", muscle: "Muscle Gain", maintenance: "Maintenance" };
-  const tierLabels: Record<string, string> = { foundation: "Foundation ($49)", coaching: "Coaching ($129)", performance: "Performance ($229)", vip: "VIP Elite ($349)" };
+  const tierLabels: Record<string, string> = { standard: "1:1 Standard ($149/mo)", premium: "1:1 Premium ($350/mo)" };
   const gymLabels: Record<string, string> = { none: "No equipment", hotel: "Hotel gym", dumbbells: "Dumbbells at home", full_gym: "Full gym" };
   const expLabels: Record<string, string> = { beginner: "Beginner (0-1 yrs)", intermediate: "Intermediate (1-3 yrs)", advanced: "Advanced (3+ yrs)" };
 
@@ -451,10 +447,8 @@ export async function sendFoundingMemberWelcome(
   const { email, planTier } = data;
 
   const tierNames: Record<string, string> = {
-    foundation: "Foundation",
-    coaching: "Coaching",
-    performance: "Performance",
-    vip: "VIP Elite",
+    standard: "1:1 Standard",
+    premium: "1:1 Premium",
   };
   const tierName = planTier ? (tierNames[planTier] ?? planTier) : "your";
 
@@ -530,16 +524,14 @@ export async function sendLaunchEmail(data: LaunchEmail): Promise<void> {
       <h2>Kairo Fitness is now live and accepting members.</h2>
       ${foundingNote}
       <p>
-        <a href="${env.APP_URL}/#pricing" style="display:inline-block;background:#000;color:#fff;padding:12px 24px;border-radius:12px;text-decoration:none;font-weight:600;">
+        <a href="${env.APP_URL}/#coaching" style="display:inline-block;background:#000;color:#fff;padding:12px 24px;border-radius:12px;text-decoration:none;font-weight:600;">
           Choose Your Plan →
         </a>
       </p>
       <h3>Plans available:</h3>
       <ul>
-        <li><strong>Foundation</strong>, training plan + nutrition targets</li>
-        <li><strong>Coaching</strong>, weekly check-ins + program adjustments</li>
-        <li><strong>Performance</strong>, daily coaching + priority support</li>
-        <li><strong>VIP Elite</strong>, full-service 1-on-1 coaching</li>
+        <li><strong>1:1 Standard ($149/mo)</strong>, custom programming, nutrition guidance, and weekly check-ins</li>
+        <li><strong>1:1 Premium ($350/mo)</strong>, everything in Standard plus weekly video calls and daily coach access</li>
       </ul>
       <p style="color:#737373;font-size:13px;">
         You're receiving this because you signed up for the Kairo waitlist.

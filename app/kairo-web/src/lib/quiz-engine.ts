@@ -13,10 +13,8 @@
  * - challenge: time=0, consistency/accountability=1, plateau=2
  *
  * Tier thresholds:
- * - 0-2  → foundation
- * - 3-5  → coaching
- * - 6-8  → performance
- * - 9+   → vip
+ * - 0-5  → standard  (1:1 Standard, $149/mo)
+ * - 6+   → premium   (1:1 Premium, $350/mo)
  */
 import type { PlanTier } from "@/lib/stripe-prices";
 
@@ -62,13 +60,13 @@ function scoreMinutesPerSession(minutes: number | undefined): number {
 /**
  * Recommend a plan tier based on quiz answers.
  *
- * Always returns a valid PlanTier — defaults to "foundation"
+ * Always returns a valid PlanTier — defaults to "standard"
  * for empty, undefined, or minimal input.
  */
 export function recommendTier(answers: QuizAnswers): PlanTier {
   // Defensive: handle undefined/null input
   if (!answers || typeof answers !== "object") {
-    return "foundation";
+    return "standard";
   }
 
   let score = 0;
@@ -95,8 +93,6 @@ export function recommendTier(answers: QuizAnswers): PlanTier {
   }
 
   // Map score to tier
-  if (score <= 2) return "foundation";
-  if (score <= 5) return "coaching";
-  if (score <= 8) return "performance";
-  return "vip";
+  if (score <= 5) return "standard";
+  return "premium";
 }

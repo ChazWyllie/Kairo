@@ -40,7 +40,7 @@ const ApplicationSchema = z.object({
   biggestObstacle: z.string().max(1000).optional(),
   helpWithMost: z.string().max(1000).optional(),
   preferredTier: z
-    .enum(["foundation", "coaching", "performance", "vip"])
+    .enum(["standard", "premium"])
     .optional(),
   readyForStructure: z.boolean().optional(),
   budgetComfort: z.string().max(200).optional(),

@@ -16,6 +16,7 @@ const WEEKS_IN_30_DAYS = 4.29;
 
 export interface ClientHealth {
   email: string;
+  phone: string | null;
   planTier: string | null;
   billingInterval: string | null;
   goal: string | null;
@@ -194,6 +195,7 @@ export async function getCoachDashboard(): Promise<CoachDashboardData> {
 
     return {
       email: m.email,
+      phone: m.phone ?? null,
       planTier: m.planTier,
       billingInterval: m.billingInterval,
       goal: m.goal,

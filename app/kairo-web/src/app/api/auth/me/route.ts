@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { env } from "@/lib/env";
 import {
   verifySessionToken,
   getSessionFromRequest,
@@ -18,9 +19,9 @@ import {
  * - No PII logged
  */
 export async function GET(request: NextRequest) {
-  // Coach session: return role without a member record lookup
+  // Coach session: return role + admin email (no member record for coaches)
   if (requireCoachAuth(request)) {
-    return NextResponse.json({ role: "coach", member: null });
+    return NextResponse.json({ role: "coach", member: null, coachEmail: env.ADMIN_NOTIFY_EMAIL });
   }
 
   const cookieHeader = request.headers.get("cookie");

@@ -1,4 +1,4 @@
-type TierVariant = "foundation" | "coaching" | "performance" | "vip";
+type TierVariant = "foundation" | "coaching" | "performance" | "vip" | "standard" | "premium";
 type StatusVariant = "active" | "canceled" | "past_due" | "pending";
 
 interface TierBadgeProps {
@@ -16,6 +16,8 @@ const TIER_STYLES: Record<TierVariant, { label: string; bg: string; color: strin
   coaching:   { label: "Coaching",   bg: "rgba(224,255,79,0.12)",  color: "var(--accent-primary)" },
   performance:{ label: "Performance",bg: "rgba(79,255,224,0.12)",  color: "var(--accent-secondary)" },
   vip:        { label: "VIP Elite",  bg: "rgba(224,255,79,0.08)",  color: "var(--accent-primary)" },
+  standard:   { label: "1:1 Standard", bg: "rgba(224,255,79,0.12)", color: "var(--accent-primary)" },
+  premium:    { label: "1:1 Premium",  bg: "rgba(224,255,79,0.08)", color: "var(--accent-primary)" },
 };
 
 const STATUS_STYLES: Record<StatusVariant, { label: string; bg: string; color: string }> = {
