@@ -24,7 +24,7 @@ import type { PlanTier, BillingInterval } from "@/lib/stripe-prices";
 
 const FoundingCheckoutSchema = z.object({
   email: z.string().email("A valid email is required"),
-  tier: z.enum(["foundation", "coaching", "performance", "vip"]),
+  tier: z.enum(["standard", "premium"]),
   interval: z.enum(["monthly", "annual"]),
 });
 
