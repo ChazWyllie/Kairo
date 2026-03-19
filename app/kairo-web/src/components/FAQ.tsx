@@ -22,7 +22,7 @@ const FAQS = [
   {
     question: "What if I miss a day?",
     answer:
-      "Nothing breaks. Log what happened (or didn't), and tomorrow's plan adjusts accordingly. Missing days is part of real life. Kairo is designed around that, not against it. Consistency over long periods matters more than perfection on any given week.",
+      "Nothing breaks. Log what happened (or didn't), and tomorrow's plan adjusts accordingly. Missing days is part of real life, Kairo is designed around that, not against it. Consistency over long periods matters more than perfection on any given week.",
   },
   {
     question: "Do I need a gym membership?",
