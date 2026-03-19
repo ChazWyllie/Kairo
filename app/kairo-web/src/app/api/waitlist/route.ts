@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { waitlistLimiter } from "@/lib/rate-limit";
+import { sendWaitlistConfirmation } from "@/services/email";
 
 /**
  * POST /api/waitlist
@@ -87,6 +88,14 @@ export async function POST(request: NextRequest) {
         // Touch updatedAt on re-submission — no data overwrite
       },
     });
+
+    // Fire-and-forget — email failure must not affect the 200 response
+    sendWaitlistConfirmation({ email: parsed.email }).catch((err) =>
+      console.error(
+        "[waitlist] Email error:",
+        err instanceof Error ? err.message : err
+      )
+    );
 
     return NextResponse.json({
       success: true,

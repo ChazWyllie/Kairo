@@ -133,6 +133,46 @@ export async function sendWelcomeEmail(data: WelcomeEmail): Promise<void> {
   });
 }
 
+// ── Waitlist Confirmation Email ──
+
+interface WaitlistConfirmationEmail {
+  email: string;
+}
+
+/**
+ * Send confirmation email when someone joins the waitlist.
+ * Fire-and-forget. Failures should not disrupt the API response.
+ */
+export async function sendWaitlistConfirmation(
+  data: WaitlistConfirmationEmail
+): Promise<void> {
+  const { email } = data;
+
+  if (!env.RESEND_API_KEY) {
+    console.log("[email-stub] Waitlist confirmation:", { email });
+    return;
+  }
+
+  const resend = await getResend();
+
+  await resend.emails.send({
+    from: env.EMAIL_FROM,
+    to: email,
+    subject: "You're on the list 🎯",
+    html: `
+      <h2>You're on the Kairo waitlist.</h2>
+      <p>We'll reach out as soon as coaching spots open up.</p>
+      <p>In the meantime, if you're ready to get started, you can apply now:</p>
+      <p><a href="${env.APP_URL}/#coaching" style="display:inline-block;background:#000;color:#fff;padding:12px 24px;border-radius:12px;text-decoration:none;font-weight:600;">Apply Now →</a></p>
+      <p style="color:#737373;font-size:13px;">
+        You're receiving this because you signed up for the Kairo waitlist.
+        To unsubscribe, reply with "unsubscribe" in the subject line.
+      </p>
+      <p>The Kairo Fitness team</p>
+    `,
+  });
+}
+
 // ── Quiz Welcome Email ──
 
 interface QuizWelcomeEmail {
