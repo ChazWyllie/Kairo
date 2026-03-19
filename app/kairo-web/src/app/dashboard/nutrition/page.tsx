@@ -56,7 +56,7 @@ export default function NutritionPage() {
     if (!member?.email) return;
     fetch(`/api/macro?email=${encodeURIComponent(member.email)}`)
       .then((r) => r.ok ? r.json() : {})
-      .then((d) => setMacro(d.macro ?? d.macros?.[0] ?? null))
+      .then((d: { macro?: MacroTarget; macros?: MacroTarget[] }) => setMacro(d.macro ?? d.macros?.[0] ?? null))
       .catch(() => setMacro(null))
       .finally(() => setLoading(false));
   }, [member?.email]);

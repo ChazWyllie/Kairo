@@ -165,7 +165,7 @@ export default function DashboardPage() {
       }
 
       setData({ phase: "ready", checkIns, stats, reviews, programs, macros });
-      track({ name: "dashboard_loaded", properties: { status: member?.status } });
+      track({ name: "dashboard_loaded", properties: { status: member?.status ?? "unknown" } });
     } catch (err) {
       setData({ phase: "error", message: err instanceof Error ? err.message : "Something went wrong" });
     }

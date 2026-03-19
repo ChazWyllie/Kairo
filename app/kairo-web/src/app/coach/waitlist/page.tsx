@@ -26,7 +26,7 @@ export default function CoachWaitlistPage() {
   useEffect(() => {
     fetch("/api/coach", { credentials: "include" })
       .then((r) => r.ok ? r.json() : {})
-      .then((d) => {
+      .then((d: { pendingApps?: Application[]; processedApps?: Application[] }) => {
         const pending = d.pendingApps ?? [];
         const processed = d.processedApps ?? [];
         setApps([...pending, ...processed]);
