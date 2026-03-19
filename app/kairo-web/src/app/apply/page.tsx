@@ -355,10 +355,10 @@ function ApplyContent() {
               </div>
 
               {/* Pricing */}
-              {matchedPlan && originalPrice !== null && discountedPrice !== null ? (
+              {matchedTier && originalPrice !== null && discountedPrice !== null ? (
                 <div className="text-center mb-5">
                   <p className="text-base font-semibold" style={{ color: "var(--text-primary)" }}>
-                    {matchedPlan.name}
+                    {matchedTier.name}
                   </p>
                   <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>
                     <span style={{ textDecoration: "line-through", color: "var(--text-tertiary)" }}>
