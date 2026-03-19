@@ -96,6 +96,35 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 4b. One-time payment (template purchase) — no subscription to activate.
+    //     Record the event for idempotency, mark lead converted, notify admin.
+    if (session.mode === "payment") {
+      await prisma.stripeEvent.create({ data: { id: event.id } });
+
+      try {
+        const lead = await prisma.lead.findUnique({ where: { email } });
+        if (lead && !lead.convertedAt) {
+          await prisma.lead.update({ where: { email }, data: { convertedAt: new Date() } });
+        }
+      } catch {
+        console.error("[webhook] Lead conversion tracking failed (non-fatal)");
+      }
+
+      try {
+        if (customerId) {
+          await notifyAdmin({
+            memberEmail: email,
+            stripeCustomerId: customerId,
+            stripeSubId: "one-time",
+          });
+        }
+      } catch {
+        console.error("[webhook] Admin notification failed (non-fatal)");
+      }
+
+      return NextResponse.json({ received: true, status: "processed_one_time" });
+    }
+
     if (!customerId || !subscriptionId) {
       console.error(
         "[webhook] checkout.session.completed missing customer or subscription ID"
