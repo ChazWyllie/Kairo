@@ -5,9 +5,19 @@ import ScrollReveal from "@/components/ui/ScrollReveal";
 
 const FAQS = [
   {
-    question: "How is this different from a generic workout app?",
+    question: "What format are the guides in?",
     answer:
-      "Apps give you a static program and hope you fit your life around it. Kairo does the opposite, it adapts to your actual day. Busy week with no gym access? Short on sleep? Your plan changes. A coach reviews your progress and adjusts the structure, not just the reps.",
+      "All guides are delivered as PDF downloads that work on any device. They're designed to be followed on your phone at the gym. You'll receive the download link instantly via email after purchase. No account needed.",
+  },
+  {
+    question: "How is coaching different from the templates?",
+    answer:
+      "Templates are pre-built programs that work great on their own. Coaching is fully personalized. Your workouts, nutrition, and progression are built specifically for you and adjusted bi-weekly based on your feedback and real-life circumstances. Think of templates as the starting point, coaching as the ongoing system.",
+  },
+  {
+    question: "What if I buy a template and then want coaching?",
+    answer:
+      "Many of our coaching clients started with templates. Your coaching program will be built fresh around your specific goals, not based on the template. The template is yours to keep either way.",
   },
   {
     question: "What if I miss a day?",
@@ -17,17 +27,22 @@ const FAQS = [
   {
     question: "Do I need a gym membership?",
     answer:
-      "No. During onboarding you tell us what equipment you have access to, gym, home setup, just bodyweight, or hotel room. Your plan is built around whatever you actually have. You can change this any time.",
+      "No. During onboarding you tell us what equipment you have access to: gym, home setup, just bodyweight, or hotel room. Your plan is built around whatever you actually have. You can change this any time.",
   },
   {
     question: "What does the nutrition coaching include?",
     answer:
-      "Daily protein targets calibrated to your goal and body, practical meal timing guidance, and adjustments based on your check-in data. This is not a meal plan or calorie counting, it's actionable direction that actually fits how people eat.",
+      "Daily protein targets calibrated to your goal and body, practical meal timing guidance, and adjustments based on your check-in data. This is not a meal plan or calorie counting. It's actionable direction that actually fits how people eat.",
   },
   {
-    question: "Can I cancel anytime?",
+    question: "Can I cancel coaching anytime?",
     answer:
-      "Yes, no questions asked. There are no contracts, no minimum commitment, and no cancellation fees. You can cancel directly from your account at any time. The founding member pricing is locked in for as long as you remain subscribed.",
+      "Yes, no questions asked. No contracts, no minimum commitment, no cancellation fees. Cancel directly from your account anytime. Your founding member pricing locks in for as long as you stay subscribed.",
+  },
+  {
+    question: "Is there a money-back guarantee?",
+    answer:
+      "Yes. Templates come with a 30-day money-back guarantee (full refund if you're not satisfied). Coaching includes a 7-day satisfaction guarantee.",
   },
   {
     question: "Is this medical advice?",

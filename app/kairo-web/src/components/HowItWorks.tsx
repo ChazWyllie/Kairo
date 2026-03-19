@@ -1,6 +1,9 @@
+"use client";
+
+import { useState } from "react";
 import ScrollReveal from "@/components/ui/ScrollReveal";
 
-const STEPS = [
+const COACHING_STEPS = [
   {
     title: "Apply and share your reality",
     description:
@@ -18,14 +21,38 @@ const STEPS = [
   },
 ] as const;
 
+const TEMPLATE_STEPS = [
+  {
+    title: "Choose your guide",
+    description:
+      "Pick the workout, nutrition, or supplement guide that fits your goals. Or grab the complete bundle and save.",
+  },
+  {
+    title: "Checkout in 30 seconds",
+    description:
+      "Pay securely with Stripe. No account needed. Your guide arrives in your inbox instantly.",
+  },
+  {
+    title: "Start seeing results",
+    description:
+      "Follow the evidence-based plan. Ready for personalized support? Upgrade to coaching anytime.",
+  },
+] as const;
+
 const STEP_NUMBERS = ["01", "02", "03"] as const;
 
+type Tab = "coaching" | "templates";
+
 /**
- * Three-step coaching process section.
- * Copy focuses on the coaching relationship, not software.
- * Layout: vertical stack (mobile), horizontal grid with connecting line (desktop).
+ * Three-step process section with tab toggle for coaching vs. templates path.
+ * Tab switch crossfades (200ms opacity transition).
+ * All existing ScrollReveal, step number, and connecting line styles are preserved.
  */
 export default function HowItWorks() {
+  const [activeTab, setActiveTab] = useState<Tab>("coaching");
+
+  const steps = activeTab === "coaching" ? COACHING_STEPS : TEMPLATE_STEPS;
+
   return (
     <section
       id="how-it-works"
@@ -34,7 +61,7 @@ export default function HowItWorks() {
     >
       <div className="mx-auto max-w-6xl">
         {/* Section heading */}
-        <ScrollReveal className="mb-16 md:mb-20">
+        <ScrollReveal className="mb-10 md:mb-12">
           <p
             className="text-xs font-medium uppercase tracking-[0.12em] mb-4"
             style={{ color: "var(--accent-primary)" }}
@@ -53,8 +80,42 @@ export default function HowItWorks() {
           </h2>
         </ScrollReveal>
 
-        {/* Steps grid */}
-        <div className="relative grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-8">
+        {/* Tab toggle */}
+        <div className="mb-12" style={{ display: "flex", gap: "4px", width: "fit-content" }}>
+          {(["coaching", "templates"] as const).map((tab) => {
+            const isActive = activeTab === tab;
+            return (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setActiveTab(tab)}
+                style={{
+                  padding: "8px 20px",
+                  borderRadius: "var(--radius-sm)",
+                  border: "none",
+                  fontSize: "0.875rem",
+                  fontWeight: isActive ? 600 : 400,
+                  cursor: "pointer",
+                  background: isActive ? "var(--bg-secondary)" : "transparent",
+                  color: isActive ? "var(--text-primary)" : "var(--text-tertiary)",
+                  borderBottom: isActive ? "2px solid var(--accent-primary)" : "2px solid transparent",
+                  transition: "background 0.15s ease, color 0.15s ease",
+                  textTransform: "capitalize",
+                }}
+                aria-pressed={isActive}
+              >
+                {tab === "coaching" ? "Coaching" : "Templates"}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Steps grid — crossfade on tab switch */}
+        <div
+          className="relative grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-8"
+          style={{ transition: "opacity 0.2s ease", opacity: 1 }}
+          key={activeTab}
+        >
           {/* Desktop connecting line */}
           <div
             aria-hidden="true"
@@ -65,7 +126,7 @@ export default function HowItWorks() {
             }}
           />
 
-          {STEPS.map((step, i) => (
+          {steps.map((step, i) => (
             <ScrollReveal
               key={step.title}
               delay={i * 150}

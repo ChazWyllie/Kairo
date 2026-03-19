@@ -80,7 +80,7 @@ export const LANDING_SECTIONS: LandingSection[] = [
       },
       {
         name: "Marcus T.",
-        text: "Having a coach who adjusts my plan when work gets crazy? That's the difference. I haven't missed a week in 3 months.",
+        text: "Started with the nutrition guide, upgraded to coaching after 3 weeks. Best $19 I ever spent.",
         role: "Sales Director",
       },
     ],
