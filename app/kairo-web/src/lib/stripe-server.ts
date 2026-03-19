@@ -11,32 +11,21 @@ import { PLANS } from "@/lib/stripe-prices";
 import type { PlanTier, PlanDisplay, BillingInterval } from "@/lib/stripe-prices";
 
 /** Price ID lookup table — server only, env vars read here.
- *  Values may be undefined during waitlist phase when STRIPE_PRICE_* aren't set. */
+ *  Values may be undefined when STRIPE_PRICE_* aren't set. */
 const PRICE_IDS: Record<PlanTier, { monthly: string | undefined; annual: string | undefined }> = {
-  foundation: {
-    monthly: env.STRIPE_PRICE_FOUNDATION_MONTHLY ?? "",
-    annual: env.STRIPE_PRICE_FOUNDATION_ANNUAL ?? "",
-  },
-  coaching: {
-    monthly: env.STRIPE_PRICE_COACHING_MONTHLY ?? "",
-    annual: env.STRIPE_PRICE_COACHING_ANNUAL ?? "",
-  },
-  performance: {
-    monthly: env.STRIPE_PRICE_PERFORMANCE_MONTHLY ?? "",
-    annual: env.STRIPE_PRICE_PERFORMANCE_ANNUAL ?? "",
-  },
-  vip: {
-    monthly: env.STRIPE_PRICE_VIP_MONTHLY ?? "",
-    annual: env.STRIPE_PRICE_VIP_ANNUAL ?? "",
-  },
-  // New 2-tier coaching model — monthly only, no annual billing
+  // Legacy tiers — kept for existing members on old plans
+  foundation: { monthly: undefined, annual: undefined },
+  coaching:   { monthly: undefined, annual: undefined },
+  performance:{ monthly: undefined, annual: undefined },
+  vip:        { monthly: undefined, annual: undefined },
+  // Current 2-tier coaching model
   standard: {
     monthly: env.STRIPE_PRICE_STANDARD_MONTHLY ?? "",
-    annual: undefined,
+    annual: env.STRIPE_PRICE_STANDARD_ANNUAL ?? "",
   },
   premium: {
     monthly: env.STRIPE_PRICE_PREMIUM_MONTHLY ?? "",
-    annual: undefined,
+    annual: env.STRIPE_PRICE_PREMIUM_ANNUAL ?? "",
   },
 };
 

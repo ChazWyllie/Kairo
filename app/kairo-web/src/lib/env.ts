@@ -44,19 +44,11 @@ export const env = createEnv({
       .min(16, "CRON_SECRET must be at least 16 characters"),
     // Founding Stripe coupon (10% off forever) — optional until coupon is created
     FOUNDING_MEMBER_COUPON_ID: z.string().min(1).optional(),
-    // Stripe price IDs — optional during waitlist phase (checkout disabled).
-    // Will be required once checkout is re-enabled.
-    STRIPE_PRICE_FOUNDATION_MONTHLY: z.string().startsWith("price_").optional(),
-    STRIPE_PRICE_FOUNDATION_ANNUAL: z.string().startsWith("price_").optional(),
-    STRIPE_PRICE_COACHING_MONTHLY: z.string().startsWith("price_").optional(),
-    STRIPE_PRICE_COACHING_ANNUAL: z.string().startsWith("price_").optional(),
-    STRIPE_PRICE_PERFORMANCE_MONTHLY: z.string().startsWith("price_").optional(),
-    STRIPE_PRICE_PERFORMANCE_ANNUAL: z.string().startsWith("price_").optional(),
-    STRIPE_PRICE_VIP_MONTHLY: z.string().startsWith("price_").optional(),
-    STRIPE_PRICE_VIP_ANNUAL: z.string().startsWith("price_").optional(),
-    // New 2-tier coaching model (1:1 Standard / 1:1 Premium)
+    // Stripe price IDs — 2-tier coaching model (1:1 Standard / 1:1 Premium)
     STRIPE_PRICE_STANDARD_MONTHLY: z.string().startsWith("price_").optional(),
+    STRIPE_PRICE_STANDARD_ANNUAL: z.string().startsWith("price_").optional(),
     STRIPE_PRICE_PREMIUM_MONTHLY: z.string().startsWith("price_").optional(),
+    STRIPE_PRICE_PREMIUM_ANNUAL: z.string().startsWith("price_").optional(),
   },
   // No client-side env vars — Stripe keys stay server-side
   client: {},
@@ -72,16 +64,10 @@ export const env = createEnv({
     COACH_SECRET: process.env.COACH_SECRET,
     CRON_SECRET: process.env.CRON_SECRET,
     FOUNDING_MEMBER_COUPON_ID: process.env.FOUNDING_MEMBER_COUPON_ID,
-    STRIPE_PRICE_FOUNDATION_MONTHLY: process.env.STRIPE_PRICE_FOUNDATION_MONTHLY,
-    STRIPE_PRICE_FOUNDATION_ANNUAL: process.env.STRIPE_PRICE_FOUNDATION_ANNUAL,
-    STRIPE_PRICE_COACHING_MONTHLY: process.env.STRIPE_PRICE_COACHING_MONTHLY,
-    STRIPE_PRICE_COACHING_ANNUAL: process.env.STRIPE_PRICE_COACHING_ANNUAL,
-    STRIPE_PRICE_PERFORMANCE_MONTHLY: process.env.STRIPE_PRICE_PERFORMANCE_MONTHLY,
-    STRIPE_PRICE_PERFORMANCE_ANNUAL: process.env.STRIPE_PRICE_PERFORMANCE_ANNUAL,
-    STRIPE_PRICE_VIP_MONTHLY: process.env.STRIPE_PRICE_VIP_MONTHLY,
-    STRIPE_PRICE_VIP_ANNUAL: process.env.STRIPE_PRICE_VIP_ANNUAL,
     STRIPE_PRICE_STANDARD_MONTHLY: process.env.STRIPE_PRICE_STANDARD_MONTHLY,
+    STRIPE_PRICE_STANDARD_ANNUAL: process.env.STRIPE_PRICE_STANDARD_ANNUAL,
     STRIPE_PRICE_PREMIUM_MONTHLY: process.env.STRIPE_PRICE_PREMIUM_MONTHLY,
+    STRIPE_PRICE_PREMIUM_ANNUAL: process.env.STRIPE_PRICE_PREMIUM_ANNUAL,
   },
   // Skip validation during build phase (env vars are injected at runtime on Vercel,
   // not available during `next build`) or when explicitly bypassed for CI.

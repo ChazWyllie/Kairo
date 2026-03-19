@@ -5,8 +5,8 @@
  * For Stripe price IDs and server-only utilities, use stripe-server.ts.
  *
  * Current coaching model (marketing site + new signups):
- *   1:1 Standard  ($149/mo) — Custom programming, nutrition, weekly check-ins
- *   1:1 Premium   ($350/mo) — Everything in Standard + weekly video calls, daily access
+ *   1:1 Standard  ($149/mo | annual available) — Custom programming, nutrition, weekly check-ins
+ *   1:1 Premium   ($350/mo | annual available) — Everything in Standard + weekly video calls, daily access
  *
  * Legacy tiers (kept for existing member dashboard "Compare Plans" accordion):
  *   Foundation  ($49/mo)  — Templates + async check-ins
