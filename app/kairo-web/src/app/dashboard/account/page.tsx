@@ -12,8 +12,13 @@ import Accordion from "@/components/ui/Accordion";
 import Modal from "@/components/ui/Modal";
 import { PLANS } from "@/lib/stripe-prices";
 import type { PlanTier } from "@/lib/stripe-prices";
+import { COACHING_TIERS } from "@/lib/products";
 
 const PLAN_MONTHLY_PRICES: Record<string, number> = {
+  // New 2-tier model
+  standard: COACHING_TIERS.standard.price,
+  premium: COACHING_TIERS.premium.price,
+  // Legacy tiers — kept for existing members on old plans
   foundation: 49, coaching: 129, performance: 229, vip: 349,
 };
 
