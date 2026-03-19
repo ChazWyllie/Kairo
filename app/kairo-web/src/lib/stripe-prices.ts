@@ -4,14 +4,18 @@
  * No env var imports — safe for "use client" components.
  * For Stripe price IDs and server-only utilities, use stripe-server.ts.
  *
- * Tier lineup:
- *   Foundation  ($49/mo | $490/yr)  — Templates + async check-ins
- *   Coaching    ($129/mo | $1,290/yr) — Personalized programming + 24h response
- *   Performance ($229/mo | $2,290/yr) — Video reviews + weekly calls
- *   VIP Elite   ($349/mo | $3,490/yr) — Daily access + priority everything
+ * Current coaching model (marketing site + new signups):
+ *   1:1 Standard  ($149/mo) — Custom programming, nutrition, weekly check-ins
+ *   1:1 Premium   ($350/mo) — Everything in Standard + weekly video calls, daily access
+ *
+ * Legacy tiers (kept for existing member dashboard "Compare Plans" accordion):
+ *   Foundation  ($49/mo)  — Templates + async check-ins
+ *   Coaching    ($129/mo) — Personalized programming + 24h response
+ *   Performance ($229/mo) — Video reviews + weekly calls
+ *   VIP Elite   ($349/mo) — Daily access + priority everything
  */
 
-export type PlanTier = "foundation" | "coaching" | "performance" | "vip";
+export type PlanTier = "foundation" | "coaching" | "performance" | "vip" | "standard" | "premium";
 export type BillingInterval = "monthly" | "annual";
 
 export interface PlanDisplay {

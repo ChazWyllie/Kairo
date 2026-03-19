@@ -54,6 +54,9 @@ export const env = createEnv({
     STRIPE_PRICE_PERFORMANCE_ANNUAL: z.string().startsWith("price_").optional(),
     STRIPE_PRICE_VIP_MONTHLY: z.string().startsWith("price_").optional(),
     STRIPE_PRICE_VIP_ANNUAL: z.string().startsWith("price_").optional(),
+    // New 2-tier coaching model (1:1 Standard / 1:1 Premium)
+    STRIPE_PRICE_STANDARD_MONTHLY: z.string().startsWith("price_").optional(),
+    STRIPE_PRICE_PREMIUM_MONTHLY: z.string().startsWith("price_").optional(),
   },
   // No client-side env vars — Stripe keys stay server-side
   client: {},
@@ -77,6 +80,8 @@ export const env = createEnv({
     STRIPE_PRICE_PERFORMANCE_ANNUAL: process.env.STRIPE_PRICE_PERFORMANCE_ANNUAL,
     STRIPE_PRICE_VIP_MONTHLY: process.env.STRIPE_PRICE_VIP_MONTHLY,
     STRIPE_PRICE_VIP_ANNUAL: process.env.STRIPE_PRICE_VIP_ANNUAL,
+    STRIPE_PRICE_STANDARD_MONTHLY: process.env.STRIPE_PRICE_STANDARD_MONTHLY,
+    STRIPE_PRICE_PREMIUM_MONTHLY: process.env.STRIPE_PRICE_PREMIUM_MONTHLY,
   },
   // Skip validation during build phase (env vars are injected at runtime on Vercel,
   // not available during `next build`) or when explicitly bypassed for CI.

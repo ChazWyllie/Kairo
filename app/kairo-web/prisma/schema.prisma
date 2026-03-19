@@ -13,6 +13,8 @@ enum PlanTier {
   coaching
   performance
   vip
+  standard
+  premium
 }
 
 enum BillingInterval {

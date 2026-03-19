@@ -29,6 +29,15 @@ const PRICE_IDS: Record<PlanTier, { monthly: string | undefined; annual: string 
     monthly: env.STRIPE_PRICE_VIP_MONTHLY ?? "",
     annual: env.STRIPE_PRICE_VIP_ANNUAL ?? "",
   },
+  // New 2-tier coaching model — monthly only, no annual billing
+  standard: {
+    monthly: env.STRIPE_PRICE_STANDARD_MONTHLY ?? "",
+    annual: undefined,
+  },
+  premium: {
+    monthly: env.STRIPE_PRICE_PREMIUM_MONTHLY ?? "",
+    annual: undefined,
+  },
 };
 
 /** Get a Stripe price ID for a given tier + interval.
