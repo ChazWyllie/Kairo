@@ -18,6 +18,8 @@
     "@prisma/client": "^7.5.0",
     "@t3-oss/env-nextjs": "^0.13.10",
     "bcryptjs": "^3.0.3",
+    "framer-motion": "^12.6.3",
+    "lucide-react": "^0.487.0",
     "next": "16.1.6",
     "react": "19.2.3",
     "react-dom": "19.2.3",

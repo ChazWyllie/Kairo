@@ -4,36 +4,11 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { track } from "@/lib/analytics";
 import { PLANS } from "@/lib/stripe-prices";
-// isValidEmail removed — auth is now session-based
-import { semantic, components, dashboard } from "@/lib/design-tokens";
-
-/**
- * Member Dashboard — action-first design per dashboard_prompt.md
- *
- * Primary question: "What do I do today?"
- * Layout: Today Card → Progress Block → Coach Connection → Profile → History
- *
- * Key principles:
- * - One clear primary action (check-in or view today's plan)
- * - No raw compliance scores as hero metric
- * - Progress language, not grading language
- * - Color for status only (green/amber/red)
- * - FR-8: Quick Logging ≤ 30 seconds
- * - FR-10: Insights — streak, weekly adherence, workouts this week
- */
-
-interface MemberProfile {
-  email: string;
-  status: string;
-  planTier: string | null;
-  billingInterval: string | null;
-  goal: string | null;
-  daysPerWeek: number | null;
-  minutesPerSession: number | null;
-  injuries: string | null;
-  onboardedAt: string | null;
-  createdAt: string;
-}
+import { useAuth } from "@/lib/auth-context";
+import Card from "@/components/ui/Card";
+import Badge from "@/components/ui/Badge";
+import { SkeletonCard } from "@/components/ui/Skeleton";
+import PageHeader from "@/components/layout/PageHeader";
 
 interface CheckIn {
   id: string;
@@ -121,14 +96,14 @@ interface Stats {
   weeklyAdherence: number;
 }
 
-type DashboardState =
+type DataState =
   | { phase: "loading" }
   | { phase: "error"; message: string }
-  | { phase: "dashboard"; member: MemberProfile; checkIns: CheckIn[]; stats: Stats; reviews: Review[]; programs: ProgramBlock[]; macros: MacroTarget[] };
+  | { phase: "ready"; checkIns: CheckIn[]; stats: Stats; reviews: Review[]; programs: ProgramBlock[]; macros: MacroTarget[] };
 
 export default function DashboardPage() {
-  const [state, setState] = useState<DashboardState>({ phase: "loading" });
-  const [email, setEmail] = useState("");
+  const { member } = useAuth();
+  const [data, setData] = useState<DataState>({ phase: "loading" });
 
   // Check-in form state
   const [workout, setWorkout] = useState(false);
@@ -154,148 +129,60 @@ export default function DashboardPage() {
   const [biggestWin, setBiggestWin] = useState("");
   const [biggestStruggle, setBiggestStruggle] = useState("");
   const [helpNeeded, setHelpNeeded] = useState("");
-  const [cancelLoading, setCancelLoading] = useState(false);
-  const [cancelMessage, setCancelMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    track({ name: "page_view", properties: { path: "/dashboard" } });
-
-    // Auto-authenticate from session cookie
-    async function autoAuth() {
-      try {
-        const meRes = await fetch("/api/auth/me");
-        if (!meRes.ok) {
-          // No session — redirect to login
-          window.location.href = "/login";
-          return;
-        }
-        const meData = await meRes.json();
-        const memberEmail = meData.member.email;
-        setEmail(memberEmail);
-        await loadDashboard(memberEmail);
-      } catch {
-        window.location.href = "/login";
-      }
-    }
-
-    autoAuth();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const loadDashboard = useCallback(async (memberEmail: string) => {
-    setState({ phase: "loading" });
-
+  const loadData = useCallback(async (email: string) => {
+    setData({ phase: "loading" });
     try {
-      const memberRes = await fetch(`/api/member?email=${encodeURIComponent(memberEmail)}`);
-
-      if (!memberRes.ok) {
-        const data = await memberRes.json().catch(() => null);
-        throw new Error(data?.error?.message ?? "No account found for this email. Have you completed checkout?");
-      }
-
-      const memberData = await memberRes.json();
-
       let checkIns: CheckIn[] = [];
       let stats: Stats = { currentStreak: 0, weeklyWorkouts: 0, weeklyAdherence: 0 };
       let reviews: Review[] = [];
       let programs: ProgramBlock[] = [];
       let macros: MacroTarget[] = [];
 
-      if (memberData.member.status === "active") {
-        try {
-          const historyRes = await fetch(`/api/checkin?email=${encodeURIComponent(memberEmail)}`);
-          if (historyRes.ok) {
-            const historyData = await historyRes.json();
-            checkIns = historyData.checkIns ?? [];
-            stats = historyData.stats ?? stats;
-          }
-        } catch {
-          // Non-fatal — dashboard still loads without history
-        }
+      const [historyRes, reviewsRes, programsRes, macrosRes] = await Promise.allSettled([
+        fetch(`/api/checkin?email=${encodeURIComponent(email)}`),
+        fetch(`/api/review?email=${encodeURIComponent(email)}`),
+        fetch(`/api/program?email=${encodeURIComponent(email)}`),
+        fetch(`/api/macro?email=${encodeURIComponent(email)}`),
+      ]);
 
-        try {
-          const reviewsRes = await fetch(`/api/review?email=${encodeURIComponent(memberEmail)}`);
-          if (reviewsRes.ok) {
-            const reviewsData = await reviewsRes.json();
-            reviews = reviewsData.reviews ?? [];
-          }
-        } catch {
-          // Non-fatal — dashboard still loads without reviews
-        }
-
-        try {
-          const programsRes = await fetch(`/api/program?email=${encodeURIComponent(memberEmail)}`);
-          if (programsRes.ok) {
-            const programsData = await programsRes.json();
-            programs = programsData.programs ?? [];
-          }
-        } catch {
-          // Non-fatal — dashboard still loads without programs
-        }
-
-        try {
-          const macrosRes = await fetch(`/api/macro?email=${encodeURIComponent(memberEmail)}`);
-          if (macrosRes.ok) {
-            const macrosData = await macrosRes.json();
-            macros = macrosData.macros ?? [];
-          }
-        } catch {
-          // Non-fatal — dashboard still loads without macros
-        }
+      if (historyRes.status === "fulfilled" && historyRes.value.ok) {
+        const d = await historyRes.value.json();
+        checkIns = d.checkIns ?? [];
+        stats = d.stats ?? stats;
+      }
+      if (reviewsRes.status === "fulfilled" && reviewsRes.value.ok) {
+        const d = await reviewsRes.value.json();
+        reviews = d.reviews ?? [];
+      }
+      if (programsRes.status === "fulfilled" && programsRes.value.ok) {
+        const d = await programsRes.value.json();
+        programs = d.programs ?? [];
+      }
+      if (macrosRes.status === "fulfilled" && macrosRes.value.ok) {
+        const d = await macrosRes.value.json();
+        macros = d.macros ?? [];
       }
 
-      setState({
-        phase: "dashboard",
-        member: memberData.member,
-        checkIns,
-        stats,
-        reviews,
-        programs,
-        macros,
-      });
-
-      track({ name: "dashboard_loaded", properties: { status: memberData.member.status } });
+      setData({ phase: "ready", checkIns, stats, reviews, programs, macros });
+      track({ name: "dashboard_loaded", properties: { status: member?.status ?? "unknown" } });
     } catch (err) {
-      setState({
-        phase: "error",
-        message: err instanceof Error ? err.message : "Something went wrong",
-      });
+      setData({ phase: "error", message: err instanceof Error ? err.message : "Something went wrong" });
     }
-  }, []);
+  }, [member?.status]);
 
-  async function handleCancelMembership() {
-    if (!confirm("Are you sure you want to cancel your membership? You'll keep access until the end of your billing period.")) {
-      return;
+  useEffect(() => {
+    if (member?.email && member.status === "active") {
+      loadData(member.email);
+    } else if (member) {
+      setData({ phase: "ready", checkIns: [], stats: { currentStreak: 0, weeklyWorkouts: 0, weeklyAdherence: 0 }, reviews: [], programs: [], macros: [] });
     }
-    setCancelLoading(true);
-    setCancelMessage(null);
-
-    try {
-      const res = await fetch("/api/member/cancel", {
-        method: "POST",
-      });
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => null);
-        throw new Error(data?.error?.message ?? "Failed to cancel membership");
-      }
-
-      setCancelMessage("Your membership has been cancelled. You'll keep access until the end of your billing period.");
-      // Refresh dashboard
-      await loadDashboard(email);
-    } catch (err) {
-      setCancelMessage(err instanceof Error ? err.message : "Something went wrong");
-    } finally {
-      setCancelLoading(false);
-    }
-  }
-
-  async function handleLogout() {
-    await fetch("/api/auth/logout", { method: "POST" });
-    window.location.href = "/login";
-  }
+    track({ name: "page_view", properties: { path: "/dashboard" } });
+  }, [member, loadData]);
 
   async function onCheckIn(e: React.FormEvent) {
     e.preventDefault();
+    if (!member?.email) return;
     setCheckInLoading(true);
     setCheckInMessage(null);
 
@@ -304,13 +191,12 @@ export default function DashboardPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email,
+          email: member.email,
           workout,
           meals,
           water,
           steps,
           note: note.trim() || undefined,
-          // Enhanced weekly fields — only send if provided
           ...(avgWeight ? { avgWeight: parseFloat(avgWeight) } : {}),
           ...(waist ? { waist: parseFloat(waist) } : {}),
           ...(workoutsCompleted ? { workoutsCompleted: parseInt(workoutsCompleted, 10) } : {}),
@@ -327,915 +213,474 @@ export default function DashboardPage() {
         }),
       });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error?.message ?? "Check-in failed");
+      const resData = await res.json();
+      if (!res.ok) throw new Error(resData?.error?.message ?? "Check-in failed");
 
-      setCheckInMessage("Checked in ✅");
+      setCheckInMessage("Checked in!");
       track({ name: "checkin_submitted", properties: { workout } });
 
       // Reset form
-      setWorkout(false);
-      setMeals(0);
-      setWater(false);
-      setSteps(false);
-      setNote("");
-      setShowWeekly(false);
-      setAvgWeight("");
-      setWaist("");
-      setWorkoutsCompleted("");
-      setStepsAverage("");
-      setCalorieAdherence(0);
-      setProteinAdherence(0);
-      setSleepAverage("");
-      setEnergyScore(0);
-      setStressScore(0);
-      setRecoveryScore(0);
-      setBiggestWin("");
-      setBiggestStruggle("");
-      setHelpNeeded("");
+      setWorkout(false); setMeals(0); setWater(false); setSteps(false); setNote("");
+      setShowWeekly(false); setAvgWeight(""); setWaist(""); setWorkoutsCompleted("");
+      setStepsAverage(""); setCalorieAdherence(0); setProteinAdherence(0);
+      setSleepAverage(""); setEnergyScore(0); setStressScore(0); setRecoveryScore(0);
+      setBiggestWin(""); setBiggestStruggle(""); setHelpNeeded("");
 
-      // Refresh dashboard
-      await loadDashboard(email);
+      await loadData(member.email);
     } catch (err) {
-      setCheckInMessage(
-        err instanceof Error ? err.message : "Something went wrong"
-      );
+      setCheckInMessage(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setCheckInLoading(false);
     }
   }
 
-  // ── Error state ──
-  if (state.phase === "error") {
+  if (!member || data.phase === "loading") {
     return (
-      <main className="min-h-screen bg-neutral-50 text-black">
-        <div className="mx-auto max-w-md px-6 py-16">
-          <h1 className="text-2xl font-semibold text-center">Dashboard</h1>
-          <p className="mt-4 text-sm text-red-600 text-center" role="alert">
-            {state.message}
-          </p>
-          <div className="mt-8 text-center space-y-2">
-            <button
-              onClick={() => window.location.reload()}
-              className={`w-full ${components.button.primary}`}
-            >
-              Try Again
-            </button>
-            <Link href="/login" className={components.button.ghost}>
-              Sign in with a different account
-            </Link>
-          </div>
-        </div>
-      </main>
+      <div>
+        <PageHeader title="Home" />
+        <SkeletonCard /><br /><SkeletonCard /><br /><SkeletonCard />
+      </div>
     );
   }
 
-  // ── Loading ──
-  if (state.phase === "loading") {
+  if (data.phase === "error") {
     return (
-      <main className="min-h-screen bg-neutral-50 text-black">
-        <div className="mx-auto max-w-2xl px-6 py-16">
-          <div className="space-y-4 animate-pulse">
-            <div className="h-8 bg-neutral-200 rounded-xl w-48" />
-            <div className="h-40 bg-neutral-200 rounded-2xl" />
-            <div className="grid grid-cols-3 gap-4">
-              <div className="h-24 bg-neutral-200 rounded-2xl" />
-              <div className="h-24 bg-neutral-200 rounded-2xl" />
-              <div className="h-24 bg-neutral-200 rounded-2xl" />
-            </div>
-          </div>
-        </div>
-      </main>
+      <div>
+        <PageHeader title="Home" />
+        <Card>
+          <p style={{ color: "var(--status-error)", fontSize: "0.875rem", marginBottom: "12px" }}>{data.message}</p>
+          <button
+            onClick={() => member?.email && loadData(member.email)}
+            style={{ padding: "10px 16px", background: "var(--accent-primary)", color: "var(--bg-primary)", border: "none", borderRadius: "8px", fontWeight: 600, cursor: "pointer" }}
+          >
+            Try Again
+          </button>
+        </Card>
+      </div>
     );
   }
 
-  // ── Dashboard ──
-  const { member, checkIns, stats, reviews, programs, macros } = state;
+  const { checkIns, stats, reviews, programs, macros } = data;
+
   const hasCheckedInToday = checkIns.some((ci) => {
     const ciDate = new Date(ci.date);
     const today = new Date();
-    return (
-      ciDate.getFullYear() === today.getFullYear() &&
+    return ciDate.getFullYear() === today.getFullYear() &&
       ciDate.getMonth() === today.getMonth() &&
-      ciDate.getDate() === today.getDate()
-    );
+      ciDate.getDate() === today.getDate();
   });
 
   const planConfig = PLANS.find((p) => p.tier === member.planTier);
-  const goalLabel = member.goal === "fat_loss"
-    ? "Fat Loss"
-    : member.goal === "muscle"
-      ? "Build Muscle"
-      : member.goal
-        ? "Stay Consistent"
-        : null;
-
-  // Next milestone calculation
   const totalCheckIns = checkIns.length;
-  const nextMilestone = totalCheckIns < 7 ? 7
-    : totalCheckIns < 14 ? 14
-    : totalCheckIns < 30 ? 30
-    : totalCheckIns < 60 ? 60
-    : totalCheckIns < 100 ? 100
-    : Math.ceil((totalCheckIns + 1) / 50) * 50;
+  const nextMilestone = totalCheckIns < 7 ? 7 : totalCheckIns < 14 ? 14 : totalCheckIns < 30 ? 30 : totalCheckIns < 60 ? 60 : totalCheckIns < 100 ? 100 : Math.ceil((totalCheckIns + 1) / 50) * 50;
   const milestoneProgress = Math.round((totalCheckIns / nextMilestone) * 100);
 
-  return (
-    <main className="min-h-screen bg-neutral-50 text-black">
-      <div className="mx-auto max-w-2xl px-6 py-8 space-y-6">
+  const activeProgram = programs.find((p) => p.status === "active") ?? programs[0];
+  const activeMacro = macros.find((m) => m.status === "active");
 
-        {/* ── Header ── */}
-        <header className="flex items-start justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold">
-              {getGreeting()}{member.onboardedAt ? "" : " 👋"}
-            </h1>
-            <p className="mt-0.5 text-sm text-neutral-500">
-              {member.email}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <span
-              className={`${components.badge.base} ${
-                member.status === "active"
-                  ? `${semantic.memberStatus.active.bg} ${semantic.memberStatus.active.text}`
-                  : member.status === "pending"
-                    ? `${semantic.memberStatus.pending.bg} ${semantic.memberStatus.pending.text}`
-                    : member.status === "past_due"
-                      ? "bg-amber-100 text-amber-700"
-                      : `${semantic.memberStatus.canceled.bg} ${semantic.memberStatus.canceled.text}`
-              }`}
-            >
-              {member.status === "past_due" ? "past due" : member.status}
+  return (
+    <div>
+      <PageHeader
+        title={getGreeting()}
+        subtitle={member.email}
+        action={<Badge variant="status" value={member.status as "active" | "canceled" | "past_due" | "pending"} />}
+      />
+
+      {/* Pending notice */}
+      {member.status === "pending" && (
+        <Card accentBorder style={{ marginBottom: "16px", borderLeft: "2px solid var(--status-warning)" }}>
+          <p style={{ fontWeight: 600, color: "var(--text-primary)", marginBottom: "6px" }}>Payment pending</p>
+          <p style={{ fontSize: "0.875rem", color: "var(--text-secondary)", marginBottom: "12px" }}>
+            Complete checkout to unlock your dashboard, check-ins, and coaching.
+          </p>
+          <a href="/" style={{ display: "inline-block", padding: "10px 16px", background: "var(--accent-primary)", color: "var(--bg-primary)", borderRadius: "8px", fontWeight: 600, fontSize: "0.875rem", textDecoration: "none" }}>
+            Complete checkout
+          </a>
+        </Card>
+      )}
+
+      {/* Canceled notice */}
+      {member.status === "canceled" && (
+        <Card style={{ marginBottom: "16px", border: "1px solid var(--status-error)" }}>
+          <p style={{ fontWeight: 600, color: "var(--text-primary)", marginBottom: "6px" }}>Membership canceled</p>
+          <p style={{ fontSize: "0.875rem", color: "var(--text-secondary)", marginBottom: "12px" }}>
+            Re-subscribe to regain access to coaching and check-ins.
+          </p>
+          <a href="/" style={{ display: "inline-block", padding: "10px 16px", background: "var(--accent-primary)", color: "var(--bg-primary)", borderRadius: "8px", fontWeight: 600, fontSize: "0.875rem", textDecoration: "none" }}>
+            Re-subscribe
+          </a>
+        </Card>
+      )}
+
+      {/* TODAY CARD */}
+      {member.status === "active" && !hasCheckedInToday && (
+        <Card accentBorder style={{ marginBottom: "16px" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
+            <p style={{ fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>Today&apos;s Check-In</p>
+            <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)" }}>
+              {new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
             </span>
           </div>
-        </header>
+          <p style={{ fontSize: "0.8125rem", color: "var(--text-tertiary)", marginBottom: "16px" }}>
+            Log what you did today. Takes &lt; 30 seconds.
+          </p>
 
-        {/* ── Pending notice ── */}
-        {member.status === "pending" && (
-          <div className={components.card.status.warning}>
-            <h2 className="text-lg font-semibold text-yellow-800">
-              Payment pending
-            </h2>
-            <p className="mt-2 text-sm text-yellow-700">
-              Complete checkout to unlock your dashboard, check-ins, and coaching.
-            </p>
-            <a href="/" className={`mt-4 inline-block ${components.button.primary}`}>
-              Complete checkout →
-            </a>
-          </div>
-        )}
-
-        {/* ── Canceled notice ── */}
-        {member.status === "canceled" && (
-          <div className={components.card.status.error}>
-            <h2 className="text-lg font-semibold text-red-800">
-              Membership canceled
-            </h2>
-            <p className="mt-2 text-sm text-red-700">
-              Re-subscribe to regain access to coaching and check-ins.
-            </p>
-            <a href="/" className={`mt-4 inline-block ${components.button.primary}`}>
-              Re-subscribe →
-            </a>
-          </div>
-        )}
-
-        {/* ── TODAY CARD — Primary action area ── */}
-        {member.status === "active" && !hasCheckedInToday && (
-          <section className={dashboard.member.todayCard}>
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Today&apos;s Check-In</h2>
-              <span className="text-sm text-neutral-500">
-                {new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
-              </span>
+          <form onSubmit={onCheckIn}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "10px", marginBottom: "14px" }}>
+              <CheckToggle emoji="💪" label="Workout" checked={workout} onToggle={() => setWorkout(!workout)} />
+              <CheckToggle emoji="💧" label="Water" checked={water} onToggle={() => setWater(!water)} />
+              <CheckToggle emoji="🚶" label="Steps" checked={steps} onToggle={() => setSteps(!steps)} />
             </div>
-            <p className="mt-1 text-sm text-neutral-500">
-              Log what you did today. Takes &lt; 30 seconds.
-            </p>
 
-            <form onSubmit={onCheckIn} className="mt-5 space-y-4">
-              {/* Activity toggles */}
-              <div className="grid grid-cols-3 gap-3">
-                <CheckToggle
-                  emoji="💪"
-                  label="Workout"
-                  checked={workout}
-                  onToggle={() => setWorkout(!workout)}
-                />
-                <CheckToggle
-                  emoji="💧"
-                  label="Water"
-                  checked={water}
-                  onToggle={() => setWater(!water)}
-                />
-                <CheckToggle
-                  emoji="🚶"
-                  label="Steps"
-                  checked={steps}
-                  onToggle={() => setSteps(!steps)}
-                />
+            <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "12px" }}>
+              <span style={{ fontSize: "0.8125rem", color: "var(--text-secondary)" }}>🍽️ Meals on plan:</span>
+              <div style={{ display: "flex", gap: "8px" }}>
+                {[0, 1, 2, 3].map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setMeals(n)}
+                    aria-pressed={meals === n}
+                    style={{
+                      height: "36px", width: "36px", borderRadius: "8px", border: "1px solid",
+                      borderColor: meals === n ? "var(--accent-primary)" : "var(--border-hover)",
+                      background: meals === n ? "var(--accent-primary)" : "transparent",
+                      color: meals === n ? "var(--bg-primary)" : "var(--text-secondary)",
+                      fontSize: "0.875rem", fontWeight: 600, cursor: "pointer",
+                    }}
+                  >
+                    {n}
+                  </button>
+                ))}
               </div>
+            </div>
 
-              {/* Meals counter */}
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-medium text-neutral-600">🍽️ Meals on plan:</span>
-                <div className="flex gap-2">
-                  {[0, 1, 2, 3].map((n) => (
-                    <button
-                      key={n}
-                      type="button"
-                      onClick={() => setMeals(n)}
-                      className={`h-9 w-9 rounded-lg text-sm font-medium transition-colors ${
-                        meals === n
-                          ? "bg-black text-white"
-                          : "border border-neutral-300 bg-white text-neutral-700 hover:border-neutral-500"
-                      }`}
-                      aria-label={`${n} meals`}
-                      aria-pressed={meals === n}
-                    >
-                      {n}
-                    </button>
-                  ))}
-                </div>
-              </div>
+            <input
+              type="text"
+              placeholder="Add a note… (optional)"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              maxLength={500}
+              style={{
+                width: "100%", background: "var(--bg-tertiary)", border: "1px solid var(--border-hover)",
+                borderRadius: "8px", padding: "10px 12px", color: "var(--text-primary)",
+                fontSize: "16px", boxSizing: "border-box", outline: "none", marginBottom: "12px",
+              }}
+            />
 
-              {/* Note */}
-              <input
-                type="text"
-                className="w-full rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-2 text-sm outline-none focus:border-black focus:bg-white"
-                placeholder="Add a note… (optional)"
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                maxLength={500}
-                aria-label="Check-in note"
-              />
+            <button
+              type="button"
+              onClick={() => setShowWeekly(!showWeekly)}
+              style={{ width: "100%", textAlign: "left", fontSize: "0.8125rem", color: "var(--text-tertiary)", background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: "6px", marginBottom: "12px" }}
+            >
+              <span>{showWeekly ? "▼" : "▶"}</span>
+              <span>Weekly details (body, recovery, reflection)</span>
+            </button>
 
-              {/* Weekly check-in toggle */}
-              <button
-                type="button"
-                onClick={() => setShowWeekly(!showWeekly)}
-                className="w-full text-left text-sm text-neutral-500 hover:text-black transition-colors flex items-center gap-2"
-              >
-                <span>{showWeekly ? "▼" : "▶"}</span>
-                <span>Weekly details (body, recovery, reflection)</span>
-              </button>
-
-              {showWeekly && (
-                <div className="space-y-4 rounded-xl border border-neutral-200 bg-neutral-50 p-4">
-                  {/* Body measurements */}
+            {showWeekly && (
+              <div style={{ background: "var(--bg-tertiary)", borderRadius: "10px", padding: "14px", marginBottom: "12px" }}>
+                <p style={{ fontSize: "0.7rem", color: "var(--text-tertiary)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "10px" }}>Body Data</p>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "14px" }}>
                   <div>
-                    <p className="text-xs font-medium text-neutral-500 uppercase tracking-wide mb-2">
-                      📊 Body Data
-                    </p>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="text-xs text-neutral-500" htmlFor="avgWeight">Avg weight (lbs)</label>
-                        <input
-                          id="avgWeight"
-                          type="number"
-                          step="0.1"
-                          className="w-full mt-1 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm outline-none focus:border-black"
-                          placeholder="185.5"
-                          value={avgWeight}
-                          onChange={(e) => setAvgWeight(e.target.value)}
-                        />
-                      </div>
-                      <div>
-                        <label className="text-xs text-neutral-500" htmlFor="waist">Waist (in)</label>
-                        <input
-                          id="waist"
-                          type="number"
-                          step="0.1"
-                          className="w-full mt-1 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm outline-none focus:border-black"
-                          placeholder="32.0"
-                          value={waist}
-                          onChange={(e) => setWaist(e.target.value)}
-                        />
-                      </div>
-                    </div>
+                    <label style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", display: "block", marginBottom: "4px" }}>Avg weight (lbs)</label>
+                    <input type="number" step="0.1" placeholder="185.5" value={avgWeight} onChange={(e) => setAvgWeight(e.target.value)} style={inputStyle} />
                   </div>
-
-                  {/* Adherence */}
                   <div>
-                    <p className="text-xs font-medium text-neutral-500 uppercase tracking-wide mb-2">
-                      🎯 Adherence
-                    </p>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="text-xs text-neutral-500" htmlFor="workoutsCompleted">Workouts completed</label>
-                        <input
-                          id="workoutsCompleted"
-                          type="number"
-                          className="w-full mt-1 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm outline-none focus:border-black"
-                          placeholder="5"
-                          value={workoutsCompleted}
-                          onChange={(e) => setWorkoutsCompleted(e.target.value)}
-                        />
-                      </div>
-                      <div>
-                        <label className="text-xs text-neutral-500" htmlFor="stepsAverage">Avg daily steps</label>
-                        <input
-                          id="stepsAverage"
-                          type="number"
-                          className="w-full mt-1 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm outline-none focus:border-black"
-                          placeholder="9500"
-                          value={stepsAverage}
-                          onChange={(e) => setStepsAverage(e.target.value)}
-                        />
-                      </div>
-                      <div>
-                        <label className="text-xs text-neutral-500" htmlFor="sleepAverage">Avg sleep (hrs)</label>
-                        <input
-                          id="sleepAverage"
-                          type="number"
-                          step="0.1"
-                          className="w-full mt-1 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm outline-none focus:border-black"
-                          placeholder="7.5"
-                          value={sleepAverage}
-                          onChange={(e) => setSleepAverage(e.target.value)}
-                        />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3 mt-3">
-                      <ScoreSelector label="Calorie adherence" value={calorieAdherence} onChange={setCalorieAdherence} />
-                      <ScoreSelector label="Protein adherence" value={proteinAdherence} onChange={setProteinAdherence} />
-                    </div>
-                  </div>
-
-                  {/* Recovery */}
-                  <div>
-                    <p className="text-xs font-medium text-neutral-500 uppercase tracking-wide mb-2">
-                      💤 Recovery (1–10)
-                    </p>
-                    <div className="grid grid-cols-3 gap-3">
-                      <ScoreSelector label="Energy" value={energyScore} onChange={setEnergyScore} />
-                      <ScoreSelector label="Stress" value={stressScore} onChange={setStressScore} />
-                      <ScoreSelector label="Recovery" value={recoveryScore} onChange={setRecoveryScore} />
-                    </div>
-                  </div>
-
-                  {/* Reflection */}
-                  <div>
-                    <p className="text-xs font-medium text-neutral-500 uppercase tracking-wide mb-2">
-                      💬 Reflection
-                    </p>
-                    <div className="space-y-2">
-                      <input
-                        type="text"
-                        className="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm outline-none focus:border-black"
-                        placeholder="Biggest win this week…"
-                        value={biggestWin}
-                        onChange={(e) => setBiggestWin(e.target.value)}
-                        maxLength={1000}
-                        aria-label="Biggest win"
-                      />
-                      <input
-                        type="text"
-                        className="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm outline-none focus:border-black"
-                        placeholder="Biggest struggle…"
-                        value={biggestStruggle}
-                        onChange={(e) => setBiggestStruggle(e.target.value)}
-                        maxLength={1000}
-                        aria-label="Biggest struggle"
-                      />
-                      <input
-                        type="text"
-                        className="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm outline-none focus:border-black"
-                        placeholder="What do you need help with?"
-                        value={helpNeeded}
-                        onChange={(e) => setHelpNeeded(e.target.value)}
-                        maxLength={1000}
-                        aria-label="Help needed"
-                      />
-                    </div>
+                    <label style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", display: "block", marginBottom: "4px" }}>Waist (in)</label>
+                    <input type="number" step="0.1" placeholder="32.0" value={waist} onChange={(e) => setWaist(e.target.value)} style={inputStyle} />
                   </div>
                 </div>
-              )}
 
-              {checkInMessage && (
-                <p
-                  className={`text-sm ${checkInMessage.includes("✅") ? "text-green-600" : "text-red-600"}`}
-                  role="alert"
-                >
-                  {checkInMessage}
-                </p>
-              )}
+                <p style={{ fontSize: "0.7rem", color: "var(--text-tertiary)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "10px" }}>Adherence</p>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "14px" }}>
+                  <div>
+                    <label style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", display: "block", marginBottom: "4px" }}>Workouts completed</label>
+                    <input type="number" placeholder="5" value={workoutsCompleted} onChange={(e) => setWorkoutsCompleted(e.target.value)} style={inputStyle} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", display: "block", marginBottom: "4px" }}>Avg daily steps</label>
+                    <input type="number" placeholder="9500" value={stepsAverage} onChange={(e) => setStepsAverage(e.target.value)} style={inputStyle} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", display: "block", marginBottom: "4px" }}>Avg sleep (hrs)</label>
+                    <input type="number" step="0.1" placeholder="7.5" value={sleepAverage} onChange={(e) => setSleepAverage(e.target.value)} style={inputStyle} />
+                  </div>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "14px" }}>
+                  <ScoreSelector label="Calorie adherence" value={calorieAdherence} onChange={setCalorieAdherence} />
+                  <ScoreSelector label="Protein adherence" value={proteinAdherence} onChange={setProteinAdherence} />
+                </div>
 
-              <button
-                type="submit"
-                disabled={checkInLoading}
-                className={`w-full ${components.button.primary}`}
-              >
-                {checkInLoading ? "Saving…" : "Log Today"}
-              </button>
-            </form>
-          </section>
-        )}
+                <p style={{ fontSize: "0.7rem", color: "var(--text-tertiary)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "10px" }}>Recovery (1–10)</p>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "10px", marginBottom: "14px" }}>
+                  <ScoreSelector label="Energy" value={energyScore} onChange={setEnergyScore} />
+                  <ScoreSelector label="Stress" value={stressScore} onChange={setStressScore} />
+                  <ScoreSelector label="Recovery" value={recoveryScore} onChange={setRecoveryScore} />
+                </div>
 
-        {/* ── Checked-in today confirmation ── */}
-        {member.status === "active" && hasCheckedInToday && (
-          <section className={components.card.status.success}>
-            <div className="text-center">
-              <p className="text-lg font-semibold text-green-800">
-                Checked in today ✅
+                <p style={{ fontSize: "0.7rem", color: "var(--text-tertiary)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "10px" }}>Reflection</p>
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  <input type="text" placeholder="Biggest win this week…" value={biggestWin} onChange={(e) => setBiggestWin(e.target.value)} maxLength={1000} style={inputStyle} />
+                  <input type="text" placeholder="Biggest struggle…" value={biggestStruggle} onChange={(e) => setBiggestStruggle(e.target.value)} maxLength={1000} style={inputStyle} />
+                  <input type="text" placeholder="What do you need help with?" value={helpNeeded} onChange={(e) => setHelpNeeded(e.target.value)} maxLength={1000} style={inputStyle} />
+                </div>
+              </div>
+            )}
+
+            {checkInMessage && (
+              <p style={{ fontSize: "0.875rem", color: checkInMessage.includes("Checked") ? "var(--status-success)" : "var(--status-error)", marginBottom: "10px" }} role="alert">
+                {checkInMessage}
               </p>
-              <p className="mt-1 text-sm text-green-600">
-                Come back tomorrow to keep your streak going.
-              </p>
+            )}
+
+            <button
+              type="submit"
+              disabled={checkInLoading}
+              style={{
+                width: "100%", padding: "12px", background: "var(--accent-primary)", color: "var(--bg-primary)",
+                border: "none", borderRadius: "8px", fontWeight: 700, fontSize: "0.9375rem",
+                cursor: checkInLoading ? "not-allowed" : "pointer", opacity: checkInLoading ? 0.7 : 1,
+              }}
+            >
+              {checkInLoading ? "Saving…" : "Log Today"}
+            </button>
+          </form>
+        </Card>
+      )}
+
+      {/* Checked in today */}
+      {member.status === "active" && hasCheckedInToday && (
+        <Card style={{ marginBottom: "16px", borderColor: "var(--status-success)" }}>
+          <p style={{ textAlign: "center", fontWeight: 600, color: "var(--status-success)", margin: 0 }}>
+            Checked in today
+          </p>
+          <p style={{ textAlign: "center", fontSize: "0.8125rem", color: "var(--text-tertiary)", marginTop: "4px" }}>
+            Come back tomorrow to keep your streak going.
+          </p>
+        </Card>
+      )}
+
+      {/* PROGRESS BLOCK */}
+      {member.status === "active" && (
+        <Card style={{ marginBottom: "16px" }}>
+          <p style={{ fontWeight: 600, color: "var(--text-primary)", marginBottom: "16px" }}>Your Progress</p>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px", marginBottom: "16px" }}>
+            {[
+              { value: stats.currentStreak, label: "Day streak" },
+              { value: stats.weeklyWorkouts, label: member.daysPerWeek ? `Workouts / ${member.daysPerWeek}` : "Workouts" },
+              { value: totalCheckIns, label: "Total check-ins" },
+            ].map(({ value, label }) => (
+              <div key={label} style={{ textAlign: "center", background: "var(--bg-tertiary)", borderRadius: "10px", padding: "12px 8px" }}>
+                <p style={{ fontSize: "1.75rem", fontWeight: 700, color: "var(--text-primary)", margin: "0 0 4px" }}>{value}</p>
+                <p style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", margin: 0 }}>{label}</p>
+              </div>
+            ))}
+          </div>
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.75rem", color: "var(--text-tertiary)", marginBottom: "6px" }}>
+              <span>{totalCheckIns} check-ins</span>
+              <span>Next milestone: {nextMilestone}</span>
             </div>
-          </section>
-        )}
-
-        {/* ── PROGRESS BLOCK — motivational, not compliance-scoring ── */}
-        {member.status === "active" && (
-          <section className={dashboard.member.progressBlock}>
-            <h2 className="text-lg font-semibold">Your Progress</h2>
-
-            <div className="mt-4 grid grid-cols-3 gap-4">
-              <div className={components.stat.container}>
-                <p className={components.stat.value}>
-                  {stats.currentStreak}
-                </p>
-                <p className={components.stat.label}>Day streak 🔥</p>
-              </div>
-              <div className={components.stat.container}>
-                <p className={components.stat.value}>
-                  {stats.weeklyWorkouts}
-                </p>
-                <p className={components.stat.label}>
-                  Workouts{member.daysPerWeek ? ` / ${member.daysPerWeek}` : ""}
-                </p>
-              </div>
-              <div className={components.stat.container}>
-                <p className={components.stat.value}>
-                  {totalCheckIns}
-                </p>
-                <p className={components.stat.label}>Total check-ins</p>
-              </div>
+            <div style={{ height: "4px", background: "var(--bg-tertiary)", borderRadius: "2px", overflow: "hidden" }}>
+              <div style={{ height: "100%", background: "var(--accent-primary)", borderRadius: "2px", width: `${Math.min(milestoneProgress, 100)}%`, transition: "width 0.5s ease" }} />
             </div>
+          </div>
+        </Card>
+      )}
 
-            {/* Milestone progress bar */}
-            <div className="mt-4">
-              <div className="flex justify-between text-xs text-neutral-500">
-                <span>{totalCheckIns} check-ins</span>
-                <span>Next milestone: {nextMilestone}</span>
+      {/* CURRENT PROGRAM */}
+      {member.status === "active" && activeProgram && (
+        <Card style={{ marginBottom: "16px" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
+            <p style={{ fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>Current Program</p>
+            <span style={{
+              fontSize: "0.75rem", padding: "2px 10px", borderRadius: "9999px",
+              background: activeProgram.status === "active" ? "rgba(74,222,128,0.1)" : "var(--bg-tertiary)",
+              color: activeProgram.status === "active" ? "var(--status-success)" : "var(--text-tertiary)",
+            }}>
+              {activeProgram.status}
+            </span>
+          </div>
+          <p style={{ fontWeight: 500, color: "var(--text-primary)", marginBottom: "12px" }}>{activeProgram.name}</p>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "12px" }}>
+            {activeProgram.primaryGoal && (
+              <div>
+                <p style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", margin: "0 0 2px" }}>Goal</p>
+                <p style={{ fontSize: "0.875rem", color: "var(--text-primary)", margin: 0, textTransform: "capitalize" }}>{activeProgram.primaryGoal.replace("_", " ")}</p>
               </div>
-              <div className="mt-1 h-2 rounded-full bg-neutral-200 overflow-hidden">
-                <div
-                  className="h-full rounded-full bg-black transition-all duration-500"
-                  style={{ width: `${Math.min(milestoneProgress, 100)}%` }}
-                />
+            )}
+            {activeProgram.split && (
+              <div>
+                <p style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", margin: "0 0 2px" }}>Split</p>
+                <p style={{ fontSize: "0.875rem", color: "var(--text-primary)", margin: 0, textTransform: "capitalize" }}>{activeProgram.split.replace("_", " / ")}</p>
               </div>
+            )}
+            {activeProgram.daysPerWeek && (
+              <div>
+                <p style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", margin: "0 0 2px" }}>Days/week</p>
+                <p style={{ fontSize: "0.875rem", color: "var(--text-primary)", margin: 0 }}>{activeProgram.daysPerWeek}×</p>
+              </div>
+            )}
+          </div>
+
+          {activeProgram.keyExercises && (
+            <div style={{ marginBottom: "10px" }}>
+              <p style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", marginBottom: "4px" }}>Key Exercises</p>
+              <p style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>{activeProgram.keyExercises}</p>
             </div>
-          </section>
-        )}
+          )}
+          {activeProgram.workoutNotes && (
+            <div style={{ background: "var(--bg-tertiary)", borderRadius: "8px", padding: "10px" }}>
+              <p style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", marginBottom: "4px" }}>Coach Notes</p>
+              <p style={{ fontSize: "0.875rem", color: "var(--text-secondary)", whiteSpace: "pre-line" }}>{activeProgram.workoutNotes}</p>
+            </div>
+          )}
+        </Card>
+      )}
 
-        {/* ── COACH CONNECTION ── */}
-        {member.status === "active" && (
-          <section className={dashboard.member.coachConnection}>
-            <h2 className="text-lg font-semibold">Coach</h2>
-            <div className="mt-3 space-y-3">
-              {planConfig && (
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-neutral-500">Your plan</span>
-                  <span className="font-medium">
-                    {planConfig.name}
-                    {member.billingInterval ? ` · ${member.billingInterval}` : ""}
+      {/* DAILY TARGETS */}
+      {member.status === "active" && activeMacro && (
+        <Card style={{ marginBottom: "16px" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
+            <p style={{ fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>Daily Targets</p>
+            <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)" }}>
+              Since {new Date(activeMacro.effectiveDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+            </span>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "12px" }}>
+            <div style={{ background: "var(--bg-tertiary)", borderRadius: "10px", padding: "12px", textAlign: "center" }}>
+              <p style={{ fontSize: "1.5rem", fontWeight: 700, color: "var(--text-primary)", margin: "0 0 4px" }}>{activeMacro.calories.toLocaleString()}</p>
+              <p style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", margin: 0 }}>Calories</p>
+            </div>
+            <div style={{ background: "var(--bg-tertiary)", borderRadius: "10px", padding: "12px", textAlign: "center" }}>
+              <p style={{ fontSize: "1.5rem", fontWeight: 700, color: "var(--text-primary)", margin: "0 0 4px" }}>{activeMacro.protein}g</p>
+              <p style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", margin: 0 }}>Protein</p>
+            </div>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            {activeMacro.fatsMin && <MacroRow label="Fats (min)" value={`${activeMacro.fatsMin}g`} />}
+            {activeMacro.carbs && <MacroRow label="Carbs" value={`${activeMacro.carbs}g`} />}
+            {activeMacro.stepsTarget && <MacroRow label="Steps target" value={activeMacro.stepsTarget.toLocaleString()} />}
+            {activeMacro.hydrationTarget && <MacroRow label="Hydration" value={activeMacro.hydrationTarget} />}
+          </div>
+        </Card>
+      )}
+
+      {/* COACH REVIEWS */}
+      {member.status === "active" && reviews.length > 0 && (
+        <Card style={{ marginBottom: "16px" }}>
+          <p style={{ fontWeight: 600, color: "var(--text-primary)", marginBottom: "12px" }}>Coach Reviews</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            {reviews.slice(0, 5).map((review) => (
+              <div key={review.id} style={{ border: "1px solid var(--border-subtle)", borderRadius: "10px", padding: "12px" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
+                  <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", textTransform: "capitalize" }}>
+                    {review.type.replace("_", " ")} · {review.completedDate ? <span style={{ color: "var(--status-success)" }}>Completed</span> : <span style={{ color: "var(--status-warning)" }}>Upcoming</span>}
+                  </span>
+                  <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)" }}>
+                    {new Date(review.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                   </span>
                 </div>
-              )}
-              {goalLabel && (
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-neutral-500">Goal</span>
-                  <span className="font-medium">{goalLabel}</span>
-                </div>
-              )}
-              {member.daysPerWeek && (
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-neutral-500">Training schedule</span>
-                  <span className="font-medium">{member.daysPerWeek}× per week</span>
-                </div>
-              )}
-              {member.minutesPerSession && (
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-neutral-500">Session length</span>
-                  <span className="font-medium">{member.minutesPerSession} min</span>
-                </div>
-              )}
-              {member.injuries && (
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-neutral-500">Considerations</span>
-                  <span className="font-medium">{member.injuries}</span>
-                </div>
-              )}
-              {!member.onboardedAt && (
-                <Link
-                  href="/onboarding"
-                  className={`block text-center ${components.button.secondary}`}
-                >
-                  Complete onboarding →
-                </Link>
-              )}
-            </div>
-          </section>
-        )}
-
-        {/* ── CURRENT PROGRAM — training block overview ── */}
-        {member.status === "active" && programs.length > 0 && (() => {
-          const activeProgram = programs.find((p) => p.status === "active");
-          const displayProgram = activeProgram ?? programs[0];
-          return (
-            <section className={components.card.base}>
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold">Current Program</h2>
-                <span className={`${components.badge.base} ${
-                  displayProgram.status === "active"
-                    ? "bg-green-100 text-green-700"
-                    : displayProgram.status === "upcoming"
-                      ? "bg-blue-100 text-blue-700"
-                      : "bg-neutral-100 text-neutral-700"
-                }`}>
-                  {displayProgram.status}
-                </span>
-              </div>
-              <p className="mt-1 text-sm font-medium">{displayProgram.name}</p>
-
-              <div className="mt-3 grid grid-cols-2 gap-3">
-                {displayProgram.primaryGoal && (
-                  <div className="text-sm">
-                    <span className="text-neutral-500">Goal</span>
-                    <p className="font-medium capitalize">{displayProgram.primaryGoal.replace("_", " ")}</p>
+                {review.summary && <p style={{ fontSize: "0.875rem", color: "var(--text-secondary)", whiteSpace: "pre-line" }}>{review.summary}</p>}
+                {review.actionItems && (
+                  <div style={{ marginTop: "8px" }}>
+                    <p style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", marginBottom: "2px" }}>Action items:</p>
+                    <p style={{ fontSize: "0.875rem", color: "var(--text-secondary)", whiteSpace: "pre-line" }}>{review.actionItems}</p>
                   </div>
                 )}
-                {displayProgram.split && (
-                  <div className="text-sm">
-                    <span className="text-neutral-500">Split</span>
-                    <p className="font-medium capitalize">{displayProgram.split.replace("_", " / ")}</p>
-                  </div>
-                )}
-                {displayProgram.daysPerWeek && (
-                  <div className="text-sm">
-                    <span className="text-neutral-500">Days/week</span>
-                    <p className="font-medium">{displayProgram.daysPerWeek}×</p>
-                  </div>
-                )}
-                {displayProgram.progressionModel && (
-                  <div className="text-sm">
-                    <span className="text-neutral-500">Progression</span>
-                    <p className="font-medium capitalize">{displayProgram.progressionModel}</p>
-                  </div>
+                {review.loomLink && (
+                  <a href={review.loomLink} target="_blank" rel="noopener noreferrer" style={{ display: "inline-block", marginTop: "8px", fontSize: "0.875rem", color: "var(--accent-primary)", fontWeight: 500 }}>
+                    Watch video review →
+                  </a>
                 )}
               </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
-              {displayProgram.deloadPlanned && displayProgram.deloadWeek && (
-                <p className="mt-2 text-xs text-neutral-500">
-                  📅 Deload scheduled: Week {displayProgram.deloadWeek}
-                </p>
-              )}
-
-              {displayProgram.keyExercises && (
-                <div className="mt-3">
-                  <p className="text-xs font-medium text-neutral-500 uppercase tracking-wide mb-1">Key Exercises</p>
-                  <p className="text-sm text-neutral-700">{displayProgram.keyExercises}</p>
-                </div>
-              )}
-
-              {displayProgram.cardioTarget && (
-                <div className="mt-2 text-sm">
-                  <span className="text-neutral-500">Cardio: </span>
-                  <span>{displayProgram.cardioTarget}</span>
-                </div>
-              )}
-
-              {displayProgram.stepsTarget && (
-                <div className="text-sm">
-                  <span className="text-neutral-500">Daily steps: </span>
-                  <span className="font-medium">{displayProgram.stepsTarget.toLocaleString()}</span>
-                </div>
-              )}
-
-              {displayProgram.workoutNotes && (
-                <div className="mt-3 rounded-lg bg-neutral-50 p-3">
-                  <p className="text-xs font-medium text-neutral-500 mb-1">Coach Notes</p>
-                  <p className="text-sm text-neutral-700 whitespace-pre-line">{displayProgram.workoutNotes}</p>
-                </div>
-              )}
-
-              {displayProgram.nextUpdateDate && (
-                <p className="mt-2 text-xs text-neutral-500">
-                  Next program update: {new Date(displayProgram.nextUpdateDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                </p>
-              )}
-
-              {displayProgram.adjustmentsMade && (
-                <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
-                  <p className="text-xs font-medium text-amber-700 mb-1">Recent Adjustments</p>
-                  <p className="text-sm text-amber-800">{displayProgram.adjustmentsMade}</p>
-                  {displayProgram.adjustmentReason && (
-                    <p className="mt-1 text-xs text-amber-600">Reason: {displayProgram.adjustmentReason}</p>
-                  )}
-                </div>
-              )}
-            </section>
-          );
-        })()}
-
-        {/* ── MACROS — nutrition targets ── */}
-        {member.status === "active" && macros.length > 0 && (() => {
-          const activeMacro = macros.find((m) => m.status === "active");
-          if (!activeMacro) return null;
-          return (
-            <section className={components.card.base}>
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold">Daily Targets</h2>
-                <span className="text-xs text-neutral-500">
-                  Since {new Date(activeMacro.effectiveDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                </span>
-              </div>
-
-              <div className="mt-3 grid grid-cols-2 gap-4">
-                <div className="rounded-xl bg-neutral-100 p-3 text-center">
-                  <p className="text-2xl font-semibold">{activeMacro.calories.toLocaleString()}</p>
-                  <p className="text-xs text-neutral-500">Calories</p>
-                  {activeMacro.previousCalories && activeMacro.previousCalories !== activeMacro.calories && (
-                    <p className="text-xs text-neutral-400 mt-0.5">
-                      was {activeMacro.previousCalories.toLocaleString()}
-                    </p>
-                  )}
-                </div>
-                <div className="rounded-xl bg-neutral-100 p-3 text-center">
-                  <p className="text-2xl font-semibold">{activeMacro.protein}g</p>
-                  <p className="text-xs text-neutral-500">Protein</p>
-                  {activeMacro.previousProtein && activeMacro.previousProtein !== activeMacro.protein && (
-                    <p className="text-xs text-neutral-400 mt-0.5">
-                      was {activeMacro.previousProtein}g
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              <div className="mt-3 grid grid-cols-2 gap-3">
-                {activeMacro.fatsMin && (
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-neutral-500">Fats (min)</span>
-                    <span className="font-medium">{activeMacro.fatsMin}g</span>
-                  </div>
-                )}
-                {activeMacro.carbs && (
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-neutral-500">Carbs</span>
-                    <span className="font-medium">{activeMacro.carbs}g</span>
-                  </div>
-                )}
-                {activeMacro.stepsTarget && (
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-neutral-500">Steps target</span>
-                    <span className="font-medium">{activeMacro.stepsTarget.toLocaleString()}</span>
-                  </div>
-                )}
-                {activeMacro.hydrationTarget && (
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-neutral-500">Hydration</span>
-                    <span className="font-medium">{activeMacro.hydrationTarget}</span>
-                  </div>
-                )}
-              </div>
-
-              {activeMacro.adjustmentReason && (
-                <div className="mt-3 rounded-lg bg-neutral-50 p-3">
-                  <p className="text-xs font-medium text-neutral-500 mb-1">Why this target</p>
-                  <p className="text-sm text-neutral-700">{activeMacro.adjustmentReason}</p>
-                </div>
-              )}
-            </section>
-          );
-        })()}
-
-        {/* ── REVIEWS — coach feedback ── */}
-        {member.status === "active" && reviews.length > 0 && (
-          <section className={components.card.base}>
-            <h2 className="text-lg font-semibold">Coach Reviews</h2>
-            <div className="mt-3 space-y-3">
-              {reviews.slice(0, 5).map((review) => (
-                <div
-                  key={review.id}
-                  className="rounded-xl border border-neutral-200 p-4"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className={`${components.badge.base} bg-neutral-100 text-neutral-700`}>
-                        {review.type.replace("_", " ")}
-                      </span>
-                      {review.completedDate ? (
-                        <span className="text-xs text-green-600">Completed</span>
-                      ) : (
-                        <span className="text-xs text-amber-600">Upcoming</span>
-                      )}
-                    </div>
-                    <span className="text-xs text-neutral-500">
-                      {new Date(review.createdAt).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                      })}
-                    </span>
-                  </div>
-
-                  {review.summary && (
-                    <p className="mt-2 text-sm text-neutral-700 whitespace-pre-line">
-                      {review.summary}
-                    </p>
-                  )}
-
-                  {review.actionItems && (
-                    <div className="mt-2">
-                      <p className="text-xs font-medium text-neutral-500">Action items:</p>
-                      <p className="text-sm text-neutral-700 whitespace-pre-line">
-                        {review.actionItems}
+      {/* CHECK-IN HISTORY */}
+      {member.status === "active" && (
+        <Card style={{ marginBottom: "16px" }}>
+          <p style={{ fontWeight: 600, color: "var(--text-primary)", marginBottom: "12px" }}>Recent Check-Ins</p>
+          {checkIns.length === 0 ? (
+            <p style={{ fontSize: "0.875rem", color: "var(--text-tertiary)" }}>No check-ins yet. Start logging today!</p>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              {checkIns.slice(0, 14).map((ci) => (
+                <div key={ci.id} style={{
+                  borderRadius: "10px", padding: "12px",
+                  background: ci.coachStatus === "red" ? "rgba(248,113,113,0.08)"
+                    : ci.coachStatus === "yellow" ? "rgba(251,191,36,0.08)"
+                    : ci.coachStatus === "green" ? "rgba(74,222,128,0.08)"
+                    : "var(--bg-tertiary)",
+                  border: "1px solid var(--border-subtle)",
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <div>
+                      <p style={{ fontSize: "0.875rem", fontWeight: 500, color: "var(--text-primary)", margin: "0 0 2px" }}>
+                        {new Date(ci.date).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
                       </p>
+                      {ci.note && <p style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", margin: 0, fontStyle: "italic" }}>{ci.note}</p>}
                     </div>
-                  )}
-
-                  {review.loomLink && (
-                    <a
-                      href={review.loomLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-2 inline-block text-sm font-medium text-black underline hover:no-underline"
-                    >
-                      🎥 Watch video review →
-                    </a>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.875rem" }}>
+                      {ci.coachStatus && (
+                        <span style={{
+                          height: "8px", width: "8px", borderRadius: "50%", display: "inline-block",
+                          background: ci.coachStatus === "green" ? "var(--status-success)" : ci.coachStatus === "yellow" ? "var(--status-warning)" : "var(--status-error)",
+                        }} />
+                      )}
+                      {ci.workout && <span>💪</span>}
+                      {ci.meals > 0 && <span>🍽️{ci.meals}</span>}
+                      {ci.water && <span>💧</span>}
+                      {ci.steps && <span>🚶</span>}
+                    </div>
+                  </div>
+                  {ci.coachResponse && (
+                    <div style={{ marginTop: "8px", background: "var(--bg-secondary)", borderRadius: "6px", padding: "8px 10px" }}>
+                      <p style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", marginBottom: "2px" }}>Coach feedback:</p>
+                      <p style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>{ci.coachResponse}</p>
+                    </div>
                   )}
                 </div>
               ))}
             </div>
-          </section>
-        )}
-
-        {/* ── CHECK-IN HISTORY ── */}
-        {member.status === "active" && (
-          <section className={components.card.base}>
-            <h2 className="text-lg font-semibold">Recent Check-Ins</h2>
-
-            {checkIns.length === 0 ? (
-              <p className="mt-3 text-sm text-neutral-500">
-                No check-ins yet. Start logging today!
-              </p>
-            ) : (
-              <div className="mt-3 space-y-2">
-                {checkIns.slice(0, 14).map((ci) => (
-                  <div
-                    key={ci.id}
-                    className={`rounded-xl px-4 py-3 ${
-                      ci.coachStatus === "red"
-                        ? "bg-red-50 border border-red-200"
-                        : ci.coachStatus === "yellow"
-                          ? "bg-amber-50 border border-amber-200"
-                          : ci.coachStatus === "green"
-                            ? "bg-green-50 border border-green-200"
-                            : "bg-neutral-50"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium">
-                          {new Date(ci.date).toLocaleDateString("en-US", {
-                            weekday: "short",
-                            month: "short",
-                            day: "numeric",
-                          })}
-                        </p>
-                        {ci.note && (
-                          <p className="mt-0.5 text-xs text-neutral-500 italic">
-                            {ci.note}
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2 text-sm">
-                        {ci.coachStatus && (
-                          <span
-                            className={`h-2 w-2 rounded-full ${
-                              ci.coachStatus === "green"
-                                ? "bg-green-500"
-                                : ci.coachStatus === "yellow"
-                                  ? "bg-amber-500"
-                                  : "bg-red-500"
-                            }`}
-                            title={`Coach: ${ci.coachStatus}`}
-                          />
-                        )}
-                        {ci.workout && <span title="Workout">💪</span>}
-                        {ci.meals > 0 && (
-                          <span title={`${ci.meals} meals`}>
-                            🍽️{ci.meals}
-                          </span>
-                        )}
-                        {ci.water && <span title="Water">💧</span>}
-                        {ci.steps && <span title="Steps">🚶</span>}
-                        {ci.avgWeight && (
-                          <span className="text-xs text-neutral-500" title="Weight">
-                            ⚖️{ci.avgWeight}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Coach response */}
-                    {ci.coachResponse && (
-                      <div className="mt-2 rounded-lg bg-white/50 px-3 py-2 border border-neutral-200">
-                        <p className="text-xs font-medium text-neutral-500">Coach feedback:</p>
-                        <p className="text-sm text-neutral-700">{ci.coachResponse}</p>
-                      </div>
-                    )}
-
-                    {/* Enhanced data summary */}
-                    {(ci.biggestWin || ci.biggestStruggle) && (
-                      <div className="mt-2 flex gap-3 text-xs text-neutral-500">
-                        {ci.biggestWin && <span>🏆 {ci.biggestWin}</span>}
-                        {ci.biggestStruggle && <span>⚡ {ci.biggestStruggle}</span>}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-        )}
-
-        {/* ── MEMBERSHIP & ACCOUNT ── */}
-        <section className={components.card.base}>
-          <h2 className="text-lg font-semibold">Membership</h2>
-          <div className="mt-3 space-y-3">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-neutral-500">Status</span>
-              <span className={`font-medium ${
-                member.status === "active" ? "text-green-700"
-                  : member.status === "past_due" ? "text-amber-600"
-                    : "text-red-600"
-              }`}>
-                {member.status === "past_due" ? "⚠️ Payment past due" : member.status}
-              </span>
-            </div>
-            {planConfig && (
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-neutral-500">Plan</span>
-                <span className="font-medium">
-                  {planConfig.name}{member.billingInterval ? ` · ${member.billingInterval}` : ""}
-                </span>
-              </div>
-            )}
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-neutral-500">Member since</span>
-              <span className="font-medium">
-                {new Date(member.createdAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
-              </span>
-            </div>
-          </div>
-
-          {cancelMessage && (
-            <p className={`mt-3 text-sm rounded-lg px-3 py-2 ${
-              cancelMessage.includes("cancelled") ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"
-            }`}>
-              {cancelMessage}
-            </p>
           )}
+        </Card>
+      )}
 
-          {member.status === "active" && (
-            <button
-              onClick={handleCancelMembership}
-              disabled={cancelLoading}
-              className="mt-4 w-full rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
-            >
-              {cancelLoading ? "Cancelling…" : "Cancel membership"}
-            </button>
-          )}
-        </section>
-
-        {/* ── Navigation ── */}
-        <nav className="flex items-center justify-between text-sm pb-8">
-          <div className="flex gap-4">
-            <Link href="/" className={components.button.ghost}>
-              ← Home
-            </Link>
-            {!member.onboardedAt && (
-              <Link href="/onboarding" className={components.button.ghost}>
-                Complete onboarding →
-              </Link>
-            )}
-          </div>
-          <button
-            onClick={handleLogout}
-            className="text-neutral-400 hover:text-black text-sm transition-colors"
+      {/* ONBOARDING CTA */}
+      {member.status === "active" && !member.onboardedAt && (
+        <Card accentBorder style={{ marginBottom: "16px" }}>
+          <p style={{ fontWeight: 600, color: "var(--text-primary)", marginBottom: "6px" }}>Complete your profile</p>
+          <p style={{ fontSize: "0.875rem", color: "var(--text-secondary)", marginBottom: "12px" }}>
+            Tell your coach about your goals, schedule, and any injuries so they can build your plan.
+          </p>
+          <Link
+            href="/onboarding"
+            style={{ display: "inline-block", padding: "10px 16px", background: "var(--accent-primary)", color: "var(--bg-primary)", borderRadius: "8px", fontWeight: 600, fontSize: "0.875rem", textDecoration: "none" }}
           >
-            Sign out
-          </button>
-        </nav>
-      </div>
-    </main>
+            Complete onboarding
+          </Link>
+        </Card>
+      )}
+
+      {/* PLAN INFO */}
+      {planConfig && (
+        <Card style={{ marginBottom: "24px" }}>
+          <p style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", marginBottom: "10px" }}>Your Plan</p>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <p style={{ fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>
+              {planConfig.name}{member.billingInterval ? ` · ${member.billingInterval}` : ""}
+            </p>
+            <Badge variant="status" value={member.status as "active" | "canceled" | "past_due" | "pending"} />
+          </div>
+        </Card>
+      )}
+    </div>
   );
 }
-
-// ── Helpers ──
 
 function getGreeting(): string {
   const hour = new Date().getHours();
@@ -1244,59 +689,67 @@ function getGreeting(): string {
   return "Good evening";
 }
 
-function CheckToggle({
-  emoji,
-  label,
-  checked,
-  onToggle,
-}: {
-  emoji: string;
-  label: string;
-  checked: boolean;
-  onToggle: () => void;
-}) {
+const inputStyle: React.CSSProperties = {
+  width: "100%",
+  background: "var(--bg-secondary)",
+  border: "1px solid var(--border-hover)",
+  borderRadius: "8px",
+  padding: "8px 10px",
+  color: "var(--text-primary)",
+  fontSize: "16px",
+  boxSizing: "border-box",
+  outline: "none",
+};
+
+function MacroRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "0.875rem" }}>
+      <span style={{ color: "var(--text-tertiary)" }}>{label}</span>
+      <span style={{ color: "var(--text-primary)", fontWeight: 500 }}>{value}</span>
+    </div>
+  );
+}
+
+function CheckToggle({ emoji, label, checked, onToggle }: { emoji: string; label: string; checked: boolean; onToggle: () => void }) {
   return (
     <button
       type="button"
       onClick={onToggle}
       aria-pressed={checked}
-      className={`flex flex-col items-center gap-1 rounded-xl border px-4 py-3 text-sm font-medium transition-colors ${
-        checked
-          ? "border-black bg-black text-white"
-          : "border-neutral-200 bg-white text-neutral-700 hover:border-neutral-400"
-      }`}
+      style={{
+        display: "flex", flexDirection: "column", alignItems: "center", gap: "4px",
+        padding: "12px 8px", borderRadius: "10px", border: "1px solid",
+        borderColor: checked ? "var(--accent-primary)" : "var(--border-hover)",
+        background: checked ? "rgba(224,255,79,0.1)" : "transparent",
+        color: checked ? "var(--accent-primary)" : "var(--text-secondary)",
+        cursor: "pointer", fontSize: "0.8125rem", fontWeight: 500, transition: "all 0.15s ease",
+      }}
     >
-      <span className="text-lg">{emoji}</span>
+      <span style={{ fontSize: "1.25rem" }}>{emoji}</span>
       <span>{label}</span>
     </button>
   );
 }
 
-function ScoreSelector({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: number;
-  onChange: (v: number) => void;
-}) {
+function ScoreSelector({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
   return (
     <div>
-      <label className="text-xs text-neutral-500">{label}</label>
-      <div className="mt-1 flex gap-1">
+      <label style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", display: "block", marginBottom: "4px" }}>{label}</label>
+      <div style={{ display: "flex", gap: "3px", flexWrap: "wrap" }}>
         {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
           <button
             key={n}
             type="button"
             onClick={() => onChange(value === n ? 0 : n)}
-            className={`h-7 w-7 rounded text-[10px] font-medium transition-colors ${
-              value === n
-                ? "bg-black text-white"
-                : "border border-neutral-200 bg-white text-neutral-500 hover:border-neutral-400"
-            }`}
-            aria-label={`${label} ${n}`}
             aria-pressed={value === n}
+            style={{
+              height: "28px", width: "28px", borderRadius: "6px",
+              border: "1px solid",
+              borderColor: value === n ? "var(--accent-primary)" : "var(--border-hover)",
+              background: value === n ? "var(--accent-primary)" : "transparent",
+              color: value === n ? "var(--bg-primary)" : "var(--text-tertiary)",
+              fontSize: "0.625rem", fontWeight: 600, cursor: "pointer",
+            }}
           >
             {n}
           </button>
