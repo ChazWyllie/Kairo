@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { requireMemberOrCoachAuth } from "@/lib/auth";
 import { runAdaptation } from "@/services/adaptation";
 
@@ -17,7 +18,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const email = searchParams.get("email");
 
-    if (!email || !/\S+@\S+\.\S+/.test(email)) {
+    if (!email || !z.string().email().safeParse(email).success) {
       return NextResponse.json(
         {
           error: {
