@@ -6,7 +6,7 @@ import type { MetadataRoute } from "next";
  */
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl =
-    process.env.APP_URL ?? "https://kairo-delta-sand.vercel.app";
+    process.env.APP_URL ?? "https://kairo.business";
 
   return [
     {

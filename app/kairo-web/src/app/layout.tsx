@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   description:
     "Expert fitness and nutrition coaching that flexes with your schedule, stress, and energy — so you actually stay consistent. Join the waitlist for founding member pricing.",
   metadataBase: new URL(
-    process.env.APP_URL ?? "https://kairo-delta-sand.vercel.app"
+    process.env.APP_URL ?? "https://kairo.business"
   ),
   openGraph: {
     title: "Kairo Fitness — Coaching That Adapts to Your Real Life",
