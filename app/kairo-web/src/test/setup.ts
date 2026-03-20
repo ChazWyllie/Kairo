@@ -35,7 +35,10 @@ vi.mock("@/lib/env", () => ({
 
 // ── Mock Prisma ──
 export const mockPrisma = {
-  $transaction: vi.fn(async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma)),
+  $transaction: vi.fn(async (fnOrArray: ((tx: typeof mockPrisma) => Promise<unknown>) | Promise<unknown>[]) => {
+    if (Array.isArray(fnOrArray)) return Promise.all(fnOrArray);
+    return fnOrArray(mockPrisma);
+  }),
   member: {
     upsert: vi.fn(),
     findUnique: vi.fn(),
@@ -55,6 +58,7 @@ export const mockPrisma = {
     findUnique: vi.fn(),
     findMany: vi.fn(),
     update: vi.fn(),
+    deleteMany: vi.fn(),
     count: vi.fn(),
   },
   lead: {
@@ -85,6 +89,7 @@ export const mockPrisma = {
     findUnique: vi.fn(),
     findMany: vi.fn(),
     update: vi.fn(),
+    deleteMany: vi.fn(),
     count: vi.fn(),
   },
   macroTarget: {
@@ -94,6 +99,7 @@ export const mockPrisma = {
     findMany: vi.fn(),
     update: vi.fn(),
     updateMany: vi.fn(),
+    deleteMany: vi.fn(),
     count: vi.fn(),
   },
   dailyPlan: {
@@ -102,6 +108,7 @@ export const mockPrisma = {
     findMany: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
+    deleteMany: vi.fn(),
     count: vi.fn(),
   },
 };

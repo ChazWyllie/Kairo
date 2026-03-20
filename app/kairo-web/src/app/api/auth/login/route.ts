@@ -103,11 +103,11 @@ export async function POST(request: NextRequest) {
     // ── Member auth ──
     const member = await prisma.member.findUnique({
       where: { email },
-      select: { passwordHash: true, status: true },
+      select: { passwordHash: true, status: true, deletedAt: true },
     });
 
-    // Generic error — don't reveal if account exists
-    if (!member || !member.passwordHash) {
+    // Generic error — don't reveal if account exists or has been deleted
+    if (!member || !member.passwordHash || member.deletedAt) {
       return NextResponse.json(
         {
           error: {

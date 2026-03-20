@@ -148,6 +148,9 @@ model Member {
   supportNeeded     String?
   success90Days     String?
 
+  // GDPR — set when member requests data deletion (PII nulled, financial records preserved)
+  deletedAt        DateTime?
+
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
