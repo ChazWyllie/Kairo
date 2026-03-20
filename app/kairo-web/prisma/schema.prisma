@@ -155,6 +155,7 @@ model Member {
   programBlocks    ProgramBlock[]
   macroTargets     MacroTarget[]
   dailyPlans       DailyPlan[]
+  feedback         MemberFeedback[]
 }
 
 model StripeEvent {
@@ -352,6 +353,22 @@ model MacroTarget {
 
   @@index([memberId])
   @@index([memberId, status])
+}
+
+/// Member-submitted feedback — star ratings and suggestions from the More page.
+model MemberFeedback {
+  id        String   @id @default(cuid())
+  memberId  String
+  member    Member   @relation(fields: [memberId], references: [id])
+
+  type      String   // "review" | "suggestion"
+  rating    Int?     // 1-5 stars (review only)
+  comment   String?  @db.Text // review text or suggestion text
+  category  String?  // suggestion category: "Workouts" | "Nutrition" | "App Experience" | "Other"
+
+  createdAt DateTime @default(now())
+
+  @@index([memberId])
 }
 
 /// Generated daily plan — workout + nutrition for a given day.

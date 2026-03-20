@@ -4,6 +4,7 @@ import { getStripe } from "@/services/stripe";
 import { env } from "@/lib/env";
 import { requireMemberOrCoachAuth } from "@/lib/auth";
 import { checkoutLimiter } from "@/lib/rate-limit";
+import { prisma } from "@/lib/prisma";
 
 const bodySchema = z.object({
   email: z.string().email(),
@@ -16,9 +17,6 @@ const bodySchema = z.object({
  * Returns { url } for client-side redirect.
  *
  * Auth: member session cookie or coach Bearer token.
- *
- * TODO: Store stripeCustomerId on the Member model to avoid a Stripe
- * customer list lookup on every request.
  */
 export async function POST(request: NextRequest) {
   const ip =
@@ -50,21 +48,20 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const stripe = getStripe();
+  const member = await prisma.member.findUnique({
+    where: { email },
+    select: { stripeCustomerId: true },
+  });
 
-  // Look up the Stripe customer by email
-  // TODO: Store stripeCustomerId on Member model to avoid this lookup
-  const customers = await stripe.customers.list({ email, limit: 1 });
-  if (customers.data.length === 0) {
+  if (!member?.stripeCustomerId) {
     return NextResponse.json(
       { error: "No billing account found. Complete your subscription first." },
       { status: 404 }
     );
   }
 
-  const customer = customers.data[0];
-  const session = await stripe.billingPortal.sessions.create({
-    customer: customer.id,
+  const session = await getStripe().billingPortal.sessions.create({
+    customer: member.stripeCustomerId,
     return_url: `${env.APP_URL}/dashboard/account`,
   });
 

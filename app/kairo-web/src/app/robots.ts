@@ -6,14 +6,14 @@ import type { MetadataRoute } from "next";
  */
 export default function robots(): MetadataRoute.Robots {
   const baseUrl =
-    process.env.APP_URL ?? "https://kairo-delta-sand.vercel.app";
+    process.env.APP_URL ?? "https://kairo.business";
 
   return {
     rules: [
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/api/", "/dashboard", "/onboarding", "/success"],
+        disallow: ["/api/", "/dashboard", "/onboarding", "/success", "/login", "/register", "/coach"],
       },
     ],
     sitemap: `${baseUrl}/sitemap.xml`,

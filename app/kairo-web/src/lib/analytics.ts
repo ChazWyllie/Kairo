@@ -1,12 +1,11 @@
 /**
  * Lightweight analytics — fires named events with optional properties.
  *
- * MVP: logs to console in development, no-ops in production.
- * Swap the `send()` implementation for a real provider later
- * (Plausible, PostHog, Vercel Analytics, etc.).
- *
- * Zero external dependencies. No PII in event payloads.
+ * In development: logs to console.
+ * In production: forwards to Vercel Analytics via vaTrack().
+ * No PII in event payloads.
  */
+import { track as vaTrack } from "@vercel/analytics";
 
 export type AnalyticsEvent =
   | { name: "page_view"; properties: { path: string } }
@@ -45,8 +44,7 @@ export function track(
 
   if (dev) {
     console.log("[analytics]", event.name, event.properties);
+  } else {
+    vaTrack(event.name, event.properties as Record<string, string | number | boolean>);
   }
-
-  // Future: send to Plausible, PostHog, or Vercel Analytics
-  // Example: posthog.capture(event.name, event.properties);
 }

@@ -6,21 +6,13 @@ import PageHeader from "@/components/layout/PageHeader";
 import Card from "@/components/ui/Card";
 import StarRating from "@/components/ui/StarRating";
 import { useToast } from "@/components/ui/Toast";
+import { useAuth } from "@/lib/auth-context";
 
 const SUGGESTION_CATEGORIES = ["Workouts", "Nutrition", "App Experience", "Other"] as const;
 
-// TODO: Replace with real client review endpoint when built
-async function submitReview(_rating: number, _comment: string) {
-  await new Promise((r) => setTimeout(r, 600));
-}
-
-// TODO: Replace with real suggestion endpoint when built
-async function submitSuggestion(_category: string, _text: string) {
-  await new Promise((r) => setTimeout(r, 600));
-}
-
 export default function MorePage() {
   const { toast } = useToast();
+  const { member } = useAuth();
 
   const [rating, setRating] = useState(0);
   const [reviewText, setReviewText] = useState("");
@@ -35,9 +27,15 @@ export default function MorePage() {
   async function handleReviewSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (rating === 0) { toast("Please select a star rating.", "error"); return; }
+    if (!member?.email) { toast("Not signed in.", "error"); return; }
     setReviewLoading(true);
     try {
-      await submitReview(rating, reviewText);
+      const res = await fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "review", email: member.email, rating, comment: reviewText || undefined }),
+      });
+      if (!res.ok) throw new Error("Failed to submit review");
       setReviewSubmitted(true);
       toast("Thanks for your review!", "success");
     } catch {
@@ -50,9 +48,15 @@ export default function MorePage() {
   async function handleSuggestionSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!suggestionText.trim()) { toast("Please enter a suggestion.", "error"); return; }
+    if (!member?.email) { toast("Not signed in.", "error"); return; }
     setSuggestionLoading(true);
     try {
-      await submitSuggestion(suggestionCategory, suggestionText);
+      const res = await fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "suggestion", email: member.email, category: suggestionCategory, comment: suggestionText }),
+      });
+      if (!res.ok) throw new Error("Failed to submit suggestion");
       setSuggestionSubmitted(true);
       toast("Thanks for the feedback!", "success");
     } catch {

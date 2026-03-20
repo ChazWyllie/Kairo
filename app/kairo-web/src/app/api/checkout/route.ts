@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { PlanTier as PrismaPlanTier, BillingInterval as PrismaBillingInterval } from "@prisma/client";
 import { getStripe } from "@/services/stripe";
 import { env } from "@/lib/env";
 import { prisma } from "@/lib/prisma";
@@ -112,13 +113,13 @@ export async function POST(request: NextRequest) {
         email,
         phone: phone || null,
         status: "pending",
-        planTier,
-        billingInterval,
+        planTier: planTier as PrismaPlanTier,
+        billingInterval: billingInterval as PrismaBillingInterval,
       },
       update: {
         phone: phone || null,
-        planTier,
-        billingInterval,
+        planTier: planTier as PrismaPlanTier,
+        billingInterval: billingInterval as PrismaBillingInterval,
       },
     });
 
