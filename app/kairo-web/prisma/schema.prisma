@@ -9,10 +9,13 @@ datasource db {
 // ── Enums ──
 
 enum PlanTier {
+  // Legacy values — kept to avoid breaking existing DB rows.
+  // TODO: backfill all legacy rows to standard/premium, then remove these in a migration.
   foundation
   coaching
   performance
   vip
+  // Current 2-tier model
   standard
   premium
 }
