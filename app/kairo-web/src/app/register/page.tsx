@@ -56,7 +56,10 @@ function RegisterForm() {
       }
 
       track({ name: "member_registered", properties: {} });
-      router.push("/dashboard");
+      // Check member status — pending applicants are not yet active members
+      const me = await fetch("/api/auth/me").then((r) => r.json()).catch(() => null);
+      const status = me?.member?.status;
+      router.push(status === "active" ? "/dashboard" : "/apply/status");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -209,7 +212,7 @@ function RegisterForm() {
 
 export default function RegisterPage() {
   return (
-    <Suspense>
+    <Suspense fallback={null}>
       <RegisterForm />
     </Suspense>
   );

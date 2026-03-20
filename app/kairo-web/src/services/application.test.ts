@@ -85,6 +85,7 @@ describe("submitApplication", () => {
 
     expect(result).toEqual({ ok: true, applicationId: MOCK_APPLICATION.id });
     expect(mockPrisma.application.create).toHaveBeenCalledOnce();
+    expect(mockPrisma.member.upsert).toHaveBeenCalledOnce();
   });
 
   it("upserts a pending Member record alongside the application", async () => {

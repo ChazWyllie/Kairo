@@ -52,8 +52,8 @@ export async function submitApplication(data: ApplicationInput): Promise<SubmitR
     return { ok: false, code: "DUPLICATE" };
   }
 
-  const [application] = await prisma.$transaction([
-    prisma.application.create({
+  const application = await prisma.$transaction(async (tx) => {
+    const created = await tx.application.create({
       data: {
         email,
         fullName: fields.fullName,
@@ -74,8 +74,8 @@ export async function submitApplication(data: ApplicationInput): Promise<SubmitR
         readyForStructure: fields.readyForStructure ?? false,
         budgetComfort: fields.budgetComfort ?? null,
       },
-    }),
-    prisma.member.upsert({
+    });
+    await tx.member.upsert({
       where: { email },
       create: {
         email,
@@ -83,8 +83,9 @@ export async function submitApplication(data: ApplicationInput): Promise<SubmitR
         status: "pending",
       },
       update: {},
-    }),
-  ]);
+    });
+    return created;
+  });
 
   console.log("[application] New application submitted:", { id: application.id });
 

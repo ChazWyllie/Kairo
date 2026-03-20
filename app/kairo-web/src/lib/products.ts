@@ -71,6 +71,9 @@ export const TEMPLATE_PRODUCTS = {
 
 export type TemplateProductKey = keyof typeof TEMPLATE_PRODUCTS;
 
+/** Multiplier for annual billing — 10% off monthly price, billed monthly. */
+export const ANNUAL_DISCOUNT = 0.9;
+
 export const COACHING_TIERS = {
   standard: {
     name: "1:1 Standard",

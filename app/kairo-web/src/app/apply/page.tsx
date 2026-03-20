@@ -13,7 +13,7 @@ import {
   type ApplyStep,
 } from "@/lib/apply-flow";
 import { type BillingInterval } from "@/lib/stripe-prices";
-import { COACHING_TIERS } from "@/lib/products";
+import { COACHING_TIERS, ANNUAL_DISCOUNT } from "@/lib/products";
 
 /**
  * Application form — pre-payment screening.
@@ -725,7 +725,7 @@ function ApplyContent() {
                   const coachingTier = COACHING_TIERS[t.value as keyof typeof COACHING_TIERS];
                   const monthlyPrice = coachingTier ? coachingTier.price : null;
                   const displayPrice = monthlyPrice !== null && billingInterval === "annual"
-                    ? Math.round(monthlyPrice * 0.9)
+                    ? Math.round(monthlyPrice * ANNUAL_DISCOUNT)
                     : monthlyPrice;
                   const isSelected = preferredTier === t.value;
 
