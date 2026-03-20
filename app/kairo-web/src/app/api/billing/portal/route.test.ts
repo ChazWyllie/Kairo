@@ -1,14 +1,17 @@
 /**
  * Tests for POST /api/billing/portal
  *
- * Coverage: rate limiting, input validation, auth, Stripe customer lookup,
+ * Coverage: rate limiting, input validation, auth, DB customer lookup,
  * billing portal session creation, and error handling.
+ *
+ * The portal route looks up stripeCustomerId from the Member table (not Stripe API).
+ * Tests mock prisma.member.findUnique accordingly.
  */
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { NextRequest } from "next/server";
 import {
   mockRateLimitCheck,
-  mockStripeCustomersList,
+  mockPrisma,
   mockStripeBillingPortalCreate,
 } from "@/test/setup";
 
@@ -34,8 +37,8 @@ describe("POST /api/billing/portal", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockRateLimitCheck.mockReturnValue({ allowed: true, retryAfter: 0 });
-    mockStripeCustomersList.mockResolvedValue({
-      data: [{ id: "cus_test_abc" }],
+    mockPrisma.member.findUnique.mockResolvedValue({
+      stripeCustomerId: "cus_test_abc",
     });
     mockStripeBillingPortalCreate.mockResolvedValue({
       url: "https://billing.stripe.com/session/test",
@@ -107,10 +110,20 @@ describe("POST /api/billing/portal", () => {
     expect(res.status).toBe(401);
   });
 
-  // ── Stripe customer lookup ──
+  // ── DB customer lookup ──
 
-  it("returns 404 when no Stripe customer found for email", async () => {
-    mockStripeCustomersList.mockResolvedValue({ data: [] });
+  it("returns 404 when member has no stripeCustomerId in DB", async () => {
+    mockPrisma.member.findUnique.mockResolvedValue({ stripeCustomerId: null });
+
+    const res = await POST(makeRequest({ email: "member@test.com" }, COACH_SECRET));
+
+    expect(res.status).toBe(404);
+    const data = await res.json();
+    expect(data.error).toContain("No billing account found");
+  });
+
+  it("returns 404 when member is not found in DB", async () => {
+    mockPrisma.member.findUnique.mockResolvedValue(null);
 
     const res = await POST(makeRequest({ email: "member@test.com" }, COACH_SECRET));
 
@@ -129,16 +142,16 @@ describe("POST /api/billing/portal", () => {
     expect(data.url).toBe("https://billing.stripe.com/session/test");
   });
 
-  it("calls Stripe customer list with correct email", async () => {
+  it("looks up member by email in DB", async () => {
     await POST(makeRequest({ email: "member@test.com" }, COACH_SECRET));
 
-    expect(mockStripeCustomersList).toHaveBeenCalledWith({
-      email: "member@test.com",
-      limit: 1,
+    expect(mockPrisma.member.findUnique).toHaveBeenCalledWith({
+      where: { email: "member@test.com" },
+      select: { stripeCustomerId: true },
     });
   });
 
-  it("calls billing portal create with customer ID and return URL", async () => {
+  it("calls billing portal create with stripeCustomerId and return URL", async () => {
     await POST(makeRequest({ email: "member@test.com" }, COACH_SECRET));
 
     expect(mockStripeBillingPortalCreate).toHaveBeenCalledWith(
