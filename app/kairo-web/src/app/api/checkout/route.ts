@@ -25,7 +25,7 @@ import type { PlanTier, BillingInterval } from "@/lib/stripe-prices";
 
 const CheckoutSchema = z.object({
   email: z.string().email("A valid email is required"),
-  phone: z.string().optional(),
+  phone: z.string().max(20).optional(),
   // Accept either planId (legacy) or tier+interval (new — keeps price IDs server-side)
   planId: z.string().min(1).optional(),
   tier: z.enum(["standard", "premium"]).optional(),
