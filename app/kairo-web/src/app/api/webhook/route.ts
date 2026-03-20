@@ -97,18 +97,16 @@ export async function POST(request: NextRequest) {
     }
 
     // 4b. One-time payment (template purchase) — no subscription to activate.
-    //     Record the event for idempotency, mark lead converted, notify admin.
+    //     Atomically record the event + lead conversion so retries are idempotent.
     if (session.mode === "payment") {
-      await prisma.stripeEvent.create({ data: { id: event.id } });
+      await prisma.$transaction(async (tx) => {
+        await tx.stripeEvent.create({ data: { id: event.id } });
 
-      try {
-        const lead = await prisma.lead.findUnique({ where: { email } });
+        const lead = await tx.lead.findUnique({ where: { email } });
         if (lead && !lead.convertedAt) {
-          await prisma.lead.update({ where: { email }, data: { convertedAt: new Date() } });
+          await tx.lead.update({ where: { email }, data: { convertedAt: new Date() } });
         }
-      } catch {
-        console.error("[webhook] Lead conversion tracking failed (non-fatal)");
-      }
+      });
 
       try {
         if (customerId) {

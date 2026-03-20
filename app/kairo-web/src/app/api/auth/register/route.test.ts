@@ -274,5 +274,111 @@ describe("POST /api/auth/register", () => {
       const body = await res.json();
       expect(body.error.code).toBe("REGISTER_ERROR");
     });
+
+    it("returns 500 when DB update fails after successful bcrypt hash", async () => {
+      mockPrisma.member.findUnique.mockResolvedValue({
+        id: "m1",
+        status: "active",
+        passwordHash: null,
+      });
+      mockBcryptHash.mockResolvedValue("$2a$12$newhash");
+      mockPrisma.member.update.mockRejectedValue(new Error("DB write failed"));
+
+      const res = await POST(
+        makeRegisterRequest({ email: TEST_EMAIL, password: "validpass123" }) as never
+      );
+      expect(res.status).toBe(500);
+      const body = await res.json();
+      expect(body.error.code).toBe("REGISTER_ERROR");
+    });
+  });
+
+  // ── Boundary passwords ──
+
+  describe("boundary passwords", () => {
+    it("accepts password at exactly minimum length (8 chars)", async () => {
+      mockPrisma.member.findUnique.mockResolvedValue({
+        id: "m1",
+        status: "active",
+        passwordHash: null,
+      });
+      mockBcryptHash.mockResolvedValue("$2a$12$newhash");
+      mockPrisma.member.update.mockResolvedValue({});
+
+      const res = await POST(
+        makeRegisterRequest({ email: TEST_EMAIL, password: "exactly8" }) as never
+      );
+      expect(res.status).toBe(201);
+    });
+
+    it("accepts password at exactly maximum length (128 chars)", async () => {
+      mockPrisma.member.findUnique.mockResolvedValue({
+        id: "m1",
+        status: "active",
+        passwordHash: null,
+      });
+      mockBcryptHash.mockResolvedValue("$2a$12$newhash");
+      mockPrisma.member.update.mockResolvedValue({});
+
+      const res = await POST(
+        makeRegisterRequest({ email: TEST_EMAIL, password: "x".repeat(128) }) as never
+      );
+      expect(res.status).toBe(201);
+    });
+  });
+
+  // ── Cookie security flags ──
+
+  describe("session cookie security", () => {
+    it("sets SameSite=Strict on session cookie", async () => {
+      mockPrisma.member.findUnique.mockResolvedValue({
+        id: "m1",
+        status: "active",
+        passwordHash: null,
+      });
+      mockBcryptHash.mockResolvedValue("$2a$12$newhash");
+      mockPrisma.member.update.mockResolvedValue({});
+
+      const res = await POST(
+        makeRegisterRequest({ email: TEST_EMAIL, password: "validpass123" }) as never
+      );
+      const cookie = res.headers.get("Set-Cookie");
+      expect(cookie).toContain("SameSite=Strict");
+    });
+
+    it("sets Max-Age on session cookie", async () => {
+      mockPrisma.member.findUnique.mockResolvedValue({
+        id: "m1",
+        status: "active",
+        passwordHash: null,
+      });
+      mockBcryptHash.mockResolvedValue("$2a$12$newhash");
+      mockPrisma.member.update.mockResolvedValue({});
+
+      const res = await POST(
+        makeRegisterRequest({ email: TEST_EMAIL, password: "validpass123" }) as never
+      );
+      const cookie = res.headers.get("Set-Cookie");
+      expect(cookie).toContain("Max-Age=");
+    });
+  });
+
+  // ── past_due member ──
+
+  describe("past_due member", () => {
+    it("returns 403 when member status is past_due (only active can register)", async () => {
+      mockPrisma.member.findUnique.mockResolvedValue({
+        id: "m1",
+        status: "past_due",
+        passwordHash: null,
+      });
+
+      const res = await POST(
+        makeRegisterRequest({ email: TEST_EMAIL, password: "validpass123" }) as never
+      );
+      expect(res.status).toBe(403);
+      const body = await res.json();
+      expect(body.error.code).toBe("REGISTRATION_FAILED");
+    });
   });
 });

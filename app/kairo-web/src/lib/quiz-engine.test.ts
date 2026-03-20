@@ -7,12 +7,15 @@
  * - Boundary: empty answers, partial answers
  * - Exhaustive: all valid goal × experience combinations
  * - Property: output is always a valid PlanTier
+ *
+ * Note: engine was updated to 2-tier model (standard/premium).
+ * Score ≤ 5 → standard, score 6+ → premium.
  */
 import { describe, it, expect } from "vitest";
 import { recommendTier, type QuizAnswers } from "@/lib/quiz-engine";
 import type { PlanTier } from "@/lib/stripe-prices";
 
-const VALID_TIERS: PlanTier[] = ["foundation", "coaching", "performance", "vip"];
+const VALID_TIERS: PlanTier[] = ["standard", "premium"];
 
 describe("Quiz recommendation engine", () => {
   // ── Always returns a valid tier ──
@@ -31,70 +34,80 @@ describe("Quiz recommendation engine", () => {
     }
   });
 
-  // ── Empty / minimal answers default to foundation ──
+  // ── Empty / minimal answers default to standard ──
 
-  it("returns 'foundation' for empty answers", () => {
-    expect(recommendTier({})).toBe("foundation");
+  it("returns 'standard' for empty answers", () => {
+    expect(recommendTier({})).toBe("standard");
   });
 
-  it("returns 'foundation' for undefined answers", () => {
-    expect(recommendTier(undefined as unknown as QuizAnswers)).toBe("foundation");
+  it("returns 'standard' for undefined answers", () => {
+    expect(recommendTier(undefined as unknown as QuizAnswers)).toBe("standard");
   });
 
-  // ── Beginner users ──
+  // ── Beginner users → standard ──
 
-  it("recommends 'foundation' for beginner + maintenance", () => {
+  it("recommends 'standard' for beginner + maintenance", () => {
+    // score: beginner(0) + maintenance(0) = 0 → standard
     expect(
       recommendTier({ goal: "maintenance", experience: "beginner" })
-    ).toBe("foundation");
+    ).toBe("standard");
   });
 
-  it("recommends 'foundation' for beginner + fat_loss + low days", () => {
+  it("recommends 'standard' for beginner + fat_loss + low days", () => {
+    // score: beginner(0) + fat_loss(1) + 2days(0) = 1 → standard
     expect(
       recommendTier({ goal: "fat_loss", experience: "beginner", daysPerWeek: 2 })
-    ).toBe("foundation");
+    ).toBe("standard");
   });
 
-  it("recommends 'coaching' for beginner + muscle", () => {
+  it("recommends 'standard' for beginner + muscle", () => {
+    // score: beginner(0) + muscle(2) + 4days(1) = 3 → standard
     const tier = recommendTier({ goal: "muscle", experience: "beginner", daysPerWeek: 4 });
-    expect(["foundation", "coaching"]).toContain(tier);
+    expect(VALID_TIERS).toContain(tier);
+    expect(tier).toBe("standard");
   });
 
-  // ── Intermediate users ──
+  // ── Intermediate users → premium when score ≥ 6 ──
 
-  it("recommends 'coaching' or 'performance' for intermediate + muscle + moderate days", () => {
+  it("recommends 'premium' for intermediate + muscle + moderate days", () => {
+    // score: intermediate(2) + muscle(2) + 4days(1) + 30min(1) = 6 → premium
     const tier = recommendTier({
       goal: "muscle",
       experience: "intermediate",
       daysPerWeek: 4,
       minutesPerSession: 30,
     });
-    expect(["coaching", "performance"]).toContain(tier);
+    expect(VALID_TIERS).toContain(tier);
+    expect(tier).toBe("premium");
   });
 
-  it("recommends 'coaching' or higher for intermediate + fat_loss + high days", () => {
+  it("recommends 'premium' for intermediate + fat_loss + high days", () => {
+    // score: intermediate(2) + fat_loss(1) + 5days(2) + 45min(2) = 7 → premium
     const tier = recommendTier({
       goal: "fat_loss",
       experience: "intermediate",
       daysPerWeek: 5,
       minutesPerSession: 45,
     });
-    expect(["coaching", "performance"]).toContain(tier);
+    expect(VALID_TIERS).toContain(tier);
+    expect(tier).toBe("premium");
   });
 
-  // ── Advanced users ──
+  // ── Advanced users → premium ──
 
-  it("recommends 'performance' for advanced + muscle + high commitment", () => {
+  it("recommends 'premium' for advanced + muscle + high commitment", () => {
+    // score: advanced(4) + muscle(2) + 5days(2) + 60min(2) = 10 → premium
     const tier = recommendTier({
       goal: "muscle",
       experience: "advanced",
       daysPerWeek: 5,
       minutesPerSession: 60,
     });
-    expect(["performance", "vip"]).toContain(tier);
+    expect(tier).toBe("premium");
   });
 
-  it("recommends 'performance' or 'vip' for advanced + 6+ days", () => {
+  it("recommends 'premium' for advanced + 6+ days", () => {
+    // score: advanced(4) + muscle(2) + 6days(2) + 60min(2) + plateau(2) = 12 → premium
     const tier = recommendTier({
       goal: "muscle",
       experience: "advanced",
@@ -102,30 +115,33 @@ describe("Quiz recommendation engine", () => {
       minutesPerSession: 60,
       challenge: "plateau",
     });
-    expect(["performance", "vip"]).toContain(tier);
+    expect(tier).toBe("premium");
   });
 
   // ── Challenge factor ──
 
-  it("considers 'accountability' challenge as nudge toward coaching", () => {
+  it("considers 'accountability' challenge toward scoring", () => {
+    // score: maintenance(0) + beginner(0) + 3days(1) + accountability(1) = 2 → standard
     const withChallenge = recommendTier({
       goal: "maintenance",
       experience: "beginner",
       daysPerWeek: 3,
       challenge: "accountability",
     });
-    // Accountability-seekers benefit from coaching tier
-    expect(["foundation", "coaching"]).toContain(withChallenge);
+    expect(VALID_TIERS).toContain(withChallenge);
+    expect(withChallenge).toBe("standard");
   });
 
-  it("considers 'plateau' challenge as nudge toward performance", () => {
+  it("considers 'plateau' challenge toward premium", () => {
+    // score: intermediate(2) + muscle(2) + 5days(2) + plateau(2) = 8 → premium
     const tier = recommendTier({
       goal: "muscle",
       experience: "intermediate",
       daysPerWeek: 5,
       challenge: "plateau",
     });
-    expect(["coaching", "performance"]).toContain(tier);
+    expect(VALID_TIERS).toContain(tier);
+    expect(tier).toBe("premium");
   });
 
   // ── Parametric: all valid goals produce valid output ──

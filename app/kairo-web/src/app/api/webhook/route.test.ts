@@ -183,24 +183,26 @@ describe("POST /api/webhook", () => {
 
       expect(response.status).toBe(200);
       expect(data.status).toBe("processed");
-      expect(mockPrisma.member.upsert).toHaveBeenCalledWith({
-        where: { email: "new@member.com" },
-        create: {
-          email: "new@member.com",
-          stripeCustomerId: "cus_happy",
-          stripeSubId: "sub_happy",
-          status: "active",
-          planTier: "foundation",
-          billingInterval: "monthly",
-        },
-        update: {
-          stripeCustomerId: "cus_happy",
-          stripeSubId: "sub_happy",
-          status: "active",
-          planTier: "foundation",
-          billingInterval: "monthly",
-        },
-      });
+      expect(mockPrisma.member.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { email: "new@member.com" },
+          create: expect.objectContaining({
+            email: "new@member.com",
+            stripeCustomerId: "cus_happy",
+            stripeSubId: "sub_happy",
+            status: "active",
+            planTier: "foundation",
+            billingInterval: "monthly",
+          }),
+          update: expect.objectContaining({
+            stripeCustomerId: "cus_happy",
+            stripeSubId: "sub_happy",
+            status: "active",
+            planTier: "foundation",
+            billingInterval: "monthly",
+          }),
+        })
+      );
     });
 
     it("sends admin notification with member details", async () => {

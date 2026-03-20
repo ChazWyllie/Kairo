@@ -277,4 +277,76 @@ describe("POST /api/auth/login", () => {
       expect(body.error.code).toBe("LOGIN_ERROR");
     });
   });
+
+  // ── Coach session cookie ──
+
+  describe("coach_session cookie", () => {
+    it("sets coach_session cookie alongside kairo_session on coach login", async () => {
+      const res = await POST(
+        makeLoginRequest({
+          email: "coach@test.com",
+          password: "test-coach-secret-1234567890",
+        }) as never
+      );
+
+      // NextResponse may set multiple cookies — check all Set-Cookie values
+      const cookies = res.headers.getSetCookie
+        ? res.headers.getSetCookie()
+        : [res.headers.get("Set-Cookie") ?? ""];
+      const allCookies = cookies.join(", ");
+
+      expect(allCookies).toContain("kairo_session=");
+      expect(allCookies).toContain("coach_session=");
+    });
+  });
+
+  // ── Anti-enumeration ──
+
+  describe("anti-enumeration", () => {
+    it("returns same error code for wrong password as for member not found", async () => {
+      // Case 1: member not found
+      mockPrisma.member.findUnique.mockResolvedValue(null);
+      const resNotFound = await POST(
+        makeLoginRequest({ email: TEST_EMAIL, password: "wrongpassword" }) as never
+      );
+      const bodyNotFound = await resNotFound.json();
+
+      // Case 2: wrong password
+      mockPrisma.member.findUnique.mockResolvedValue({
+        passwordHash: "$2a$12$hashhere",
+        status: "active",
+      });
+      mockBcryptCompare.mockResolvedValue(false as never);
+      const resWrongPass = await POST(
+        makeLoginRequest({ email: TEST_EMAIL, password: "wrongpassword" }) as never
+      );
+      const bodyWrongPass = await resWrongPass.json();
+
+      expect(resNotFound.status).toBe(401);
+      expect(resWrongPass.status).toBe(401);
+      expect(bodyNotFound.error.code).toBe(bodyWrongPass.error.code);
+      expect(bodyNotFound.error.message).toBe(bodyWrongPass.error.message);
+    });
+  });
+
+  // ── past_due member ──
+
+  describe("past_due member login", () => {
+    it("allows past_due member to log in and reflects status in response", async () => {
+      mockPrisma.member.findUnique.mockResolvedValue({
+        passwordHash: "$2a$12$hashhere",
+        status: "past_due",
+      });
+      mockBcryptCompare.mockResolvedValue(true as never);
+
+      const res = await POST(
+        makeLoginRequest({ email: TEST_EMAIL, password: "correct-password" }) as never
+      );
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.status).toBe("ok");
+      expect(body.role).toBe("member");
+      expect(body.memberStatus).toBe("past_due");
+    });
+  });
 });

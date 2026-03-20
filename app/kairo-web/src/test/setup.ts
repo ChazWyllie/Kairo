@@ -26,6 +26,10 @@ vi.mock("@/lib/env", () => ({
     STRIPE_PRICE_PERFORMANCE_ANNUAL: "price_test_performance_a",
     STRIPE_PRICE_VIP_MONTHLY: "price_test_vip_m",
     STRIPE_PRICE_VIP_ANNUAL: "price_test_vip_a",
+    STRIPE_PRICE_STANDARD_MONTHLY: "price_test_standard_m",
+    STRIPE_PRICE_STANDARD_ANNUAL: "price_test_standard_a",
+    STRIPE_PRICE_PREMIUM_MONTHLY: "price_test_premium_m",
+    STRIPE_PRICE_PREMIUM_ANNUAL: "price_test_premium_a",
   },
 }));
 
@@ -110,6 +114,8 @@ vi.mock("@/lib/prisma", () => ({
 export const mockStripeCheckoutCreate = vi.fn();
 export const mockStripeConstructEvent = vi.fn();
 export const mockStripeSubscriptionsUpdate = vi.fn().mockResolvedValue({});
+export const mockStripeCustomersList = vi.fn();
+export const mockStripeBillingPortalCreate = vi.fn();
 
 vi.mock("@/services/stripe", () => ({
   getStripe: () => ({
@@ -123,6 +129,14 @@ vi.mock("@/services/stripe", () => ({
     },
     subscriptions: {
       update: mockStripeSubscriptionsUpdate,
+    },
+    customers: {
+      list: mockStripeCustomersList,
+    },
+    billingPortal: {
+      sessions: {
+        create: mockStripeBillingPortalCreate,
+      },
     },
   }),
 }));
@@ -139,6 +153,8 @@ export const mockNotifyAdminNewApplication = vi.fn().mockResolvedValue(undefined
 export const mockSendReviewDelivered = vi.fn().mockResolvedValue(undefined);
 export const mockSendCheckInReminder = vi.fn().mockResolvedValue(undefined);
 export const mockSendProgramUpdated = vi.fn().mockResolvedValue(undefined);
+export const mockSendLaunchEmail = vi.fn().mockResolvedValue(undefined);
+export const mockSendWaitlistConfirmation = vi.fn().mockResolvedValue(undefined);
 
 vi.mock("@/services/email", () => ({
   notifyAdmin: mockNotifyAdmin,
@@ -152,6 +168,8 @@ vi.mock("@/services/email", () => ({
   sendReviewDelivered: mockSendReviewDelivered,
   sendCheckInReminder: mockSendCheckInReminder,
   sendProgramUpdated: mockSendProgramUpdated,
+  sendLaunchEmail: mockSendLaunchEmail,
+  sendWaitlistConfirmation: mockSendWaitlistConfirmation,
 }));
 
 // ── Mock rate limiter (always allow — rate-limit.test.ts tests it directly) ──
@@ -180,6 +198,11 @@ export const mockWaitlistRateLimitCheck = vi.fn().mockReturnValue({
   retryAfter: 0,
 });
 
+export const mockPlanRateLimitCheck = vi.fn().mockReturnValue({
+  allowed: true,
+  retryAfter: 0,
+});
+
 vi.mock("@/lib/rate-limit", () => ({
   checkoutLimiter: {
     check: (...args: unknown[]) => mockRateLimitCheck(...args),
@@ -195,6 +218,9 @@ vi.mock("@/lib/rate-limit", () => ({
   },
   waitlistLimiter: {
     check: (...args: unknown[]) => mockWaitlistRateLimitCheck(...args),
+  },
+  planLimiter: {
+    check: (...args: unknown[]) => mockPlanRateLimitCheck(...args),
   },
   createRateLimiter: vi.fn(),
 }));

@@ -82,7 +82,8 @@ describe("POST /api/quiz", () => {
 
   // ── Tier Recommendation Logic ──
 
-  it("recommends 'foundation' for beginner/low-commitment users", async () => {
+  it("recommends 'standard' for beginner/low-commitment users", async () => {
+    // score: beginner(0) + maintenance(0) + 2days(0) + 15min(0) + time(0) = 0 → standard
     const submission = {
       email: "beginner@test.com",
       answers: {
@@ -95,17 +96,18 @@ describe("POST /api/quiz", () => {
     };
     mockPrisma.lead.upsert.mockResolvedValue({
       ...MOCK_LEAD,
-      recommendedTier: "foundation",
+      recommendedTier: "standard",
     });
 
     const res = await POST(makeRequest(submission));
     const data = await res.json();
 
     expect(res.status).toBe(200);
-    expect(data.recommendedTier).toBe("foundation");
+    expect(data.recommendedTier).toBe("standard");
   });
 
-  it("recommends higher tier for advanced/high-commitment users", async () => {
+  it("recommends 'premium' for advanced/high-commitment users", async () => {
+    // score: advanced(4) + muscle(2) + 6days(2) + 60min(2) + plateau(2) = 12 → premium
     const submission = {
       email: "advanced@test.com",
       answers: {
@@ -118,30 +120,31 @@ describe("POST /api/quiz", () => {
     };
     mockPrisma.lead.upsert.mockResolvedValue({
       ...MOCK_LEAD,
-      recommendedTier: "performance",
+      recommendedTier: "premium",
     });
 
     const res = await POST(makeRequest(submission));
     const data = await res.json();
 
     expect(res.status).toBe(200);
-    expect(["performance", "vip"]).toContain(data.recommendedTier);
+    expect(["standard", "premium"]).toContain(data.recommendedTier);
   });
 
   // ── Boundary Cases ──
 
   it("accepts minimal submission (email only, empty answers)", async () => {
+    // score: 0 → standard
     mockPrisma.lead.upsert.mockResolvedValue({
       ...MOCK_LEAD,
       quizAnswers: {},
-      recommendedTier: "foundation",
+      recommendedTier: "standard",
     });
 
     const res = await POST(makeRequest(MINIMAL_QUIZ_SUBMISSION));
     const data = await res.json();
 
     expect(res.status).toBe(200);
-    expect(data.recommendedTier).toBe("foundation");
+    expect(data.recommendedTier).toBe("standard");
   });
 
   it("accepts daysPerWeek at minimum boundary (1)", async () => {

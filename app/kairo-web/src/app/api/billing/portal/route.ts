@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getStripe } from "@/services/stripe";
 import { env } from "@/lib/env";
+import { prisma } from "@/lib/prisma";
 import { requireMemberOrCoachAuth } from "@/lib/auth";
 import { checkoutLimiter } from "@/lib/rate-limit";
 import { prisma } from "@/lib/prisma";
