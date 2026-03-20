@@ -90,7 +90,7 @@ export default function FullHomePage() {
         </p>
         <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link
-            href="/apply"
+            href={`/apply?interval=${billingInterval}`}
             onClick={() => track({ name: "cta_click", properties: { location: "hero" } })}
             className="rounded-xl bg-black px-8 py-4 text-lg font-semibold text-white shadow-lg hover:opacity-90 transition-opacity"
           >

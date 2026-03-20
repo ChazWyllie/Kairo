@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { track } from "@/lib/analytics";
 import { isValidEmail } from "@/lib/validation";
-import { components } from "@/lib/design-tokens";
 
 /**
  * /login — Member sign-in page
@@ -51,8 +50,6 @@ export default function LoginPage() {
       const role = data?.role;
       if (role === "coach") {
         track({ name: "coach_login", properties: {} });
-        // Cookie-based auth: server set httpOnly coach_session cookie,
-        // so we redirect without exposing the secret in the URL.
         router.push("/coach");
       } else {
         track({ name: "member_login", properties: {} });
@@ -66,22 +63,45 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-neutral-50 text-black">
-      <div className="mx-auto max-w-md px-6 py-16">
-        <h1 className="text-2xl font-semibold text-center">Sign In</h1>
-        <p className="mt-2 text-center text-neutral-500 text-sm">
+    <main
+      className="min-h-screen flex flex-col items-center justify-center px-6 py-16"
+      style={{ background: "var(--bg-primary)", color: "var(--text-primary)" }}
+    >
+      {/* Wordmark */}
+      <Link
+        href="/"
+        className="font-display font-bold tracking-[0.15em] text-sm uppercase mb-12"
+        style={{ color: "var(--text-tertiary)", letterSpacing: "0.15em" }}
+      >
+        Kairo
+      </Link>
+
+      <div className="w-full max-w-sm">
+        <h1 className="text-2xl font-semibold text-center" style={{ color: "var(--text-primary)" }}>
+          Sign In
+        </h1>
+        <p className="mt-2 text-center text-sm" style={{ color: "var(--text-tertiary)" }}>
           Access your Kairo Fitness dashboard.
         </p>
 
         <form onSubmit={onSubmit} className="mt-8 space-y-4">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-neutral-700 mb-1">
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium mb-1"
+              style={{ color: "var(--text-secondary)" }}
+            >
               Email
             </label>
             <input
               id="email"
               type="email"
-              className={components.input.base}
+              className="w-full rounded-xl px-4 py-3 text-base outline-none transition-colors"
+              style={{
+                background: "var(--bg-secondary)",
+                border: "1px solid var(--border-subtle)",
+                color: "var(--text-primary)",
+              }}
               placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -91,13 +111,22 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-neutral-700 mb-1">
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium mb-1"
+              style={{ color: "var(--text-secondary)" }}
+            >
               Password
             </label>
             <input
               id="password"
               type="password"
-              className={components.input.base}
+              className="w-full rounded-xl px-4 py-3 text-base outline-none transition-colors"
+              style={{
+                background: "var(--bg-secondary)",
+                border: "1px solid var(--border-subtle)",
+                color: "var(--text-primary)",
+              }}
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -108,7 +137,7 @@ export default function LoginPage() {
           </div>
 
           {error && (
-            <p className="text-sm text-red-600" role="alert">
+            <p className="text-sm text-red-400" role="alert">
               {error}
             </p>
           )}
@@ -116,17 +145,31 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className={`w-full ${components.button.primary}`}
+            className="w-full rounded-xl px-6 py-3 text-sm font-semibold transition-all duration-200 disabled:opacity-60"
+            style={{
+              background: "var(--accent-primary)",
+              color: "var(--bg-primary)",
+            }}
           >
             {loading ? "Signing in…" : "Sign In"}
           </button>
         </form>
 
-        <div className="mt-6 text-center space-y-2">
-          <p className="text-sm text-neutral-500">
-            Forgot your password? Contact your admin to reset your credentials.
+        <div className="mt-6 text-center space-y-3">
+          <p className="text-sm" style={{ color: "var(--text-tertiary)" }}>
+            New member?{" "}
+            <Link href="/register" style={{ color: "var(--text-secondary)" }} className="underline">
+              Set up your account
+            </Link>
           </p>
-          <Link href="/" className={components.button.ghost}>
+          <p className="text-sm" style={{ color: "var(--text-tertiary)" }}>
+            Forgot your password? Contact your coach to reset.
+          </p>
+          <Link
+            href="/"
+            className="block text-sm transition-colors"
+            style={{ color: "var(--text-tertiary)" }}
+          >
             ← Back to home
           </Link>
         </div>

@@ -28,7 +28,7 @@ const CheckoutSchema = z.object({
   phone: z.string().optional(),
   // Accept either planId (legacy) or tier+interval (new — keeps price IDs server-side)
   planId: z.string().min(1).optional(),
-  tier: z.enum(["foundation", "coaching", "performance", "vip"]).optional(),
+  tier: z.enum(["standard", "premium"]).optional(),
   interval: z.enum(["monthly", "annual"]).optional(),
 }).refine(
   (d) => d.planId || (d.tier && d.interval),

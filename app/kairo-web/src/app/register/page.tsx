@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { track } from "@/lib/analytics";
 import { isValidEmail } from "@/lib/validation";
-import { components } from "@/lib/design-tokens";
 
 /**
  * /register — Set password for existing active members
@@ -65,12 +64,24 @@ export default function RegisterPage() {
   }
 
   return (
-    <main className="min-h-screen bg-neutral-50 text-black">
-      <div className="mx-auto max-w-md px-6 py-16">
-        <h1 className="text-2xl font-semibold text-center">
+    <main
+      className="min-h-screen flex flex-col items-center justify-center px-6 py-16"
+      style={{ background: "var(--bg-primary)", color: "var(--text-primary)" }}
+    >
+      {/* Wordmark */}
+      <Link
+        href="/"
+        className="font-display font-bold tracking-[0.15em] text-sm uppercase mb-12"
+        style={{ color: "var(--text-tertiary)", letterSpacing: "0.15em" }}
+      >
+        Kairo
+      </Link>
+
+      <div className="w-full max-w-sm">
+        <h1 className="text-2xl font-semibold text-center" style={{ color: "var(--text-primary)" }}>
           Set Up Your Account
         </h1>
-        <p className="mt-2 text-center text-neutral-500 text-sm">
+        <p className="mt-2 text-center text-sm" style={{ color: "var(--text-tertiary)" }}>
           Create a password to access your coaching dashboard.
           <br />
           You must have completed checkout first.
@@ -80,14 +91,20 @@ export default function RegisterPage() {
           <div>
             <label
               htmlFor="email"
-              className="block text-sm font-medium text-neutral-700 mb-1"
+              className="block text-sm font-medium mb-1"
+              style={{ color: "var(--text-secondary)" }}
             >
               Email (same as checkout)
             </label>
             <input
               id="email"
               type="email"
-              className={components.input.base}
+              className="w-full rounded-xl px-4 py-3 text-base outline-none transition-colors"
+              style={{
+                background: "var(--bg-secondary)",
+                border: "1px solid var(--border-subtle)",
+                color: "var(--text-primary)",
+              }}
               placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -99,14 +116,20 @@ export default function RegisterPage() {
           <div>
             <label
               htmlFor="password"
-              className="block text-sm font-medium text-neutral-700 mb-1"
+              className="block text-sm font-medium mb-1"
+              style={{ color: "var(--text-secondary)" }}
             >
               Password
             </label>
             <input
               id="password"
               type="password"
-              className={components.input.base}
+              className="w-full rounded-xl px-4 py-3 text-base outline-none transition-colors"
+              style={{
+                background: "var(--bg-secondary)",
+                border: "1px solid var(--border-subtle)",
+                color: "var(--text-primary)",
+              }}
               placeholder="At least 8 characters"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -119,14 +142,20 @@ export default function RegisterPage() {
           <div>
             <label
               htmlFor="confirm"
-              className="block text-sm font-medium text-neutral-700 mb-1"
+              className="block text-sm font-medium mb-1"
+              style={{ color: "var(--text-secondary)" }}
             >
               Confirm password
             </label>
             <input
               id="confirm"
               type="password"
-              className={components.input.base}
+              className="w-full rounded-xl px-4 py-3 text-base outline-none transition-colors"
+              style={{
+                background: "var(--bg-secondary)",
+                border: "1px solid var(--border-subtle)",
+                color: "var(--text-primary)",
+              }}
               placeholder="Re-enter password"
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
@@ -137,7 +166,7 @@ export default function RegisterPage() {
           </div>
 
           {error && (
-            <p className="text-sm text-red-600" role="alert">
+            <p className="text-sm text-red-400" role="alert">
               {error}
             </p>
           )}
@@ -145,20 +174,28 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={loading}
-            className={`w-full ${components.button.primary}`}
+            className="w-full rounded-xl px-6 py-3 text-sm font-semibold transition-all duration-200 disabled:opacity-60"
+            style={{
+              background: "var(--accent-primary)",
+              color: "var(--bg-primary)",
+            }}
           >
             {loading ? "Setting up…" : "Create Account"}
           </button>
         </form>
 
-        <div className="mt-6 text-center space-y-2">
-          <p className="text-sm text-neutral-500">
+        <div className="mt-6 text-center space-y-3">
+          <p className="text-sm" style={{ color: "var(--text-tertiary)" }}>
             Already have an account?{" "}
-            <Link href="/login" className="text-black underline">
+            <Link href="/login" style={{ color: "var(--text-secondary)" }} className="underline">
               Sign in
             </Link>
           </p>
-          <Link href="/" className={components.button.ghost}>
+          <Link
+            href="/"
+            className="block text-sm transition-colors"
+            style={{ color: "var(--text-tertiary)" }}
+          >
             ← Back to home
           </Link>
         </div>

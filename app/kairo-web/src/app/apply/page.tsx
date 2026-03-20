@@ -139,7 +139,9 @@ function ApplyContent() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [foundingLoading, setFoundingLoading] = useState(false);
   const [foundingError, setFoundingError] = useState<string | null>(null);
-  const [billingInterval, setBillingInterval] = useState<BillingInterval>("monthly");
+  const [billingInterval, setBillingInterval] = useState<BillingInterval>(
+    searchParams.get("interval") === "annual" ? "annual" : "monthly"
+  );
 
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");

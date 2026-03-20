@@ -119,13 +119,55 @@ export async function sendWelcomeEmail(data: WelcomeEmail): Promise<void> {
     html: `
       <h2>Welcome to Kairo Fitness!</h2>
       <p>Thanks for joining. Your membership is now active.</p>
+      <p><a href="${env.APP_URL}/register" style="display:inline-block;background:#000;color:#fff;padding:12px 24px;border-radius:12px;text-decoration:none;font-weight:600;">Set up your account →</a></p>
       <h3>What happens next:</h3>
       <ol>
+        <li><strong>Set up your account</strong> using the link above to access your coaching dashboard.</li>
         <li><strong>Fill out your onboarding form</strong>, tell us your goals, schedule, and any limitations so we can build your plan.</li>
         <li><strong>Receive your first plan</strong>, with personalized training + nutrition targets within 48 hours.</li>
         <li><strong>Weekly check-in</strong>, every week send a quick update and we'll adjust your plan.</li>
       </ol>
       <p>Questions? Just reply to this email.</p>
+      <p>The Kairo Fitness team</p>
+    `,
+  });
+}
+
+// ── Waitlist Confirmation Email ──
+
+interface WaitlistConfirmationEmail {
+  email: string;
+}
+
+/**
+ * Send confirmation email when someone joins the waitlist.
+ * Fire-and-forget. Failures should not disrupt the API response.
+ */
+export async function sendWaitlistConfirmation(
+  data: WaitlistConfirmationEmail
+): Promise<void> {
+  const { email } = data;
+
+  if (!env.RESEND_API_KEY) {
+    console.log("[email-stub] Waitlist confirmation:", { email });
+    return;
+  }
+
+  const resend = await getResend();
+
+  await resend.emails.send({
+    from: env.EMAIL_FROM,
+    to: email,
+    subject: "You're on the list 🎯",
+    html: `
+      <h2>You're on the Kairo waitlist.</h2>
+      <p>We'll reach out as soon as coaching spots open up.</p>
+      <p>In the meantime, if you're ready to get started, you can apply now:</p>
+      <p><a href="${env.APP_URL}/#coaching" style="display:inline-block;background:#000;color:#fff;padding:12px 24px;border-radius:12px;text-decoration:none;font-weight:600;">Apply Now →</a></p>
+      <p style="color:#737373;font-size:13px;">
+        You're receiving this because you signed up for the Kairo waitlist.
+        To unsubscribe, reply with "unsubscribe" in the subject line.
+      </p>
       <p>The Kairo Fitness team</p>
     `,
   });
@@ -480,10 +522,13 @@ export async function sendFoundingMemberWelcome(
 
       <h3>What happens next:</h3>
       <ol>
+        <li><strong>Set up your account</strong> using the link below to access your coaching dashboard</li>
         <li><strong>Onboarding form</strong>, tell us your goals, schedule, and limitations</li>
         <li><strong>Your first plan</strong>, personalized training + nutrition within 48 hours</li>
         <li><strong>Weekly check-ins</strong>, send updates and we'll adjust your plan</li>
       </ol>
+
+      <p><a href="${env.APP_URL}/register" style="display:inline-block;background:#000;color:#fff;padding:12px 24px;border-radius:12px;text-decoration:none;font-weight:600;">Set up your account →</a></p>
 
       <p>Questions? Just reply to this email.</p>
       <p>The Kairo Fitness team</p>
