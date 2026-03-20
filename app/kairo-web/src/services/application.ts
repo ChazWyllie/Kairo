@@ -52,28 +52,39 @@ export async function submitApplication(data: ApplicationInput): Promise<SubmitR
     return { ok: false, code: "DUPLICATE" };
   }
 
-  const application = await prisma.application.create({
-    data: {
-      email,
-      fullName: fields.fullName,
-      phone: fields.phone ?? null,
-      age: fields.age ?? null,
-      height: fields.height ?? null,
-      currentWeight: fields.currentWeight ?? null,
-      goal: fields.goal,
-      whyNow: fields.whyNow ?? null,
-      trainingExperience: fields.trainingExperience ?? null,
-      trainingFrequency: fields.trainingFrequency ?? null,
-      gymAccess: fields.gymAccess ?? null,
-      injuryHistory: fields.injuryHistory ?? null,
-      nutritionStruggles: fields.nutritionStruggles ?? null,
-      biggestObstacle: fields.biggestObstacle ?? null,
-      helpWithMost: fields.helpWithMost ?? null,
-      preferredTier: fields.preferredTier ?? null,
-      readyForStructure: fields.readyForStructure ?? false,
-      budgetComfort: fields.budgetComfort ?? null,
-    },
-  });
+  const [application] = await prisma.$transaction([
+    prisma.application.create({
+      data: {
+        email,
+        fullName: fields.fullName,
+        phone: fields.phone ?? null,
+        age: fields.age ?? null,
+        height: fields.height ?? null,
+        currentWeight: fields.currentWeight ?? null,
+        goal: fields.goal,
+        whyNow: fields.whyNow ?? null,
+        trainingExperience: fields.trainingExperience ?? null,
+        trainingFrequency: fields.trainingFrequency ?? null,
+        gymAccess: fields.gymAccess ?? null,
+        injuryHistory: fields.injuryHistory ?? null,
+        nutritionStruggles: fields.nutritionStruggles ?? null,
+        biggestObstacle: fields.biggestObstacle ?? null,
+        helpWithMost: fields.helpWithMost ?? null,
+        preferredTier: fields.preferredTier ?? null,
+        readyForStructure: fields.readyForStructure ?? false,
+        budgetComfort: fields.budgetComfort ?? null,
+      },
+    }),
+    prisma.member.upsert({
+      where: { email },
+      create: {
+        email,
+        fullName: fields.fullName,
+        status: "pending",
+      },
+      update: {},
+    }),
+  ]);
 
   console.log("[application] New application submitted:", { id: application.id });
 

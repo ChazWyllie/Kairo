@@ -1,20 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { track } from "@/lib/analytics";
 import { isValidEmail } from "@/lib/validation";
 
 /**
- * /register — Set password for existing active members
+ * /register — Set password after submitting an application or completing checkout.
  *
- * Only works if the member has completed Stripe checkout.
- * This is the post-payment onboarding step for account access.
+ * Accepts ?email= to pre-fill the email field (passed from the apply success screen).
  */
-export default function RegisterPage() {
+function RegisterForm() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const searchParams = useSearchParams();
+  const prefillEmail = searchParams.get("email") ?? "";
+  const [email, setEmail] = useState(prefillEmail);
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
@@ -82,9 +83,9 @@ export default function RegisterPage() {
           Set Up Your Account
         </h1>
         <p className="mt-2 text-center text-sm" style={{ color: "var(--text-tertiary)" }}>
-          Create a password to access your coaching dashboard.
-          <br />
-          You must have completed checkout first.
+          {prefillEmail
+            ? "Create a password to access your coaching dashboard once your application is approved."
+            : "Create a password to access your coaching dashboard."}
         </p>
 
         <form onSubmit={onSubmit} className="mt-8 space-y-4">
@@ -94,7 +95,7 @@ export default function RegisterPage() {
               className="block text-sm font-medium mb-1"
               style={{ color: "var(--text-secondary)" }}
             >
-              Email (same as checkout)
+              Email
             </label>
             <input
               id="email"
@@ -104,10 +105,12 @@ export default function RegisterPage() {
                 background: "var(--bg-secondary)",
                 border: "1px solid var(--border-subtle)",
                 color: "var(--text-primary)",
+                opacity: prefillEmail ? 0.7 : 1,
               }}
               placeholder="you@example.com"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => !prefillEmail && setEmail(e.target.value)}
+              readOnly={!!prefillEmail}
               required
               autoComplete="email"
             />
@@ -201,5 +204,13 @@ export default function RegisterPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense>
+      <RegisterForm />
+    </Suspense>
   );
 }

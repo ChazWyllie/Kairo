@@ -52,11 +52,21 @@ const MOCK_APPLICATION = {
   isFoundingMember: false,
 };
 
+const MOCK_MEMBER = {
+  id: "mem_test_001",
+  email: BASE_INPUT.email,
+  fullName: BASE_INPUT.fullName,
+  status: "pending",
+};
+
 describe("submitApplication", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockSendApplicationReceived.mockResolvedValue(undefined);
     mockNotifyAdminNewApplication.mockResolvedValue(undefined);
+    // $transaction with array resolves each promise in order
+    mockPrisma.application.create.mockResolvedValue(MOCK_APPLICATION);
+    mockPrisma.member.upsert.mockResolvedValue(MOCK_MEMBER);
   });
 
   it("returns DUPLICATE when application already exists for email", async () => {
@@ -70,7 +80,6 @@ describe("submitApplication", () => {
 
   it("creates application and returns applicationId on success", async () => {
     mockPrisma.application.findUnique.mockResolvedValue(null);
-    mockPrisma.application.create.mockResolvedValue(MOCK_APPLICATION);
 
     const result = await submitApplication(BASE_INPUT);
 
@@ -78,9 +87,31 @@ describe("submitApplication", () => {
     expect(mockPrisma.application.create).toHaveBeenCalledOnce();
   });
 
+  it("upserts a pending Member record alongside the application", async () => {
+    mockPrisma.application.findUnique.mockResolvedValue(null);
+
+    await submitApplication(BASE_INPUT);
+
+    expect(mockPrisma.member.upsert).toHaveBeenCalledOnce();
+    const upsertArgs = mockPrisma.member.upsert.mock.calls[0][0];
+    expect(upsertArgs.where).toEqual({ email: BASE_INPUT.email });
+    expect(upsertArgs.create.email).toBe(BASE_INPUT.email);
+    expect(upsertArgs.create.fullName).toBe(BASE_INPUT.fullName);
+    expect(upsertArgs.create.status).toBe("pending");
+    // update is a no-op — existing members are not overwritten
+    expect(upsertArgs.update).toEqual({});
+  });
+
+  it("does not upsert member when application is duplicate", async () => {
+    mockPrisma.application.findUnique.mockResolvedValue(MOCK_APPLICATION);
+
+    await submitApplication(BASE_INPUT);
+
+    expect(mockPrisma.member.upsert).not.toHaveBeenCalled();
+  });
+
   it("passes all required fields to Prisma create", async () => {
     mockPrisma.application.findUnique.mockResolvedValue(null);
-    mockPrisma.application.create.mockResolvedValue(MOCK_APPLICATION);
 
     await submitApplication({
       ...BASE_INPUT,
@@ -103,7 +134,6 @@ describe("submitApplication", () => {
 
   it("defaults optional fields to null when not provided", async () => {
     mockPrisma.application.findUnique.mockResolvedValue(null);
-    mockPrisma.application.create.mockResolvedValue(MOCK_APPLICATION);
 
     await submitApplication(BASE_INPUT);
 
@@ -116,7 +146,6 @@ describe("submitApplication", () => {
 
   it("fires sendApplicationReceived as fire-and-forget", async () => {
     mockPrisma.application.findUnique.mockResolvedValue(null);
-    mockPrisma.application.create.mockResolvedValue(MOCK_APPLICATION);
 
     await submitApplication(BASE_INPUT);
 
@@ -130,7 +159,6 @@ describe("submitApplication", () => {
 
   it("fires notifyAdminNewApplication as fire-and-forget", async () => {
     mockPrisma.application.findUnique.mockResolvedValue(null);
-    mockPrisma.application.create.mockResolvedValue(MOCK_APPLICATION);
 
     await submitApplication(BASE_INPUT);
 
