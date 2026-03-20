@@ -60,10 +60,18 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const session = await getStripe().billingPortal.sessions.create({
-    customer: member.stripeCustomerId,
-    return_url: `${env.APP_URL}/dashboard/account`,
-  });
-
-  return NextResponse.json({ url: session.url });
+  try {
+    const session = await getStripe().billingPortal.sessions.create({
+      customer: member.stripeCustomerId,
+      return_url: `${env.APP_URL}/dashboard/account`,
+    });
+    return NextResponse.json({ url: session.url });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    console.error("[billing/portal] Stripe error:", message);
+    return NextResponse.json(
+      { error: { code: "STRIPE_ERROR", message: "Failed to open billing portal. Please try again." } },
+      { status: 502 }
+    );
+  }
 }

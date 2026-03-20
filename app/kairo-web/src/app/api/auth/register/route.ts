@@ -10,13 +10,13 @@ import { registerLimiter } from "@/lib/rate-limit";
 /**
  * POST /api/auth/register
  *
- * Set a password for an existing active member.
- * Only members with status "active" can register.
+ * Set a password for a member with status "active" or "pending".
+ * Pending members are created at application time; webhook upgrades them to active after payment.
  *
  * Security:
  * - bcrypt with cost 12
  * - Never log passwords
- * - Only works for existing active members (prevents account creation)
+ * - Only works for members that exist in the DB (no open account creation)
  */
 
 const RegisterSchema = z.object({

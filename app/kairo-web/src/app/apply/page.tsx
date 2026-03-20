@@ -13,7 +13,7 @@ import {
   type ApplyStep,
 } from "@/lib/apply-flow";
 import { type BillingInterval } from "@/lib/stripe-prices";
-import { COACHING_TIERS } from "@/lib/products";
+import { COACHING_TIERS, ANNUAL_DISCOUNT } from "@/lib/products";
 
 /**
  * Application form — pre-payment screening.
@@ -137,8 +137,6 @@ function ApplyContent() {
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-  const [foundingLoading, setFoundingLoading] = useState(false);
-  const [foundingError, setFoundingError] = useState<string | null>(null);
   const [billingInterval, setBillingInterval] = useState<BillingInterval>(
     searchParams.get("interval") === "annual" ? "annual" : "monthly"
   );
@@ -247,33 +245,9 @@ function ApplyContent() {
     }
   }
 
-  async function handleFoundingCheckout() {
-    setFoundingError(null);
-    setFoundingLoading(true);
-    const tier = preferredTier || "standard";
-
-    track({ name: "founding_member_cta_click", properties: { tier, interval: billingInterval } });
-
-    try {
-      const res = await fetch("/api/checkout/founding", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, tier, interval: billingInterval }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error?.message ?? "Failed to start checkout.");
-      if (data.url) window.location.href = data.url;
-    } catch (err: unknown) {
-      setFoundingError(err instanceof Error ? err.message : "Something went wrong.");
-      setFoundingLoading(false);
-    }
-  }
-
   // ── Done state ──
   if (done) {
-    const matchedTier = preferredTier ? COACHING_TIERS[preferredTier as keyof typeof COACHING_TIERS] : null;
-    const originalPrice = matchedTier ? matchedTier.price : null;
-    const discountedPrice = originalPrice !== null ? Math.round(originalPrice * 0.9) : null;
+    const registerUrl = `/register?email=${encodeURIComponent(email)}`;
 
     return (
       <main
@@ -302,126 +276,41 @@ function ApplyContent() {
           <div className="flex items-center gap-4 mb-10">
             <div className="flex-1 h-px" style={{ background: "var(--border-subtle)" }} />
             <span className="text-xs uppercase tracking-widest" style={{ color: "var(--text-tertiary)" }}>
-              or
+              while you wait
             </span>
             <div className="flex-1 h-px" style={{ background: "var(--border-subtle)" }} />
           </div>
 
-          {/* Founding member upsell — gradient border card */}
+          {/* Create account card */}
           <div
-            className="p-px rounded-[var(--radius-lg)] text-left"
-            style={{
-              background: "linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%)",
-            }}
+            className="rounded-[var(--radius-lg)] p-6 text-left"
+            style={{ background: "var(--bg-secondary)", border: "1px solid var(--border-subtle)" }}
           >
-            <div
-              className="rounded-[calc(var(--radius-lg)-1px)] p-6"
-              style={{ background: "var(--bg-secondary)" }}
+            <h2
+              className="font-display font-bold text-xl mb-1"
+              style={{ color: "var(--text-primary)", letterSpacing: "-0.02em" }}
             >
-              <h2
-                className="font-display font-bold text-xl text-center mb-1"
-                style={{ color: "var(--text-primary)", letterSpacing: "-0.02em" }}
+              Set Up Your Account
+            </h2>
+            <p className="text-sm mb-6" style={{ color: "var(--text-secondary)" }}>
+              Create a password so you can log in as soon as your application is approved.
+            </p>
+
+            <div className="flex flex-col gap-3">
+              <Link
+                href={registerUrl}
+                className="w-full rounded-[var(--radius-md)] py-4 text-base font-semibold text-center transition-all duration-200 hover:-translate-y-px btn-glow block"
+                style={{ background: "var(--accent-primary)", color: "var(--bg-primary)" }}
               >
-                Become a Founding Member
-              </h2>
-              <p className="text-sm text-center mb-5" style={{ color: "var(--text-secondary)" }}>
-                Lock in 10% off forever plus priority onboarding and direct coach access.
-              </p>
-
-              {/* Billing toggle */}
-              <div className="flex justify-center mb-5">
-                <div
-                  className="inline-flex rounded-[var(--radius-sm)] p-1 gap-1"
-                  style={{ background: "var(--bg-tertiary)", border: "1px solid var(--border-subtle)" }}
-                >
-                  {(["monthly", "annual"] as const).map((iv) => (
-                    <button
-                      key={iv}
-                      type="button"
-                      onClick={() => setBillingInterval(iv)}
-                      className="rounded-[calc(var(--radius-sm)-2px)] px-4 py-1.5 text-sm font-medium transition-colors duration-150 capitalize"
-                      style={{
-                        background: billingInterval === iv ? "var(--accent-primary)" : "transparent",
-                        color: billingInterval === iv ? "var(--bg-primary)" : "var(--text-secondary)",
-                      }}
-                    >
-                      {iv}
-                      {iv === "annual" && (
-                        <span className="ml-1.5 text-xs font-semibold" style={{ color: billingInterval === "annual" ? "var(--bg-primary)" : "var(--accent-primary)" }}>
-                          Save ~17%
-                        </span>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Pricing */}
-              {matchedTier && originalPrice !== null && discountedPrice !== null ? (
-                <div className="text-center mb-5">
-                  <p className="text-base font-semibold" style={{ color: "var(--text-primary)" }}>
-                    {matchedTier.name}
-                  </p>
-                  <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>
-                    <span style={{ textDecoration: "line-through", color: "var(--text-tertiary)" }}>
-                      ${originalPrice}/mo
-                    </span>
-                    {" "}
-                    <span style={{ color: "var(--accent-primary)", fontWeight: 600 }}>
-                      ${discountedPrice}/mo
-                    </span>
-                  </p>
-                </div>
-              ) : (
-                <p className="text-center text-sm mb-5" style={{ color: "var(--text-secondary)" }}>
-                  10% off any plan, forever.
-                </p>
-              )}
-
-              {/* Perks */}
-              <ul className="space-y-2.5 mb-6">
-                {[
-                  "10% off your subscription, locked in forever",
-                  "Rate never increases as long as you stay subscribed",
-                  "Priority onboarding, first in line",
-                  "Direct coach access via WhatsApp",
-                ].map((perk) => (
-                  <li key={perk} className="flex items-start gap-2.5 text-sm" style={{ color: "var(--text-secondary)" }}>
-                    <span
-                      className="shrink-0 mt-0.5 font-bold"
-                      style={{ color: "var(--accent-primary)" }}
-                      aria-hidden="true"
-                    >
-                      ✓
-                    </span>
-                    {perk}
-                  </li>
-                ))}
-              </ul>
-
-              {foundingError && (
-                <p className="text-sm text-center mb-4" style={{ color: "#f87171" }} role="alert">
-                  {foundingError}
-                </p>
-              )}
-
-              <div className="flex flex-col gap-3">
-                <button
-                  onClick={handleFoundingCheckout}
-                  disabled={foundingLoading}
-                  className="w-full rounded-[var(--radius-md)] py-4 text-base font-semibold transition-all duration-200 hover:-translate-y-px btn-glow disabled:opacity-60"
-                  style={{ background: "var(--accent-primary)", color: "var(--bg-primary)" }}
-                >
-                  {foundingLoading ? "Redirecting to checkout..." : "Secure My Spot"}
-                </button>
-                <Link
-                  href="/"
-                  className="text-sm text-center transition-colors duration-150"
-                  style={{ color: "var(--text-tertiary)" }}
-                >
-                  No thanks, I will wait
-                </Link>
-              </div>
+                Create Account
+              </Link>
+              <Link
+                href="/"
+                className="text-sm text-center transition-colors duration-150"
+                style={{ color: "var(--text-tertiary)" }}
+              >
+                I will do this later
+              </Link>
             </div>
           </div>
         </div>
@@ -834,7 +723,10 @@ function ApplyContent() {
                 </legend>
                 {TIERS.map((t) => {
                   const coachingTier = COACHING_TIERS[t.value as keyof typeof COACHING_TIERS];
-                  const price = coachingTier ? coachingTier.price : null;
+                  const monthlyPrice = coachingTier ? coachingTier.price : null;
+                  const displayPrice = monthlyPrice !== null && billingInterval === "annual"
+                    ? Math.round(monthlyPrice * ANNUAL_DISCOUNT)
+                    : monthlyPrice;
                   const isSelected = preferredTier === t.value;
 
                   return (
@@ -854,9 +746,9 @@ function ApplyContent() {
                           style={{ color: isSelected ? "var(--accent-primary)" : "var(--text-primary)" }}
                         >
                           {t.name}
-                          {price !== null && (
+                          {displayPrice !== null && (
                             <span className="ml-2 font-normal" style={{ color: "var(--text-tertiary)" }}>
-                              ${price}/mo
+                              ${displayPrice}/mo
                             </span>
                           )}
                         </p>
