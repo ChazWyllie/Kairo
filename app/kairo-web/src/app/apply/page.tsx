@@ -834,7 +834,10 @@ function ApplyContent() {
                 </legend>
                 {TIERS.map((t) => {
                   const coachingTier = COACHING_TIERS[t.value as keyof typeof COACHING_TIERS];
-                  const price = coachingTier ? coachingTier.price : null;
+                  const monthlyPrice = coachingTier ? coachingTier.price : null;
+                  const displayPrice = monthlyPrice !== null && billingInterval === "annual"
+                    ? Math.round(monthlyPrice * 0.9)
+                    : monthlyPrice;
                   const isSelected = preferredTier === t.value;
 
                   return (
@@ -854,9 +857,9 @@ function ApplyContent() {
                           style={{ color: isSelected ? "var(--accent-primary)" : "var(--text-primary)" }}
                         >
                           {t.name}
-                          {price !== null && (
+                          {displayPrice !== null && (
                             <span className="ml-2 font-normal" style={{ color: "var(--text-tertiary)" }}>
-                              ${price}/mo
+                              ${displayPrice}/mo
                             </span>
                           )}
                         </p>
