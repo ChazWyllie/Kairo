@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
 import { Inter } from "next/font/google";
+import { Analytics } from "@vercel/analytics/react";
 import "./globals.css";
 
 const inter = Inter({
@@ -27,6 +28,14 @@ export const metadata: Metadata = {
       "Expert fitness and nutrition coaching that flexes with your schedule, stress, and energy — so you actually stay consistent.",
     type: "website",
     siteName: "Kairo Fitness",
+    images: [{ url: "/icon-512.svg", width: 512, height: 512, alt: "Kairo Fitness" }],
+  },
+  twitter: {
+    card: "summary",
+    title: "Kairo Fitness — Coaching That Adapts to Your Real Life",
+    description:
+      "Expert fitness and nutrition coaching that flexes with your schedule, stress, and energy — so you actually stay consistent.",
+    images: ["/icon-512.svg"],
   },
 };
 
@@ -52,6 +61,8 @@ export default async function RootLayout({
           href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@700,800,900&display=swap"
           nonce={nonce}
         />
+        {/* Favicon */}
+        <link rel="icon" href="/icon-512.svg" type="image/svg+xml" />
         {/* PWA */}
         <link rel="manifest" href="/manifest.json" />
         <meta name="mobile-web-app-capable" content="yes" />
@@ -63,6 +74,7 @@ export default async function RootLayout({
       </head>
       <body className={`${inter.variable} antialiased`} nonce={nonce}>
         {children}
+        <Analytics />
       </body>
     </html>
   );
