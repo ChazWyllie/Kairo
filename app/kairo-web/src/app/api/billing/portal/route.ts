@@ -5,7 +5,6 @@ import { env } from "@/lib/env";
 import { prisma } from "@/lib/prisma";
 import { requireMemberOrCoachAuth } from "@/lib/auth";
 import { checkoutLimiter } from "@/lib/rate-limit";
-import { prisma } from "@/lib/prisma";
 
 const bodySchema = z.object({
   email: z.string().email(),
