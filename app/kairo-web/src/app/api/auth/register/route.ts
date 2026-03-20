@@ -71,9 +71,10 @@ export async function POST(request: NextRequest) {
       select: { id: true, status: true, passwordHash: true },
     });
 
-    // Generic error for both "not found/not eligible" and "already registered"
-    // to prevent account enumeration attacks.
-    if (!member || member.status !== "active" || member.passwordHash) {
+    // Allow pending members too — webhook sets "active" async, often after redirect.
+    // Generic error for all ineligible cases to prevent account enumeration.
+    const eligibleStatus = member?.status === "active" || member?.status === "pending";
+    if (!member || !eligibleStatus || member.passwordHash) {
       return NextResponse.json(
         {
           error: {

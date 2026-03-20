@@ -381,4 +381,40 @@ describe("POST /api/auth/register", () => {
       expect(body.error.code).toBe("REGISTRATION_FAILED");
     });
   });
+
+  // ── Webhook race condition ──
+
+  describe("pending member (webhook race condition)", () => {
+    it("returns 201 when member status is pending and has no password (webhook not yet fired)", async () => {
+      mockPrisma.member.findUnique.mockResolvedValue({
+        id: "m1",
+        status: "pending",
+        passwordHash: null,
+      });
+      mockBcryptHash.mockResolvedValue("$2a$12$newhash");
+      mockPrisma.member.update.mockResolvedValue({});
+
+      const res = await POST(
+        makeRegisterRequest({ email: TEST_EMAIL, password: "validpass123" }) as never
+      );
+      expect(res.status).toBe(201);
+      const body = await res.json();
+      expect(body.status).toBe("ok");
+    });
+
+    it("returns 403 when pending member already has a password set", async () => {
+      mockPrisma.member.findUnique.mockResolvedValue({
+        id: "m1",
+        status: "pending",
+        passwordHash: "$2a$12$existinghash",
+      });
+
+      const res = await POST(
+        makeRegisterRequest({ email: TEST_EMAIL, password: "validpass123" }) as never
+      );
+      expect(res.status).toBe(403);
+      const body = await res.json();
+      expect(body.error.code).toBe("REGISTRATION_FAILED");
+    });
+  });
 });
