@@ -140,7 +140,7 @@ describe("POST /api/application", () => {
       nutritionStruggles: "Late night snacking",
       biggestObstacle: "Consistency",
       helpWithMost: "Accountability",
-      preferredTier: "coaching",
+      preferredTier: "standard",
       readyForStructure: true,
       budgetComfort: "comfortable",
     };
@@ -155,7 +155,7 @@ describe("POST /api/application", () => {
         phone: "+1234567890",
         age: 28,
         gymAccess: "full_gym",
-        preferredTier: "coaching",
+        preferredTier: "standard",
         readyForStructure: true,
       }),
     });
@@ -215,7 +215,7 @@ describe("GET /api/application", () => {
       email: "applicant@test.com",
       fullName: "Test User",
       status: "pending",
-      preferredTier: "coaching",
+      preferredTier: "standard",
       createdAt: new Date("2026-03-01"),
     });
 

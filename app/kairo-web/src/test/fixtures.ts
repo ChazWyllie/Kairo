@@ -3,10 +3,11 @@
  * No real secrets — all fake test data.
  */
 import Stripe from "stripe";
-import { getStripePriceId } from "@/lib/stripe-server";
 
-// ── Test Plan ID — first plan's monthly price (Foundation) ──
-export const TEST_PLAN_ID = getStripePriceId("foundation", "monthly");
+// ── Test Plan ID — standard/monthly price (matches setup.ts env mock) ──
+// Note: Foundation tier no longer has a configured price ID.
+// Using hardcoded value to match STRIPE_PRICE_STANDARD_MONTHLY in setup.ts.
+export const TEST_PLAN_ID = "price_test_standard_m";
 
 // ── Stripe Checkout Session fixtures ──
 
@@ -160,7 +161,7 @@ export const MOCK_LEAD = {
   id: "lead_test_abc",
   email: "quiz@test.com",
   quizAnswers: VALID_QUIZ_ANSWERS,
-  recommendedTier: "coaching",
+  recommendedTier: "standard",
   source: "quiz",
   capturedAt: new Date("2026-03-07T00:00:00Z"),
   convertedAt: null,

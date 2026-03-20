@@ -4,6 +4,9 @@
  * Coverage: happy path, founding-specific assertions (coupon, metadata, success URL),
  * validation errors, rate limiting, Stripe failures, price ID not configured.
  * All Stripe/Prisma calls are mocked — no real API hits.
+ *
+ * Note: founding checkout uses the current 2-tier model (standard/premium).
+ * Old tiers (foundation/coaching/performance/vip) are no longer accepted.
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
@@ -17,7 +20,7 @@ import { POST } from "@/app/api/checkout/founding/route";
 const mockGetStripePriceId = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/stripe-server", () => ({
   getStripePriceId: mockGetStripePriceId,
-  ALLOWED_PRICE_IDS: new Set(["price_test_foundation_m"]),
+  ALLOWED_PRICE_IDS: new Set(["price_test_standard_m"]),
   getPlanFromPriceId: vi.fn(),
 }));
 
@@ -37,7 +40,7 @@ describe("POST /api/checkout/founding", () => {
     mockRateLimitCheck.mockReset();
     mockRateLimitCheck.mockReturnValue({ allowed: true, retryAfter: 0 });
     mockGetStripePriceId.mockReset();
-    mockGetStripePriceId.mockReturnValue("price_test_foundation_m");
+    mockGetStripePriceId.mockReturnValue("price_test_standard_m");
     // Restore the coupon ID configured in setup.ts mock
     env.FOUNDING_MEMBER_COUPON_ID = "coupon_test_founding_10";
   });
@@ -49,7 +52,7 @@ describe("POST /api/checkout/founding", () => {
       mockStripeCheckoutCreate.mockResolvedValue({ id: "cs_test_123", url: MOCK_SESSION_URL });
 
       const response = await POST(
-        makeRequest({ email: "founding@test.com", tier: "foundation", interval: "monthly" })
+        makeRequest({ email: "founding@test.com", tier: "standard", interval: "monthly" })
       );
       const data = await response.json();
 
@@ -60,12 +63,12 @@ describe("POST /api/checkout/founding", () => {
     it("passes correct line_items and customer_email to Stripe", async () => {
       mockStripeCheckoutCreate.mockResolvedValue({ id: "cs_test_123", url: MOCK_SESSION_URL });
 
-      await POST(makeRequest({ email: "founding@test.com", tier: "foundation", interval: "monthly" }));
+      await POST(makeRequest({ email: "founding@test.com", tier: "standard", interval: "monthly" }));
 
       expect(mockStripeCheckoutCreate).toHaveBeenCalledWith(
         expect.objectContaining({
           customer_email: "founding@test.com",
-          line_items: [{ price: "price_test_foundation_m", quantity: 1 }],
+          line_items: [{ price: "price_test_standard_m", quantity: 1 }],
           mode: "subscription",
         })
       );
@@ -79,7 +82,7 @@ describe("POST /api/checkout/founding", () => {
       env.FOUNDING_MEMBER_COUPON_ID = "coupon_founding_10";
       mockStripeCheckoutCreate.mockResolvedValue({ id: "cs_test_123", url: MOCK_SESSION_URL });
 
-      await POST(makeRequest({ email: "founding@test.com", tier: "coaching", interval: "annual" }));
+      await POST(makeRequest({ email: "founding@test.com", tier: "premium", interval: "annual" }));
 
       expect(mockStripeCheckoutCreate).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -92,7 +95,7 @@ describe("POST /api/checkout/founding", () => {
       env.FOUNDING_MEMBER_COUPON_ID = "coupon_founding_10";
       mockStripeCheckoutCreate.mockResolvedValue({ id: "cs_test_123", url: MOCK_SESSION_URL });
 
-      await POST(makeRequest({ email: "founding@test.com", tier: "performance", interval: "monthly" }));
+      await POST(makeRequest({ email: "founding@test.com", tier: "standard", interval: "monthly" }));
 
       expect(mockStripeCheckoutCreate).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -107,7 +110,7 @@ describe("POST /api/checkout/founding", () => {
     it("includes &founding=true in success_url", async () => {
       mockStripeCheckoutCreate.mockResolvedValue({ id: "cs_test_123", url: MOCK_SESSION_URL });
 
-      await POST(makeRequest({ email: "founding@test.com", tier: "vip", interval: "annual" }));
+      await POST(makeRequest({ email: "founding@test.com", tier: "premium", interval: "annual" }));
 
       expect(mockStripeCheckoutCreate).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -124,7 +127,7 @@ describe("POST /api/checkout/founding", () => {
       env.FOUNDING_MEMBER_COUPON_ID = undefined;
 
       const response = await POST(
-        makeRequest({ email: "founding@test.com", tier: "foundation", interval: "monthly" })
+        makeRequest({ email: "founding@test.com", tier: "standard", interval: "monthly" })
       );
       const data = await response.json();
 
@@ -139,11 +142,11 @@ describe("POST /api/checkout/founding", () => {
   describe("price ID not configured", () => {
     it("returns 503 when getStripePriceId throws (price env var missing)", async () => {
       mockGetStripePriceId.mockImplementation(() => {
-        throw new Error("Stripe price ID not configured for foundation/monthly");
+        throw new Error("Stripe price ID not configured for standard/monthly");
       });
 
       const response = await POST(
-        makeRequest({ email: "founding@test.com", tier: "foundation", interval: "monthly" })
+        makeRequest({ email: "founding@test.com", tier: "standard", interval: "monthly" })
       );
       const data = await response.json();
 
@@ -157,7 +160,7 @@ describe("POST /api/checkout/founding", () => {
 
   describe("validation errors", () => {
     it("returns 400 for missing email", async () => {
-      const response = await POST(makeRequest({ tier: "foundation", interval: "monthly" }));
+      const response = await POST(makeRequest({ tier: "standard", interval: "monthly" }));
       const data = await response.json();
 
       expect(response.status).toBe(400);
@@ -167,7 +170,7 @@ describe("POST /api/checkout/founding", () => {
 
     it("returns 400 for invalid email format", async () => {
       const response = await POST(
-        makeRequest({ email: "not-an-email", tier: "foundation", interval: "monthly" })
+        makeRequest({ email: "not-an-email", tier: "standard", interval: "monthly" })
       );
       const data = await response.json();
 
@@ -184,9 +187,10 @@ describe("POST /api/checkout/founding", () => {
       expect(data.error.details.tier).toBeDefined();
     });
 
-    it("returns 400 for invalid tier enum", async () => {
+    it("returns 400 for invalid tier enum (legacy tier is no longer valid)", async () => {
+      // Legacy tiers (foundation/coaching/performance/vip) are no longer valid
       const response = await POST(
-        makeRequest({ email: "founding@test.com", tier: "premium", interval: "monthly" })
+        makeRequest({ email: "founding@test.com", tier: "foundation", interval: "monthly" })
       );
       const data = await response.json();
 
@@ -195,7 +199,7 @@ describe("POST /api/checkout/founding", () => {
     });
 
     it("returns 400 for missing interval", async () => {
-      const response = await POST(makeRequest({ email: "founding@test.com", tier: "foundation" }));
+      const response = await POST(makeRequest({ email: "founding@test.com", tier: "standard" }));
       const data = await response.json();
 
       expect(response.status).toBe(400);
@@ -205,7 +209,7 @@ describe("POST /api/checkout/founding", () => {
 
     it("returns 400 for invalid interval enum", async () => {
       const response = await POST(
-        makeRequest({ email: "founding@test.com", tier: "foundation", interval: "weekly" })
+        makeRequest({ email: "founding@test.com", tier: "standard", interval: "weekly" })
       );
       const data = await response.json();
 
@@ -221,7 +225,7 @@ describe("POST /api/checkout/founding", () => {
       mockRateLimitCheck.mockReturnValue({ allowed: false, retryAfter: 42 });
 
       const response = await POST(
-        makeRequest({ email: "founding@test.com", tier: "foundation", interval: "monthly" })
+        makeRequest({ email: "founding@test.com", tier: "standard", interval: "monthly" })
       );
       const data = await response.json();
 
@@ -233,7 +237,7 @@ describe("POST /api/checkout/founding", () => {
     it("does not call Stripe when rate limited", async () => {
       mockRateLimitCheck.mockReturnValue({ allowed: false, retryAfter: 10 });
 
-      await POST(makeRequest({ email: "founding@test.com", tier: "foundation", interval: "monthly" }));
+      await POST(makeRequest({ email: "founding@test.com", tier: "standard", interval: "monthly" }));
 
       expect(mockStripeCheckoutCreate).not.toHaveBeenCalled();
     });
@@ -246,7 +250,7 @@ describe("POST /api/checkout/founding", () => {
       mockStripeCheckoutCreate.mockResolvedValue({ id: "cs_test_123", url: null });
 
       const response = await POST(
-        makeRequest({ email: "founding@test.com", tier: "foundation", interval: "monthly" })
+        makeRequest({ email: "founding@test.com", tier: "standard", interval: "monthly" })
       );
       const data = await response.json();
 
@@ -258,7 +262,7 @@ describe("POST /api/checkout/founding", () => {
       mockStripeCheckoutCreate.mockRejectedValue(new Error("sk_live_supersecret network error"));
 
       const response = await POST(
-        makeRequest({ email: "founding@test.com", tier: "foundation", interval: "monthly" })
+        makeRequest({ email: "founding@test.com", tier: "standard", interval: "monthly" })
       );
       const data = await response.json();
       const text = JSON.stringify(data);

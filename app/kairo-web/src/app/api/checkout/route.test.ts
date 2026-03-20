@@ -44,7 +44,7 @@ describe("POST /api/checkout", () => {
       mockStripeCheckoutCreate.mockResolvedValue(MOCK_CHECKOUT_SESSION);
 
       const response = await POST(
-        makeRequest({ email: "user@test.com", planId: TEST_PLAN_ID })
+        makeRequest({ email: "user@test.com", tier: "standard", interval: "monthly" })
       );
       const data = await response.json();
 
@@ -56,7 +56,7 @@ describe("POST /api/checkout", () => {
       mockPrisma.member.upsert.mockResolvedValue({});
       mockStripeCheckoutCreate.mockResolvedValue(MOCK_CHECKOUT_SESSION);
 
-      await POST(makeRequest({ email: "stripe@test.com", planId: TEST_PLAN_ID }));
+      await POST(makeRequest({ email: "stripe@test.com", tier: "standard", interval: "monthly" }));
 
       expect(mockStripeCheckoutCreate).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -64,7 +64,7 @@ describe("POST /api/checkout", () => {
           customer_email: "stripe@test.com",
           line_items: [{ price: TEST_PLAN_ID, quantity: 1 }],
           metadata: {
-            planTier: "foundation",
+            planTier: "standard",
             billingInterval: "monthly",
           },
         })
@@ -75,7 +75,7 @@ describe("POST /api/checkout", () => {
       mockPrisma.member.upsert.mockResolvedValue({});
       mockStripeCheckoutCreate.mockResolvedValue(MOCK_CHECKOUT_SESSION);
 
-      await POST(makeRequest({ email: "url@test.com", planId: TEST_PLAN_ID }));
+      await POST(makeRequest({ email: "url@test.com", tier: "standard", interval: "monthly" }));
 
       expect(mockStripeCheckoutCreate).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -91,7 +91,7 @@ describe("POST /api/checkout", () => {
       mockStripeCheckoutCreate.mockResolvedValue(MOCK_CHECKOUT_SESSION);
 
       const response = await POST(
-        makeRequest({ email: "phone@test.com", phone: "+15551234567", planId: TEST_PLAN_ID })
+        makeRequest({ email: "phone@test.com", phone: "+15551234567", tier: "standard", interval: "monthly" })
       );
 
       expect(response.status).toBe(200);
@@ -112,7 +112,7 @@ describe("POST /api/checkout", () => {
         return MOCK_CHECKOUT_SESSION;
       });
 
-      await POST(makeRequest({ email: "order@test.com", phone: "+1555", planId: TEST_PLAN_ID }));
+      await POST(makeRequest({ email: "order@test.com", phone: "+1555", tier: "standard", interval: "monthly" }));
 
       expect(callOrder).toEqual(["upsert", "stripe"]);
       expect(mockPrisma.member.upsert).toHaveBeenCalledWith({
@@ -121,12 +121,12 @@ describe("POST /api/checkout", () => {
           email: "order@test.com",
           phone: "+1555",
           status: "pending",
-          planTier: "foundation",
+          planTier: "standard",
           billingInterval: "monthly",
         },
         update: {
           phone: "+1555",
-          planTier: "foundation",
+          planTier: "standard",
           billingInterval: "monthly",
         },
       });
@@ -136,7 +136,7 @@ describe("POST /api/checkout", () => {
       mockPrisma.member.upsert.mockResolvedValue({});
       mockStripeCheckoutCreate.mockResolvedValue(MOCK_CHECKOUT_SESSION);
 
-      await POST(makeRequest({ email: "nophone@test.com", planId: TEST_PLAN_ID }));
+      await POST(makeRequest({ email: "nophone@test.com", tier: "standard", interval: "monthly" }));
 
       expect(mockPrisma.member.upsert).toHaveBeenCalledWith({
         where: { email: "nophone@test.com" },
@@ -144,12 +144,12 @@ describe("POST /api/checkout", () => {
           email: "nophone@test.com",
           phone: null,
           status: "pending",
-          planTier: "foundation",
+          planTier: "standard",
           billingInterval: "monthly",
         },
         update: {
           phone: null,
-          planTier: "foundation",
+          planTier: "standard",
           billingInterval: "monthly",
         },
       });
@@ -160,7 +160,7 @@ describe("POST /api/checkout", () => {
 
   describe("validation errors", () => {
     it("returns 400 when email is missing", async () => {
-      const response = await POST(makeRequest({ planId: TEST_PLAN_ID }));
+      const response = await POST(makeRequest({ tier: "standard", interval: "monthly" }));
       const data = await response.json();
 
       expect(response.status).toBe(400);
@@ -168,7 +168,7 @@ describe("POST /api/checkout", () => {
     });
 
     it("returns 400 for invalid email", async () => {
-      const response = await POST(makeRequest({ email: "not-an-email", planId: TEST_PLAN_ID }));
+      const response = await POST(makeRequest({ email: "not-an-email", tier: "standard", interval: "monthly" }));
       const data = await response.json();
 
       expect(response.status).toBe(400);
@@ -176,7 +176,7 @@ describe("POST /api/checkout", () => {
     });
 
     it("returns 400 for non-string email", async () => {
-      const response = await POST(makeRequest({ email: 123, planId: TEST_PLAN_ID }));
+      const response = await POST(makeRequest({ email: 123, tier: "standard", interval: "monthly" }));
       const data = await response.json();
 
       expect(response.status).toBe(400);
@@ -212,7 +212,7 @@ describe("POST /api/checkout", () => {
       );
 
       const response = await POST(
-        makeRequest({ email: "nourl@test.com", planId: TEST_PLAN_ID })
+        makeRequest({ email: "nourl@test.com", tier: "standard", interval: "monthly" })
       );
       const data = await response.json();
 
@@ -227,7 +227,7 @@ describe("POST /api/checkout", () => {
       );
 
       const response = await POST(
-        makeRequest({ email: "err@test.com", planId: TEST_PLAN_ID })
+        makeRequest({ email: "err@test.com", tier: "standard", interval: "monthly" })
       );
       const data = await response.json();
 
@@ -242,7 +242,7 @@ describe("POST /api/checkout", () => {
       mockStripeCheckoutCreate.mockRejectedValue("string error");
 
       const response = await POST(
-        makeRequest({ email: "str@test.com", planId: TEST_PLAN_ID })
+        makeRequest({ email: "str@test.com", tier: "standard", interval: "monthly" })
       );
       const data = await response.json();
 
@@ -261,7 +261,7 @@ describe("POST /api/checkout", () => {
       );
 
       const response = await POST(
-        makeRequest({ email: "sec@test.com", planId: TEST_PLAN_ID })
+        makeRequest({ email: "sec@test.com", tier: "standard", interval: "monthly" })
       );
       const text = await response.text();
 
@@ -274,7 +274,7 @@ describe("POST /api/checkout", () => {
       mockStripeCheckoutCreate.mockRejectedValue(new Error("boom"));
 
       const response = await POST(
-        makeRequest({ email: "fmt@test.com", planId: TEST_PLAN_ID })
+        makeRequest({ email: "fmt@test.com", tier: "standard", interval: "monthly" })
       );
       const data = await response.json();
 
@@ -291,7 +291,7 @@ describe("POST /api/checkout", () => {
       mockRateLimitCheck.mockReturnValue({ allowed: false, retryAfter: 42 });
 
       const response = await POST(
-        makeRequest({ email: "rate@test.com", planId: TEST_PLAN_ID })
+        makeRequest({ email: "rate@test.com", tier: "standard", interval: "monthly" })
       );
       const data = await response.json();
 
@@ -303,7 +303,7 @@ describe("POST /api/checkout", () => {
     it("does not call Stripe or Prisma when rate limited", async () => {
       mockRateLimitCheck.mockReturnValue({ allowed: false, retryAfter: 10 });
 
-      await POST(makeRequest({ email: "blocked@test.com", planId: TEST_PLAN_ID }));
+      await POST(makeRequest({ email: "blocked@test.com", tier: "standard", interval: "monthly" }));
 
       expect(mockPrisma.member.upsert).not.toHaveBeenCalled();
       expect(mockStripeCheckoutCreate).not.toHaveBeenCalled();
@@ -320,7 +320,7 @@ describe("POST /api/checkout", () => {
           "content-type": "application/json",
           "x-forwarded-for": "203.0.113.1, 10.0.0.1",
         },
-        body: JSON.stringify({ email: "ip@test.com", planId: TEST_PLAN_ID }),
+        body: JSON.stringify({ email: "ip@test.com", tier: "standard", interval: "monthly" }),
       });
 
       await POST(req);

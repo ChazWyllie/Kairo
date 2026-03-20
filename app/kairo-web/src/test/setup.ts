@@ -154,6 +154,7 @@ export const mockSendReviewDelivered = vi.fn().mockResolvedValue(undefined);
 export const mockSendCheckInReminder = vi.fn().mockResolvedValue(undefined);
 export const mockSendProgramUpdated = vi.fn().mockResolvedValue(undefined);
 export const mockSendLaunchEmail = vi.fn().mockResolvedValue(undefined);
+export const mockSendWaitlistConfirmation = vi.fn().mockResolvedValue(undefined);
 
 vi.mock("@/services/email", () => ({
   notifyAdmin: mockNotifyAdmin,
@@ -168,6 +169,7 @@ vi.mock("@/services/email", () => ({
   sendCheckInReminder: mockSendCheckInReminder,
   sendProgramUpdated: mockSendProgramUpdated,
   sendLaunchEmail: mockSendLaunchEmail,
+  sendWaitlistConfirmation: mockSendWaitlistConfirmation,
 }));
 
 // ── Mock rate limiter (always allow — rate-limit.test.ts tests it directly) ──
@@ -196,6 +198,11 @@ export const mockWaitlistRateLimitCheck = vi.fn().mockReturnValue({
   retryAfter: 0,
 });
 
+export const mockPlanRateLimitCheck = vi.fn().mockReturnValue({
+  allowed: true,
+  retryAfter: 0,
+});
+
 vi.mock("@/lib/rate-limit", () => ({
   checkoutLimiter: {
     check: (...args: unknown[]) => mockRateLimitCheck(...args),
@@ -211,6 +218,9 @@ vi.mock("@/lib/rate-limit", () => ({
   },
   waitlistLimiter: {
     check: (...args: unknown[]) => mockWaitlistRateLimitCheck(...args),
+  },
+  planLimiter: {
+    check: (...args: unknown[]) => mockPlanRateLimitCheck(...args),
   },
   createRateLimiter: vi.fn(),
 }));
