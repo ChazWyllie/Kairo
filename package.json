@@ -1,7 +1,7 @@
 {
-  "name": "consistai",
+  "name": "kairo",
   "version": "0.1.0",
-  "description": "ConsistAI — Adaptive fitness planning for busy people",
+  "description": "Kairo | Adaptive fitness planning for busy people",
   "private": true,
   "scripts": {
     "test": "node tests/run-all.js",

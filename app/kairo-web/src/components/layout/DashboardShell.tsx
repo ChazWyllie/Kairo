@@ -64,7 +64,7 @@ export default function DashboardShell({ tabs, children }: DashboardShellProps) 
               initial="initial"
               animate="animate"
               exit="exit"
-              transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+              transition={{ duration: 0.18, ease: "easeOut" }}
             >
               {children}
             </motion.div>
