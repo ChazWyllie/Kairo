@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { motion, type Variants } from "framer-motion";
 import PhoneFrame from "@/components/ui/PhoneFrame";
-import TodayScreen from "@/components/ui/TodayScreen";
+import ChatScreen from "@/components/ui/ChatScreen";
 
 const containerVariants: Variants = {
   hidden: {},
@@ -164,7 +164,7 @@ export default function MobileHero() {
             className="flex justify-center md:justify-end"
           >
             <PhoneFrame tiltDeg={0} floatDelay="0s">
-              <TodayScreen />
+              <ChatScreen />
             </PhoneFrame>
           </motion.div>
         </motion.div>
