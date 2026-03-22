@@ -9,7 +9,7 @@ import PhoneBottomNav from "./PhoneBottomNav";
 // phase 1 - user reply
 // phase 2 - typing indicator
 // phase 3 - coach response + card (hold)
-const PHASE_DELAYS = [1000, 1300, 900, 5500];
+const PHASE_DELAYS = [1000, 1300, 900, 3000];
 
 interface CardRow { left: string; right: string }
 interface Scenario {
