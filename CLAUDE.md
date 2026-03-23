@@ -229,6 +229,48 @@ All modules here are pure utilities or thin wrappers. No direct Next.js dependen
 
 ---
 
+## Client-Side State Management
+
+**Auth state** is managed via React Context (`src/lib/auth-context.tsx`):
+
+```tsx
+// Wrap app (already done in root layout)
+<AuthProvider>...</AuthProvider>
+
+// Consume in any component
+const { member, role, coachEmail, loading, refetch } = useAuth();
+```
+
+- `member` — full member profile from `/api/auth/me`
+- `role` — `"member"` | `"coach"` | `null`
+- `coachEmail` — set when coach is viewing a specific member
+- `loading` — true during initial fetch
+- `refetch()` — manually refresh auth state (e.g., after profile update)
+
+There is no Redux, Zustand, or other global state library. All other state is local component state or fetched per-page via Server Components / `fetch`.
+
+---
+
+## CI/CD Pipeline
+
+GitHub Actions (`.github/workflows/`):
+
+| Workflow | Trigger | Steps |
+|---|---|---|
+| `ci.yml` | push/PR | Lint, type-check, unit tests, HTML/accessibility/security/file-size validation |
+| `pages.yml` | push to main | GitHub Pages deployment |
+| `dast-zap.yml` | scheduled | OWASP ZAP dynamic security scan |
+
+**CI steps for `app/kairo-web`:**
+1. `npm ci`
+2. `npx prisma generate` (generates Prisma client)
+3. `npm run lint`
+4. `npm test` (Vitest with `SKIP_ENV_VALIDATION=1`)
+
+**Validation jobs (separate):** HTML structure, content quality, accessibility (ARIA, lang attr, viewport), security (no inline event handlers), file size budgets (50KB HTML, 30KB CSS max).
+
+---
+
 ## Security
 
 Kairo applies defense-in-depth:
