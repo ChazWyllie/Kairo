@@ -34,7 +34,7 @@ export default function ApplicationStatusPage() {
           Your account is ready. We are reviewing your application and will reach out within 24 to 48 hours.
         </p>
         <p className="text-sm mb-10" style={{ color: "var(--text-tertiary)" }}>
-          You can sign in at any time — your dashboard will unlock once you are approved.
+          You can sign in at any time. Your dashboard will unlock once you are approved.
         </p>
 
         <div className="flex flex-col gap-3">

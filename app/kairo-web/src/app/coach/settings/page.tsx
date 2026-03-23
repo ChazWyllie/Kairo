@@ -33,7 +33,7 @@ export default function CoachSettingsPage() {
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
             <div>
               <p style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", marginBottom: "4px" }}>Email</p>
-              <p style={{ color: "var(--text-primary)", margin: 0 }}>{coachEmail ?? "—"}</p>
+              <p style={{ color: "var(--text-primary)", margin: 0 }}>{coachEmail ?? "-"}</p>
             </div>
             <div>
               <label style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", display: "block", marginBottom: "6px" }}>

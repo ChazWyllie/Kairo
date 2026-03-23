@@ -16,25 +16,25 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Kairo Fitness — Coaching That Adapts to Your Real Life",
+  title: "Kairo Fitness | Coaching That Adapts to Your Real Life",
   description:
-    "Expert fitness and nutrition coaching that flexes with your schedule, stress, and energy — so you actually stay consistent. Join the waitlist for founding member pricing.",
+    "Expert fitness and nutrition coaching that flexes with your schedule, stress, and energy, so you actually stay consistent. Join the waitlist for founding member pricing.",
   metadataBase: new URL(
     process.env.APP_URL ?? "https://kairo.business"
   ),
   openGraph: {
-    title: "Kairo Fitness — Coaching That Adapts to Your Real Life",
+    title: "Kairo Fitness | Coaching That Adapts to Your Real Life",
     description:
-      "Expert fitness and nutrition coaching that flexes with your schedule, stress, and energy — so you actually stay consistent.",
+      "Expert fitness and nutrition coaching that flexes with your schedule, stress, and energy, so you actually stay consistent.",
     type: "website",
     siteName: "Kairo Fitness",
     images: [{ url: "/icon-512.svg", width: 512, height: 512, alt: "Kairo Fitness" }],
   },
   twitter: {
     card: "summary",
-    title: "Kairo Fitness — Coaching That Adapts to Your Real Life",
+    title: "Kairo Fitness | Coaching That Adapts to Your Real Life",
     description:
-      "Expert fitness and nutrition coaching that flexes with your schedule, stress, and energy — so you actually stay consistent.",
+      "Expert fitness and nutrition coaching that flexes with your schedule, stress, and energy, so you actually stay consistent.",
     images: ["/icon-512.svg"],
   },
 };
