@@ -1,6 +1,6 @@
 # Kairo
 
-> **Adaptive fitness coaching — your plan adjusts to your life, not the other way around.**
+> **Adaptive fitness coaching, your plan adjusts to your life, not the other way around.**
 
 Kairo is a full-stack SaaS platform that delivers AI-driven, constraint-aware daily workout and nutrition plans to paying members. Coaches manage clients through a real-time dashboard while an automated adaptation engine adjusts each member's program based on daily check-ins.
 
