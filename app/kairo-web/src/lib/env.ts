@@ -49,6 +49,11 @@ export const env = createEnv({
     STRIPE_PRICE_STANDARD_ANNUAL: z.string().startsWith("price_").optional(),
     STRIPE_PRICE_PREMIUM_MONTHLY: z.string().startsWith("price_").optional(),
     STRIPE_PRICE_PREMIUM_ANNUAL: z.string().startsWith("price_").optional(),
+    // Stripe price IDs — one-time template purchases
+    STRIPE_TEMPLATE_WORKOUT_PRICE_ID: z.string().startsWith("price_").optional(),
+    STRIPE_TEMPLATE_NUTRITION_PRICE_ID: z.string().startsWith("price_").optional(),
+    STRIPE_TEMPLATE_SUPPLEMENTS_PRICE_ID: z.string().startsWith("price_").optional(),
+    STRIPE_TEMPLATE_BUNDLE_PRICE_ID: z.string().startsWith("price_").optional(),
   },
   // No client-side env vars — Stripe keys stay server-side
   client: {},
@@ -68,6 +73,10 @@ export const env = createEnv({
     STRIPE_PRICE_STANDARD_ANNUAL: process.env.STRIPE_PRICE_STANDARD_ANNUAL,
     STRIPE_PRICE_PREMIUM_MONTHLY: process.env.STRIPE_PRICE_PREMIUM_MONTHLY,
     STRIPE_PRICE_PREMIUM_ANNUAL: process.env.STRIPE_PRICE_PREMIUM_ANNUAL,
+    STRIPE_TEMPLATE_WORKOUT_PRICE_ID: process.env.STRIPE_TEMPLATE_WORKOUT_PRICE_ID,
+    STRIPE_TEMPLATE_NUTRITION_PRICE_ID: process.env.STRIPE_TEMPLATE_NUTRITION_PRICE_ID,
+    STRIPE_TEMPLATE_SUPPLEMENTS_PRICE_ID: process.env.STRIPE_TEMPLATE_SUPPLEMENTS_PRICE_ID,
+    STRIPE_TEMPLATE_BUNDLE_PRICE_ID: process.env.STRIPE_TEMPLATE_BUNDLE_PRICE_ID,
   },
   // Skip validation during build phase (env vars are injected at runtime on Vercel,
   // not available during `next build`) or when explicitly bypassed for CI.

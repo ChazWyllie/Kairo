@@ -7,6 +7,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { NextRequest } from "next/server";
 import { mockRateLimitCheck, mockStripeCheckoutCreate } from "@/test/setup";
+import { env } from "@/lib/env";
 
 import { POST } from "./route";
 
@@ -24,18 +25,18 @@ describe("POST /api/checkout/templates", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockRateLimitCheck.mockReturnValue({ allowed: true, retryAfter: 0 });
-    // Set a template price ID in the environment
-    process.env.STRIPE_TEMPLATE_WORKOUT_PRICE_ID = ALLOWED_PRICE_ID;
+    // Set a template price ID in the mocked env
+    (env as Record<string, unknown>).STRIPE_TEMPLATE_WORKOUT_PRICE_ID = ALLOWED_PRICE_ID;
     mockStripeCheckoutCreate.mockResolvedValue({
       url: "https://checkout.stripe.com/pay/cs_test_templates",
     });
   });
 
   afterEach(() => {
-    delete process.env.STRIPE_TEMPLATE_WORKOUT_PRICE_ID;
-    delete process.env.STRIPE_TEMPLATE_NUTRITION_PRICE_ID;
-    delete process.env.STRIPE_TEMPLATE_SUPPLEMENTS_PRICE_ID;
-    delete process.env.STRIPE_TEMPLATE_BUNDLE_PRICE_ID;
+    (env as Record<string, unknown>).STRIPE_TEMPLATE_WORKOUT_PRICE_ID = undefined;
+    (env as Record<string, unknown>).STRIPE_TEMPLATE_NUTRITION_PRICE_ID = undefined;
+    (env as Record<string, unknown>).STRIPE_TEMPLATE_SUPPLEMENTS_PRICE_ID = undefined;
+    (env as Record<string, unknown>).STRIPE_TEMPLATE_BUNDLE_PRICE_ID = undefined;
   });
 
   // ── Rate limiting ──
@@ -83,7 +84,7 @@ describe("POST /api/checkout/templates", () => {
   // ── Allowlist enforcement ──
 
   it("returns 503 when no template price IDs are configured", async () => {
-    delete process.env.STRIPE_TEMPLATE_WORKOUT_PRICE_ID;
+    (env as Record<string, unknown>).STRIPE_TEMPLATE_WORKOUT_PRICE_ID = undefined;
 
     const res = await POST(makeRequest({ priceId: "price_some_id" }));
 
