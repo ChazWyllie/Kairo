@@ -86,7 +86,7 @@ export default function FAQ() {
               color: "var(--text-primary)",
             }}
           >
-            Questions?
+            Questions?{" "}
             <br />
             <span style={{ color: "var(--text-tertiary)", fontWeight: 400 }}>
               Answered.

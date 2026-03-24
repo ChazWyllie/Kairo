@@ -25,12 +25,6 @@ export default function HowItWorksPage() {
         style={{ background: "var(--bg-primary)" }}
       >
         <div className="mx-auto max-w-3xl">
-          <p
-            className="text-xs font-medium uppercase tracking-[0.12em] mb-4"
-            style={{ color: "var(--accent-primary)" }}
-          >
-            The process
-          </p>
           <h1
             className="font-display font-black leading-none mb-6"
             style={{

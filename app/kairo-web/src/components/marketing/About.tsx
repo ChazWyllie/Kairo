@@ -80,7 +80,7 @@ export default function About() {
                   color: "var(--text-primary)",
                 }}
               >
-                The person
+                The person{" "}
                 <br />
                 <span style={{ color: "var(--text-tertiary)", fontWeight: 400 }}>
                   behind the plan.
@@ -113,8 +113,8 @@ export default function About() {
                 style={{ color: "var(--text-secondary)" }}
               >
                 My mindset: <em style={{ color: "var(--text-primary)" }}>consistency,
-                feedback loops, and measurable progress.</em> Same principles I apply
-                to engineering and the same ones Kairo coaching is built on.
+                feedback loops, and measurable progress.</em> The same principles I apply
+                to engineering are the same ones Kairo coaching is built on.
               </p>
             </ScrollReveal>
 
