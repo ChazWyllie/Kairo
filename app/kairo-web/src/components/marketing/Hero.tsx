@@ -122,7 +122,7 @@ export default function Hero() {
           }}
         >
           <span className="block" style={{ color: "var(--text-primary)" }}>
-            Coaching that
+            Coaching that{" "}
           </span>
           <span
             className="block font-normal"
@@ -150,7 +150,7 @@ export default function Hero() {
           style={{ animationDelay: "260ms" }}
         >
           <a
-            href="#coaching"
+            href="/apply"
             onClick={() =>
               track({ name: "cta_click", properties: { location: "hero_primary" } })
             }

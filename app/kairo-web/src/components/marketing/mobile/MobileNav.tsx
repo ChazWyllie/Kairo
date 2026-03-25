@@ -51,7 +51,7 @@ export default function MobileNav() {
         >
           {/* Logo */}
           <Link
-            href="/mobile"
+            href="/"
             className="font-display font-bold tracking-[0.12em] text-sm uppercase"
             style={{ color: "var(--text-primary)", letterSpacing: "0.15em" }}
             onClick={closeMenu}

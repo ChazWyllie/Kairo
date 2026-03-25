@@ -107,7 +107,7 @@ export default function Testimonials() {
               color: "var(--text-primary)",
             }}
           >
-            Real people.
+            Real people.{" "}
             <br />
             <span style={{ color: "var(--text-tertiary)", fontWeight: 400 }}>
               Real consistency.
@@ -134,14 +134,6 @@ export default function Testimonials() {
           ))}
         </div>
 
-        <ScrollReveal className="mt-16">
-          <p
-            className="text-center text-xs uppercase tracking-[0.12em]"
-            style={{ color: "var(--text-tertiary)" }}
-          >
-            Trusted by professionals in tech, finance &amp; healthcare
-          </p>
-        </ScrollReveal>
       </div>
     </section>
   );

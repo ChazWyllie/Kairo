@@ -44,7 +44,7 @@ export default function ApplyCTA() {
               color: "var(--bg-primary)",
             }}
           >
-            Ready to stop
+            Ready to stop{" "}
             <br />
             starting over?
           </h2>
@@ -132,19 +132,18 @@ export default function ApplyCTA() {
                   Start with a guide on your own.
                 </p>
               </div>
-              <a
-                href="#templates"
+              <span
+                role="button"
+                aria-disabled="true"
                 className="inline-flex items-center justify-center w-full rounded-[var(--radius-sm)] py-3.5 text-base font-semibold"
                 style={{
                   background: "rgba(10,10,10,0.1)",
                   color: "rgba(10,10,10,0.5)",
-                  cursor: "default",
-                  pointerEvents: "none",
+                  cursor: "not-allowed",
                 }}
-                aria-disabled="true"
               >
                 Coming Soon
-              </a>
+              </span>
               <p className="text-xs text-center" style={{ color: "rgba(10,10,10,0.45)" }}>
                 Training, nutrition, and supplement guides dropping soon.
               </p>
