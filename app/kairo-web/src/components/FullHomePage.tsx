@@ -12,37 +12,39 @@ import {
   type PricingSection,
   type TrustSection,
 } from "@/lib/landing-config";
+import Navigation from "@/components/marketing/Navigation";
 
-const CardNav = dynamic(() => import("@/components/CardNav"), { ssr: false });
+// const CardNav = dynamic(() => import("@/components/CardNav"), { ssr: false });
 
-const NAV_ITEMS = [
-  {
-    label: "Programs",
-    bgColor: "#0D0716",
-    textColor: "#fff",
-    links: [
-      { label: "Apply Now", href: "/apply", ariaLabel: "Apply for coaching" },
-    ],
-  },
-  {
-    label: "Pricing",
-    bgColor: "#170D27",
-    textColor: "#fff",
-    links: [
-      { label: "Compare Plans", href: "#pricing", ariaLabel: "Compare pricing plans" },
-      { label: "What's Included", href: "#pricing", ariaLabel: "See what's included" },
-    ],
-  },
-  {
-    label: "About",
-    bgColor: "#271E37",
-    textColor: "#fff",
-    links: [
-      { label: "Why Kairo", href: "#trust", ariaLabel: "Why choose Kairo" },
-      { label: "Results", href: "#social-proof", ariaLabel: "Client results" },
-    ],
-  },
-];
+// Commented out - CardNav component temporarily removed
+// const NAV_ITEMS = [
+//   {
+//     label: "Programs",
+//     bgColor: "#0D0716",
+//     textColor: "#fff",
+//     links: [
+//       { label: "Apply Now", href: "/apply", ariaLabel: "Apply for coaching" },
+//     ],
+//   },
+//   {
+//     label: "Pricing",
+//     bgColor: "#170D27",
+//     textColor: "#fff",
+//     links: [
+//       { label: "Compare Plans", href: "#pricing", ariaLabel: "Compare pricing plans" },
+//       { label: "What's Included", href: "#pricing", ariaLabel: "See what's included" },
+//     ],
+//   },
+//   {
+//     label: "About",
+//     bgColor: "#271E37",
+//     textColor: "#fff",
+//     links: [
+//       { label: "Why Kairo", href: "#trust", ariaLabel: "Why choose Kairo" },
+//       { label: "Results", href: "#social-proof", ariaLabel: "Client results" },
+//     ],
+//   },
+// ];
 
 // Helpers to pull typed sections
 const hero = LANDING_SECTIONS.find((s) => s.id === "hero") as HeroSection;
@@ -68,17 +70,8 @@ export default function FullHomePage() {
 
   return (
     <main className="relative min-h-screen bg-white text-black">
-      {/* Card Nav */}
-      <CardNav
-        logoText="Kairo"
-        items={NAV_ITEMS}
-        baseColor="#fff"
-        menuColor="#000"
-        buttonBgColor="#111"
-        buttonTextColor="#fff"
-        ctaHref="/login"
-        ctaLabel="Sign In"
-      />
+      {/* Navigation */}
+      <Navigation />
 
       {/* Hero */}
       <section className="mx-auto max-w-4xl px-6 pt-28 pb-16 text-center">
