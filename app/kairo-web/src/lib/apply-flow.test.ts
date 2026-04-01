@@ -13,6 +13,7 @@ function makeValues(overrides: Partial<ApplyFlowValues> = {}): ApplyFlowValues {
     email: "member@example.com",
     fullName: "Test Member",
     goal: "fat_loss",
+    trainingExperience: "intermediate",
     ...overrides,
   };
 }
@@ -37,6 +38,12 @@ describe("apply-flow", () => {
     );
 
     expect(errors.email).toBe("Please enter a valid email.");
+  });
+
+  it("flags missing training experience on the training step", () => {
+    const errors = validateApplyStep("training", makeValues({ trainingExperience: "" }));
+
+    expect(errors).toEqual({ trainingExperience: "Please select your experience level." });
   });
 
   it("flags missing goal on the goals step", () => {

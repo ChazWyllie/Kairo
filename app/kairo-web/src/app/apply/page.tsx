@@ -12,8 +12,8 @@ import {
   validateApplySubmission,
   type ApplyStep,
 } from "@/lib/apply-flow";
-import { type BillingInterval } from "@/lib/stripe-prices";
-import { COACHING_TIERS, ANNUAL_DISCOUNT } from "@/lib/products";
+import { PLANS, type BillingInterval } from "@/lib/stripe-prices";
+import { COACHING_TIERS } from "@/lib/products";
 
 /**
  * Application form — pre-payment screening.
@@ -238,11 +238,11 @@ function ApplyContent() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      const appData = await appRes.json();
-      if (!appRes.ok) {
-        if (appRes.status === 409) {
-          throw new Error("You've already applied with this email. Check your inbox for next steps.");
-        }
+      if (appRes.status === 409) {
+        throw new Error("You've already applied with this email. Check your inbox for next steps.");
+      }
+      if (appRes.status !== 201) {
+        const appData = await appRes.json().catch(() => ({})) as { error?: { message?: string } };
         throw new Error(appData?.error?.message ?? "Failed to submit application.");
       }
 
@@ -256,9 +256,12 @@ function ApplyContent() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(checkoutBody),
       });
-      const checkoutData = await checkoutRes.json();
+      const checkoutData = await checkoutRes.json() as { url?: string; error?: string };
       if (!checkoutRes.ok) {
         throw new Error(checkoutData?.error ?? "Failed to create checkout session. Please contact support.");
+      }
+      if (!checkoutData.url || typeof checkoutData.url !== "string") {
+        throw new Error("Invalid checkout URL received. Please contact support.");
       }
 
       window.location.href = checkoutData.url;
@@ -675,11 +678,12 @@ function ApplyContent() {
                   Select your plan <span className="ml-1" style={{ color: "var(--accent-primary)" }}>*</span>
                 </legend>
                 {TIERS.map((t) => {
-                  const coachingTier = COACHING_TIERS[t.value as keyof typeof COACHING_TIERS];
-                  const monthlyPrice = coachingTier ? coachingTier.price : null;
-                  const displayPrice = monthlyPrice !== null && billingInterval === "annual"
-                    ? Math.round(monthlyPrice * ANNUAL_DISCOUNT)
-                    : monthlyPrice;
+                  const planDisplay = PLANS.find((p) => p.tier === t.value);
+                  const displayPrice = planDisplay
+                    ? billingInterval === "annual"
+                      ? Math.round(planDisplay.annualPrice / 12)
+                      : planDisplay.monthlyPrice
+                    : null;
                   const isSelected = preferredTier === t.value;
 
                   return (
