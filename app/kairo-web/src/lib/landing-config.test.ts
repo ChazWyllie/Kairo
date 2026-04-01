@@ -42,21 +42,21 @@ describe("Landing page data contracts", () => {
     }
   });
 
-  it("plans are in ascending price order", () => {
-    for (let i = 1; i < PLANS.length; i++) {
-      expect(PLANS[i].monthlyPrice).toBeGreaterThan(PLANS[i - 1].monthlyPrice);
-    }
+  it("active tiers are in ascending price order (standard < premium)", () => {
+    const active = PLANS.filter((p) => p.tier === "standard" || p.tier === "premium");
+    expect(active).toHaveLength(2);
+    expect(active[0].monthlyPrice).toBeLessThan(active[1].monthlyPrice);
   });
 
   // ── Tier Names for Display ──
 
-  it("has exactly 4 plans", () => {
-    expect(PLANS).toHaveLength(4);
+  it("has exactly 6 plans (2 active + 4 legacy)", () => {
+    expect(PLANS).toHaveLength(6);
   });
 
-  it("tiers are foundation, coaching, performance, vip", () => {
+  it("tiers are standard, premium, foundation, coaching, performance, vip", () => {
     const tiers = PLANS.map((p) => p.tier);
-    expect(tiers).toEqual(["foundation", "coaching", "performance", "vip"]);
+    expect(tiers).toEqual(["standard", "premium", "foundation", "coaching", "performance", "vip"]);
   });
 
   // ── Feature Copy Quality (regression) ──

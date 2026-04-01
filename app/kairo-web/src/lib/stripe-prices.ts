@@ -32,6 +32,35 @@ export type PlanConfig = PlanDisplay;
 
 export const PLANS: PlanDisplay[] = [
   {
+    tier: "standard",
+    name: "1:1 Standard",
+    tagline: "Custom programming, nutrition guidance, and ongoing coach support.",
+    monthlyPrice: 149,
+    annualPrice: 1490,
+    features: [
+      "Custom workout programming tailored to your goals",
+      "Personalized nutrition guidance with macro targets",
+      "Weekly or bi-weekly check-ins with your coach",
+      "Direct WhatsApp messaging access",
+      "Video form reviews (2 per month)",
+      "Monthly progress report",
+    ],
+  },
+  {
+    tier: "premium",
+    name: "1:1 Premium",
+    tagline: "Full personalization with weekly video calls and daily access to your coach.",
+    monthlyPrice: 350,
+    annualPrice: 3500,
+    features: [
+      "Everything in 1:1 Standard, plus:",
+      "Weekly video check-ins with your coach",
+      "Daily WhatsApp messaging (unlimited text and video)",
+      "Detailed form reviews and technique feedback",
+      "Priority scheduling (book any time)",
+    ],
+  },
+  {
     tier: "foundation",
     name: "Foundation",
     tagline: "Training and nutrition templates with direct WhatsApp access.",

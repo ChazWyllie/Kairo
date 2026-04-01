@@ -46,21 +46,20 @@ describe("getStripePriceId", () => {
 });
 
 // ── getPlanFromPriceId ──
-//
-// Note: PLANS currently only contains legacy tiers (foundation/coaching/performance/vip).
-// Standard/premium are the current active tiers but haven't been added to PLANS yet,
-// so getPlanFromPriceId returns null for them even though PRICE_ID_REVERSE maps their IDs.
 
 describe("getPlanFromPriceId", () => {
-  it("returns null for standard/monthly price ID (standard not in PLANS yet)", () => {
-    // standard/premium tiers have price IDs configured but aren't in the PLANS display array
+  it("returns the standard plan for standard/monthly price ID", () => {
     const result = getPlanFromPriceId(STANDARD_MONTHLY_ID);
-    expect(result).toBeNull();
+    expect(result).not.toBeNull();
+    expect(result?.tier).toBe("standard");
+    expect(result?.interval).toBe("monthly");
   });
 
-  it("returns null for premium/annual price ID (premium not in PLANS yet)", () => {
+  it("returns the premium plan for premium/annual price ID", () => {
     const result = getPlanFromPriceId(PREMIUM_ANNUAL_ID);
-    expect(result).toBeNull();
+    expect(result).not.toBeNull();
+    expect(result?.tier).toBe("premium");
+    expect(result?.interval).toBe("annual");
   });
 
   it("returns null for an unknown price ID", () => {

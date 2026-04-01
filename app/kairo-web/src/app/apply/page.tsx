@@ -12,8 +12,8 @@ import {
   validateApplySubmission,
   type ApplyStep,
 } from "@/lib/apply-flow";
-import { type BillingInterval } from "@/lib/stripe-prices";
-import { COACHING_TIERS, ANNUAL_DISCOUNT } from "@/lib/products";
+import { PLANS, type BillingInterval } from "@/lib/stripe-prices";
+import { COACHING_TIERS } from "@/lib/products";
 
 /**
  * Application form — pre-payment screening.
@@ -135,7 +135,6 @@ function ApplyContent() {
   const [step, setStep] = useState<ApplyStep>("info");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [billingInterval, setBillingInterval] = useState<BillingInterval>(
     searchParams.get("interval") === "annual" ? "annual" : "monthly"
@@ -177,7 +176,7 @@ function ApplyContent() {
   }
 
   function goNext() {
-    const errors = validateApplyStep(step, { email, fullName, goal });
+    const errors = validateApplyStep(step, { email, fullName, goal, trainingExperience });
     setFieldErrors(errors);
     if (Object.keys(errors).length > 0) {
       setError("Please correct the highlighted fields before continuing.");
@@ -204,11 +203,17 @@ function ApplyContent() {
       return;
     }
 
-    const submissionValidation = validateApplySubmission({ email, fullName, goal });
+    const submissionValidation = validateApplySubmission({ email, fullName, goal, trainingExperience });
     if (submissionValidation.firstInvalidStep) {
       setFieldErrors(submissionValidation.errors);
       setError("Please complete the required fields before submitting.");
       setStep(submissionValidation.firstInvalidStep);
+      return;
+    }
+
+    if (!preferredTier) {
+      setFieldErrors({ preferredTier: "Please select a plan." });
+      setError("Please select a plan before submitting.");
       return;
     }
 
@@ -225,97 +230,45 @@ function ApplyContent() {
       if (nutritionStruggles.trim()) body.nutritionStruggles = nutritionStruggles.trim();
       if (biggestObstacle.trim()) body.biggestObstacle = biggestObstacle.trim();
       if (helpWithMost.trim()) body.helpWithMost = helpWithMost.trim();
-      if (preferredTier) body.preferredTier = preferredTier;
+      body.preferredTier = preferredTier;
       if (readyForStructure) body.readyForStructure = true;
 
-      const res = await fetch("/api/application", {
+      const appRes = await fetch("/api/application", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error?.message ?? "Failed to submit application.");
+      if (appRes.status === 409) {
+        throw new Error("You've already applied with this email. Check your inbox for next steps.");
+      }
+      if (appRes.status !== 201) {
+        const appData = await appRes.json().catch(() => ({})) as { error?: { message?: string } };
+        throw new Error(appData?.error?.message ?? "Failed to submit application.");
+      }
 
-      track({ name: "application_submitted", properties: { goal, tier: preferredTier || "none" } });
-      setDone(true);
+      track({ name: "application_submitted", properties: { goal, tier: preferredTier } });
+
+      const checkoutBody: Record<string, unknown> = { email, tier: preferredTier, interval: billingInterval };
+      if (phone.trim()) checkoutBody.phone = phone.trim();
+
+      const checkoutRes = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(checkoutBody),
+      });
+      const checkoutData = await checkoutRes.json() as { url?: string; error?: string };
+      if (!checkoutRes.ok) {
+        throw new Error(checkoutData?.error ?? "Failed to create checkout session. Please contact support.");
+      }
+      if (!checkoutData.url || typeof checkoutData.url !== "string") {
+        throw new Error("Invalid checkout URL received. Please contact support.");
+      }
+
+      window.location.href = checkoutData.url;
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
-    } finally {
       setLoading(false);
     }
-  }
-
-  // ── Done state ──
-  if (done) {
-    const registerUrl = `/register?email=${encodeURIComponent(email)}`;
-
-    return (
-      <main
-        className="min-h-screen flex flex-col items-center justify-center px-5 py-16"
-        style={{ background: "var(--bg-primary)" }}
-      >
-        <div className="w-full max-w-lg text-center">
-          {/* Confirmation mark */}
-          <div
-            className="inline-flex h-16 w-16 items-center justify-center rounded-2xl text-2xl font-bold mb-6 animate-scale-in"
-            style={{ background: "var(--accent-primary)", color: "var(--bg-primary)" }}
-          >
-            ✓
-          </div>
-          <h1
-            className="font-display font-black text-3xl mb-3"
-            style={{ color: "var(--text-primary)", letterSpacing: "-0.03em" }}
-          >
-            Application Received
-          </h1>
-          <p className="text-base mb-10" style={{ color: "var(--text-secondary)" }}>
-            Thanks {fullName.split(" ")[0]}! We will review your application and reach out with next steps within 24 to 48 hours.
-          </p>
-
-          {/* Divider */}
-          <div className="flex items-center gap-4 mb-10">
-            <div className="flex-1 h-px" style={{ background: "var(--border-subtle)" }} />
-            <span className="text-xs uppercase tracking-widest" style={{ color: "var(--text-tertiary)" }}>
-              while you wait
-            </span>
-            <div className="flex-1 h-px" style={{ background: "var(--border-subtle)" }} />
-          </div>
-
-          {/* Create account card */}
-          <div
-            className="rounded-[var(--radius-lg)] p-6 text-left"
-            style={{ background: "var(--bg-secondary)", border: "1px solid var(--border-subtle)" }}
-          >
-            <h2
-              className="font-display font-bold text-xl mb-1"
-              style={{ color: "var(--text-primary)", letterSpacing: "-0.02em" }}
-            >
-              Set Up Your Account
-            </h2>
-            <p className="text-sm mb-6" style={{ color: "var(--text-secondary)" }}>
-              Create a password so you can log in as soon as your application is approved.
-            </p>
-
-            <div className="flex flex-col gap-3">
-              <Link
-                href={registerUrl}
-                className="w-full rounded-[var(--radius-md)] py-4 text-base font-semibold text-center transition-all duration-200 hover:-translate-y-px btn-glow block"
-                style={{ background: "var(--accent-primary)", color: "var(--bg-primary)" }}
-              >
-                Create Account
-              </Link>
-              <Link
-                href="/"
-                className="text-sm text-center transition-colors duration-150"
-                style={{ color: "var(--text-tertiary)" }}
-              >
-                I will do this later
-              </Link>
-            </div>
-          </div>
-        </div>
-      </main>
-    );
   }
 
   // ── Multi-step form ──
@@ -494,20 +447,23 @@ function ApplyContent() {
               </h2>
 
               <fieldset className="space-y-2">
-                <legend className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
-                  Training experience
+                <legend className="text-sm font-medium" style={{ color: fieldErrors.trainingExperience ? "#f87171" : "var(--text-primary)" }}>
+                  Training experience <span className="ml-1" style={{ color: "var(--accent-primary)" }}>*</span>
                 </legend>
                 <div className="flex flex-wrap gap-2">
                   {EXPERIENCE_LEVELS.map((exp) => (
                     <ChoiceButton
                       key={exp.value}
                       selected={trainingExperience === exp.value}
-                      onClick={() => setTrainingExperience(exp.value)}
+                      onClick={() => { setTrainingExperience(exp.value); setFieldErrors((prev) => ({ ...prev, trainingExperience: "" })); }}
                     >
                       {exp.label}
                     </ChoiceButton>
                   ))}
                 </div>
+                {fieldErrors.trainingExperience && (
+                  <p className="text-xs mt-1" style={{ color: "#f87171" }}>{fieldErrors.trainingExperience}</p>
+                )}
               </fieldset>
 
               <FormInput id="apply-freq" label="Current training frequency">
@@ -718,15 +674,16 @@ function ApplyContent() {
 
               {/* Tier selection */}
               <fieldset className="space-y-3">
-                <legend className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
-                  Preferred plan <span className="text-xs" style={{ color: "var(--text-tertiary)" }}>(optional)</span>
+                <legend className="text-sm font-medium" style={{ color: fieldErrors.preferredTier ? "#f87171" : "var(--text-secondary)" }}>
+                  Select your plan <span className="ml-1" style={{ color: "var(--accent-primary)" }}>*</span>
                 </legend>
                 {TIERS.map((t) => {
-                  const coachingTier = COACHING_TIERS[t.value as keyof typeof COACHING_TIERS];
-                  const monthlyPrice = coachingTier ? coachingTier.price : null;
-                  const displayPrice = monthlyPrice !== null && billingInterval === "annual"
-                    ? Math.round(monthlyPrice * ANNUAL_DISCOUNT)
-                    : monthlyPrice;
+                  const planDisplay = PLANS.find((p) => p.tier === t.value);
+                  const displayPrice = planDisplay
+                    ? billingInterval === "annual"
+                      ? Math.round(planDisplay.annualPrice / 12)
+                      : planDisplay.monthlyPrice
+                    : null;
                   const isSelected = preferredTier === t.value;
 
                   return (
@@ -764,6 +721,9 @@ function ApplyContent() {
                     </button>
                   );
                 })}
+                {fieldErrors.preferredTier && (
+                  <p className="text-xs mt-1" style={{ color: "#f87171" }}>{fieldErrors.preferredTier}</p>
+                )}
               </fieldset>
 
               {/* Commitment checkbox */}
@@ -823,13 +783,9 @@ function ApplyContent() {
                   className="flex-1 rounded-[var(--radius-md)] py-3.5 text-base font-semibold transition-all duration-200 hover:-translate-y-px btn-glow disabled:opacity-60"
                   style={{ background: "var(--accent-primary)", color: "var(--bg-primary)" }}
                 >
-                  {loading ? "Submitting..." : "Submit Application"}
+                  {loading ? "Processing..." : "Proceed to Payment"}
                 </button>
               </div>
-
-              <p className="text-xs text-center" style={{ color: "var(--text-tertiary)" }}>
-                We will review your application and reach out within 24 to 48 hours.
-              </p>
             </div>
           )}
         </form>
