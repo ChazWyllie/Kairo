@@ -28,10 +28,10 @@ const BodySchema = z.object({
 function getAllowedTemplatePriceIds(): Set<string> {
   const ids = new Set<string>();
   const vars = [
-    process.env.STRIPE_TEMPLATE_WORKOUT_PRICE_ID,
-    process.env.STRIPE_TEMPLATE_NUTRITION_PRICE_ID,
-    process.env.STRIPE_TEMPLATE_SUPPLEMENTS_PRICE_ID,
-    process.env.STRIPE_TEMPLATE_BUNDLE_PRICE_ID,
+    env.STRIPE_TEMPLATE_WORKOUT_PRICE_ID,
+    env.STRIPE_TEMPLATE_NUTRITION_PRICE_ID,
+    env.STRIPE_TEMPLATE_SUPPLEMENTS_PRICE_ID,
+    env.STRIPE_TEMPLATE_BUNDLE_PRICE_ID,
   ];
   for (const id of vars) {
     if (id) ids.add(id);

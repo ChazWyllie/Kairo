@@ -309,7 +309,7 @@ function ClientCard({ client, expanded, onToggle, onRefresh }: {
         const data = await res.json().catch(() => null);
         throw new Error(data?.error?.message ?? "Failed to cancel");
       }
-      setCancelMsg("Cancelled — access until end of billing period.");
+      setCancelMsg("Cancelled. Access until end of billing period.");
       onRefresh();
     } catch (err) {
       setCancelMsg(err instanceof Error ? err.message : "Error");
@@ -560,7 +560,7 @@ function ApplicationsSection({ pendingApps, processedApps, onRefresh }: {
         const data = await res.json().catch(() => null);
         throw new Error(data?.error?.message ?? "Failed to update application");
       }
-      setActionMessage(`${status === "approved" ? "Approved" : "Rejected"} — ${email}`);
+      setActionMessage(`${status === "approved" ? "Approved" : "Rejected"}: ${email}`);
       onRefresh();
     } catch (err) {
       setActionMessage(err instanceof Error ? err.message : "Error");

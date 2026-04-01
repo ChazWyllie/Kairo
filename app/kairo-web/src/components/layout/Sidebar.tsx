@@ -20,7 +20,7 @@ export default function Sidebar({ tabs }: SidebarProps) {
   return (
     <motion.aside
       animate={{ width }}
-      transition={{ duration: 0.25, ease: [0.33, 1, 0.68, 1] }}
+      transition={{ duration: 0.25, ease: "easeOut" }}
       style={{
         position: "fixed",
         top: 0,

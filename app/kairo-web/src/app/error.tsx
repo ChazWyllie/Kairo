@@ -20,7 +20,7 @@ export default function GlobalError({
       <div className="max-w-md text-center space-y-4">
         <h1 className="text-2xl font-bold">Something went wrong</h1>
         <p className="text-neutral-600 text-sm">
-          We hit an unexpected error. Please try again — if the problem persists,
+          We hit an unexpected error. Please try again. If the problem persists,
           reach out to us on Instagram.
         </p>
         <button

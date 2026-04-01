@@ -248,6 +248,7 @@ function ApplyContent() {
 
       track({ name: "application_submitted", properties: { goal, tier: preferredTier } });
 
+<<<<<<< HEAD
       const checkoutBody: Record<string, unknown> = { email, tier: preferredTier, interval: billingInterval };
       if (phone.trim()) checkoutBody.phone = phone.trim();
 

@@ -1,60 +1,104 @@
 # Kairo
 
-> **Your plan adapts. You stay consistent.**
+> **Adaptive fitness coaching, your plan adjusts to your life, not the other way around.**
 
-Kairo Coaching is a secure, production-ready MVP that converts Instagram traffic into paid subscriptions ($50/mo) with a clean landing page + Stripe-hosted checkout + verified webhooks + minimal data storage.
-
-Fitness that adapts when life happens. Set your real-life constraints — time, equipment, stress. Get a daily workout + protein plan. Log in 30 seconds. Tomorrow auto-adjusts.
+Kairo is a full-stack SaaS platform that delivers AI-driven, constraint-aware daily workout and nutrition plans to paying members. Coaches manage clients through a real-time dashboard while an automated adaptation engine adjusts each member's program based on daily check-ins.
 
 ---
 
-## MVP Scope
+## Table of Contents
 
-**Includes:**
-- Landing page (bio link)
-- Stripe Checkout subscription ($50/mo)
-- Webhook-verified member activation
-- Minimal member record (email/phone optional + Stripe IDs + status)
-- Admin email notification on successful signup
-- Tests + CI + security baseline
-
-**Explicitly NOT included (post-MVP):**
-- Full client portal, messaging, custom daily meal plans
-- Medical/diagnostic features
-- Storing sensitive health data
+- [Overview](#overview)
+- [Tech Stack](#tech-stack)
+- [Key Features](#key-features)
+- [Architecture](#architecture)
+- [Project Structure](#project-structure)
+- [Getting Started](#getting-started)
+- [Testing](#testing)
+- [License](#license)
 
 ---
 
-## Quick Start
+## Overview
 
-### View the Landing Page
+Kairo solves the consistency problem in fitness: most plans fail because life isn't predictable. Kairo collects real-time constraints — available time, equipment, stress level, sleep — and generates a daily plan that fits *today*, then auto-adjusts tomorrow based on what was logged.
 
-No build tools required. Open the file directly in your browser:
+**Product scenarios:**
 
-```bash
-open src/landing/index.html
+| User situation | Kairo response |
+|---|---|
+| 20 min, hotel gym, high-stress day | Generates a compact hotel workout with adjusted volume |
+| 60 min, full gym, muscle-building goal | Full hypertrophy session with progressive overload |
+| Low sleep, no equipment, 15 minutes | Recovery-focused mobility + reduced calorie target |
+| Missed yesterday's workout | Tomorrow's plan redistributes volume automatically |
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| **Framework** | Next.js 16 (App Router) |
+| **Language** | TypeScript 5 |
+| **Styling** | Tailwind CSS 4 |
+| **Database** | PostgreSQL via Prisma ORM 7 |
+| **Auth** | bcrypt password hashing + HTTP-only cookie sessions |
+| **Payments** | Stripe (subscriptions, one-time founding-member offer) |
+| **Email** | Resend |
+| **Animation** | Framer Motion 12 |
+| **Testing** | Vitest 4 with full API-route coverage |
+| **CI/CD** | GitHub Actions — lint, test, OWASP ZAP DAST |
+| **Deployment** | Vercel (GitHub Pages for static assets) |
+
+---
+
+## Key Features
+
+### Adaptive Daily Plans
+An AI-powered constraints engine takes time availability, equipment, stress, sleep, and goals to generate 2–3 workout options plus daily macro and protein targets. Every plan is stored and used to inform the next.
+
+### 30-Second Daily Check-In
+Members log workout completion, meals, water, and steps in under a minute. Weekly check-ins add body metrics, adherence scores, energy/hunger/stress/recovery ratings, and a brief reflection — all feeding the adaptation engine.
+
+### Coach Dashboard
+Coaches see a colour-coded client triage (green / yellow / red), review weekly check-ins, write responses, update program blocks, and adjust macro targets — all from a single interface.
+
+### Billing & Membership
+Two-tier pricing (Standard / Premium) with monthly and annual billing intervals. Founding-member offer applies a permanent Stripe coupon at checkout. A full customer portal is available for self-serve subscription management.
+
+### Lead Nurture Pipeline
+Quiz-to-waitlist flow captures leads with a recommended tier. An automated drip sequence (up to 4 emails via Resend) guides leads through to application submission.
+
+### Security & Compliance
+- GDPR deletion: PII is nulled on request while financial records are preserved
+- Input validation at all API boundaries via Zod
+- No PII in server logs
+- OWASP ZAP DAST scan on every push to `main`
+- Stripe webhook idempotency via `StripeEvent` deduplication table
+
+---
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────┐
+│                    Next.js App                      │
+│  ┌────────────┐  ┌────────────┐  ┌──────────────┐  │
+│  │  Marketing │  │  Member    │  │  Coach       │  │
+│  │  /apply    │  │  /dashboard│  │  /coach      │  │
+│  └────────────┘  └────────────┘  └──────────────┘  │
+│               App Router API Routes                 │
+│  /api/auth  /api/checkin  /api/adaptation           │
+│  /api/checkout  /api/billing  /api/coach            │
+└─────────────────────────────────────────────────────┘
+         │                            │
+  ┌──────▼──────┐             ┌───────▼──────┐
+  │  PostgreSQL  │             │    Stripe    │
+  │  (Prisma)   │             │  Webhooks    │
+  └─────────────┘             └──────────────┘
 ```
 
-Or use VS Code Live Server:
-1. Install the [Live Server](https://marketplace.visualstudio.com/items?itemName=ritwickdey.LiveServer) extension
-2. Right-click `src/landing/index.html` → "Open with Live Server"
-
-### Run the App (when created)
-
-```bash
-cd app/kairo-web
-npm install
-npm run dev
-```
-
-### Demo Prompts
-
-Try these scenarios to understand the product:
-
-1. **Busy traveler:** "I have 20 minutes, hotel gym only, high stress day → what's my plan?"
-2. **Weekend warrior:** "I have 60 minutes, full gym, muscle building goal → generate plan"
-3. **Recovery day:** "Low sleep, no equipment, 15 minutes → recovery-focused plan"
-4. **Missed day:** "I missed yesterday's workout → how does tomorrow adapt?"
+**Data flow:** Member completes daily check-in → adaptation engine queries prior check-ins and active program block → generates adjusted DailyPlan stored in DB → member sees updated plan on next login.
 
 ---
 
@@ -62,134 +106,77 @@ Try these scenarios to understand the product:
 
 ```
 Kairo/
-├── docs/
-│   ├── 00-overview.md                 # Product overview
-│   ├── 01-requirements.md             # Functional & non-functional requirements
-│   ├── 02-architecture.md             # Technical architecture
-│   ├── 03-threat-model.md             # STRIDE threat model
-│   ├── 04-api-spec.md                 # REST API specification
-│   ├── 05-data-model.md               # Database schema & models
-│   ├── 06-stripe-flow.md              # Payment integration flow
-│   ├── 07-security-controls.md        # Security controls & mitigations
-│   ├── 08-testing-ci.md               # Testing strategy & CI pipeline
-│   ├── 09-deployment-runbook.md       # Deployment & rollback procedures
-│   ├── 10-privacy-legal.md            # Privacy, GDPR, legal
-│   ├── 11-product-copy.md             # Marketing & product copy
-│   ├── rfc-template.md                # RFC template
-│   ├── slide-content.md               # Pitch deck content
-│   ├── solution-slide.md              # Solution slide content
-│   ├── rfcs/                          # Approved RFCs
-│   ├── workflows/                     # Runbooks
-│   ├── workpackages/                  # Work packages (WP1–WP6)
-│   └── checklists/                    # Review checklists
-├── agents/
-│   ├── planner.md                     # Planning agent
-│   ├── implementer.md                 # Implementation agent
-│   ├── reviewer.md                    # Review agent
-│   ├── security.md                    # Security review agent
-│   └── qa.md                          # QA/testing agent
-├── prompts/
-│   ├── feature-template.md            # Feature implementation prompt
-│   ├── bugfix-template.md             # Bug fix prompt
-│   ├── refacror-template.md           # Refactoring prompt
-│   ├── architecture-review.md         # Architecture review prompt
-│   ├── multi-agent-orchestration.md   # Multi-agent orchestration
-│   ├── landing-page.md               # Landing page design prompt
-│   ├── master-agentic-engineering.md  # Master engineering prompt
-│   ├── pr-template.md                # PR description prompt
-│   ├── security-review-template.md   # Security review prompt
-│   └── test-plan-template.md         # Test plan generation prompt
 ├── app/
-│   └── kairo-web/                     # Next.js app (future)
-├── src/
-│   ├── landing/                       # Landing page (index.html + styles.css)
-│   ├── index.html                     # Root redirect
-│   └── showcase/                      # Landing page variant showcase
-├── tests/                             # Automated test suite (50 tests)
-│   ├── run-all.js
-│   ├── test-html-structure.js
-│   ├── test-content-quality.js
-│   ├── test-accessibility.js
-│   └── test-styles.js
-├── infrastructure/
-│   ├── env.example                    # Environment variable template
-│   └── secrets-guidance.md            # Secrets management guide
+│   └── kairo-web/              # Next.js application
+│       ├── src/
+│       │   └── app/
+│       │       ├── api/        # API route handlers + tests
+│       │       │   ├── adaptation/
+│       │       │   ├── auth/
+│       │       │   ├── billing/
+│       │       │   ├── checkin/
+│       │       │   ├── checkout/
+│       │       │   └── coach/
+│       │       ├── apply/      # Application / onboarding flow
+│       │       ├── coach/      # Coach dashboard
+│       │       ├── dashboard/  # Member dashboard
+│       │       └── quiz/       # Lead quiz → tier recommendation
+│       └── prisma/
+│           ├── schema.prisma   # Full data model
+│           └── migrations/     # Versioned migration history
+├── docs/                       # Architecture, API spec, security docs
 ├── .github/
-│   ├── PULL_REQUEST_TEMPLATE.md
-│   ├── dependabot.yml
 │   └── workflows/
-│       ├── ci.yml
-│       └── dast-zap.yml
-├── .editorconfig
-├── .gitignore
+│       ├── ci.yml              # Lint + test
+│       ├── pages.yml           # Static asset deployment
+│       └── dast-zap.yml        # OWASP ZAP security scan
 ├── CHANGELOG.md
-├── LICENSE
-├── package.json
-└── README.md
+└── LICENSE                     # MIT
 ```
 
 ---
 
-## Work Packages (Roadmap)
+## Getting Started
 
-| WP | Name | Status | Effort |
-|----|------|--------|--------|
-| WP1 | Project Scaffolding & CI | ✅ Done | S |
-| WP2 | Test Suite (TDD) | ✅ Done | S |
-| WP3 | Landing Page Implementation | ✅ Done | M |
-| WP4 | Solution Slide Content | ✅ Done | S |
-| WP5 | CI Pipeline & Validation | ✅ Done | S |
-| WP6 | Documentation & Release | ✅ Done | S |
-
----
-
-## Core Features
-
-| Feature | Description |
-|---------|-------------|
-| **Constraints Engine** | Input time, equipment, context (travel/stress/sleep), and preferences |
-| **Daily Plan Generator** | 2–3 workout options + protein targets + meal suggestions |
-| **30-Second Logging** | Checklist for workout, meals, water, steps |
-| **Auto-Adaptation** | Tomorrow's plan adjusts based on today's log |
-| **Insights** | Streak, weekly adherence %, next best action |
-
----
-
-## Running Tests
+**Prerequisites:** Node.js 20+, PostgreSQL, a Stripe account, a Resend account.
 
 ```bash
-npm install    # Install cheerio (HTML parser)
-npm test       # Run all 50 tests
+# 1. Clone the repository
+git clone https://github.com/ChazWyllie/Kairo.git
+cd Kairo/app/kairo-web
+
+# 2. Install dependencies
+npm install
+
+# 3. Configure environment
+cp ../../infrastructure/env.example .env.local
+# Fill in DATABASE_URL, STRIPE_SECRET_KEY, RESEND_API_KEY, etc.
+
+# 4. Run database migrations
+npx prisma migrate deploy
+
+# 5. Start the development server
+npm run dev
 ```
 
-Individual suites:
+The app will be available at `http://localhost:3000`.
+
+---
+
+## Testing
+
 ```bash
-npm run test:html      # HTML structure (22 tests)
-npm run test:content   # Content quality (11 tests)
-npm run test:a11y      # Accessibility (9 tests)
-npm run test:css       # CSS quality (8 tests)
+# Run the full test suite
+npm test
+
+# Watch mode
+npm run test:watch
+
+# Coverage report
+npm run test:coverage
 ```
 
----
-
-## Architecture
-
-See [`docs/02-architecture.md`](docs/02-architecture.md) for the full technical design.
-
-**Key decisions:**
-- Static HTML landing page (zero dependencies)
-- Rule-based plan generator (no ML for MVP)
-- Mobile-first (React Native / Expo planned)
-- SQLite for MVP → PostgreSQL for production
-
----
-
-## Contributing
-
-1. Read the [Iteration Runbook](docs/workflows/iteration-runbook.md)
-2. Follow TDD: write tests before implementation
-3. Complete the [Reviewer Checklist](docs/checklists/reviewer-checklist.md) for every PR
-4. Update [CHANGELOG.md](CHANGELOG.md) per work package
+All API routes have co-located test files (`route.test.ts`). The CI pipeline runs tests and ESLint on every pull request.
 
 ---
 

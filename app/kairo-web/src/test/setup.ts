@@ -30,6 +30,10 @@ vi.mock("@/lib/env", () => ({
     STRIPE_PRICE_STANDARD_ANNUAL: "price_test_standard_a",
     STRIPE_PRICE_PREMIUM_MONTHLY: "price_test_premium_m",
     STRIPE_PRICE_PREMIUM_ANNUAL: "price_test_premium_a",
+    STRIPE_TEMPLATE_WORKOUT_PRICE_ID: undefined,
+    STRIPE_TEMPLATE_NUTRITION_PRICE_ID: undefined,
+    STRIPE_TEMPLATE_SUPPLEMENTS_PRICE_ID: undefined,
+    STRIPE_TEMPLATE_BUNDLE_PRICE_ID: undefined,
   },
 }));
 
