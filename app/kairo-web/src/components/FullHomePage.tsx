@@ -184,13 +184,13 @@ export default function FullHomePage() {
           </div>
 
           {/* Pricing Cards */}
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {PLANS.map((plan) => (
+          <div className="grid gap-6 sm:grid-cols-2">
+            {PLANS.filter((plan) => plan.tier === "standard" || plan.tier === "premium").map((plan) => (
               <PricingCard
                 key={plan.tier}
                 plan={plan}
                 billingInterval={billingInterval}
-                highlighted={plan.tier === "coaching"}
+                highlighted={plan.tier === "standard"}
               />
             ))}
           </div>

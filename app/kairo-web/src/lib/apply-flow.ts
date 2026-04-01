@@ -8,6 +8,7 @@ export interface ApplyFlowValues {
   email: string;
   fullName: string;
   goal: string;
+  trainingExperience: string;
 }
 
 export type ApplyFieldErrors = Record<string, string>;
@@ -25,6 +26,10 @@ export function validateApplyStep(step: ApplyStep, values: ApplyFlowValues): App
     } else if (!isValidEmail(values.email)) {
       errors.email = "Please enter a valid email.";
     }
+  }
+
+  if (step === "training" && !values.trainingExperience) {
+    errors.trainingExperience = "Please select your experience level.";
   }
 
   if (step === "goals" && !values.goal) {
@@ -59,6 +64,11 @@ export function validateApplySubmission(values: ApplyFlowValues): {
   const infoErrors = validateApplyStep("info", values);
   if (Object.keys(infoErrors).length > 0) {
     return { errors: infoErrors, firstInvalidStep: "info" };
+  }
+
+  const trainingErrors = validateApplyStep("training", values);
+  if (Object.keys(trainingErrors).length > 0) {
+    return { errors: trainingErrors, firstInvalidStep: "training" };
   }
 
   const goalErrors = validateApplyStep("goals", values);
